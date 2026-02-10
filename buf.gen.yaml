@@ -1,0 +1,24 @@
+version: v2
+clean: true
+plugins:
+  - remote: buf.build/community/neoeinstein-prost:v0.4.0
+    out: kosa-proto/src/pb
+    opt:
+      - bytes=.
+  - remote: buf.build/community/neoeinstein-prost-crate:v0.4.1
+    out: kosa-proto/src/pb
+    opt:
+      - no_features=true
+inputs:
+  - git_repo: https://github.com/Redmomn/LagrangeProto.git
+    branch: master
+    depth: 1
+    subdir: proto
+    paths:
+      - common/v2
+      - login/v2
+      - message/v2
+      - notify/v2
+      - service/v2
+      - service/highway/v2
+      - system/v2

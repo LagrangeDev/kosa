@@ -470,13 +470,13 @@ impl<'a> Tlv<'a> {
     #[tlv(0x52d)]
     pub(crate) fn tlv52d(&mut self) -> &mut Self {
         let report = DeviceReport {
-            bootloader:  "V816.0.6.0.TKHCNXM".to_string(),
-            proc_version:  "Linux version 4.19.157-perf-g92c089fc2d37 (builder@pangu-build-component-vendor-272092-qncbv-vttl3-61r9m) (clang version 10.0.7 for Android NDK, GNU ld (binutils-2.27-bd24d23f) 2.27.0.20170315) #1 SMP PREEMPT Wed Jun 5 13:27:08 UTC 2024".to_string(),
-            code_name:  "REL".to_string(),
-            fingerprint:  "Redmi/alioth/alioth:13/TKQ1.221114.001/V816.0.6.0.TKHCNXM:user/release-keys".to_string(),
-            boot_id:  "unknown".to_string(),
-            base_band:  "".to_string(),
-            inner_version: "V816.0.6.0.TKHCNXM".to_string(),
+            bootloader:  "V816.0.6.0.TKHCNXM".to_string().into(),
+            proc_version:  "Linux version 4.19.157-perf-g92c089fc2d37 (builder@pangu-build-component-vendor-272092-qncbv-vttl3-61r9m) (clang version 10.0.7 for Android NDK, GNU ld (binutils-2.27-bd24d23f) 2.27.0.20170315) #1 SMP PREEMPT Wed Jun 5 13:27:08 UTC 2024".to_string().into(),
+            code_name:  "REL".to_string().into(),
+            fingerprint:  "Redmi/alioth/alioth:13/TKQ1.221114.001/V816.0.6.0.TKHCNXM:user/release-keys".to_string().into(),
+            boot_id:  "unknown".to_string().into(),
+            base_band:  "".to_string().into(),
+            inner_version: "V816.0.6.0.TKHCNXM".to_string().into(),
             ..Default::default()
         };
 
@@ -638,11 +638,11 @@ impl<'a> TlvQrCode<'a> {
     pub(crate) fn tlvd1(&mut self) -> &mut Self {
         let obj = QrExtInfo {
             dev_info: Some(DevInfo {
-                dev_type: self.app_info.os.to_owned(),
-                dev_name: self.session.device_name.clone(),
+                dev_type: self.app_info.os.to_owned().into(),
+                dev_name: self.session.device_name.clone().into(),
             }),
             gen_info: Some(GenInfo {
-                field6: 1,
+                field6: Some(1),
                 ..Default::default()
             }),
             ..Default::default()
@@ -654,10 +654,10 @@ impl<'a> TlvQrCode<'a> {
     pub(crate) fn tlv12c(&mut self) -> &mut Self {
         let session = self.session;
         let obj = ScanExtInfo {
-            guid: Bytes::from(session.guid.to_vec()),
-            imei: session.qimei.to_owned(),
-            scan_scene: 1,
-            allow_auto_renew_ticket: true,
+            guid: Bytes::from(session.guid.to_vec()).into(),
+            imei: session.qimei.to_owned().into(),
+            scan_scene: Some(1),
+            allow_auto_renew_ticket: Some(true),
             ..Default::default()
         };
         writer.write_bytes(obj.encode_to_vec().as_slice());

@@ -3,54 +3,54 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeyExchangeRequest {
-    #[prost(bytes="bytes", tag="1")]
-    pub public_key: ::prost::bytes::Bytes,
-    #[prost(uint32, tag="2")]
-    pub r#type: u32,
-    #[prost(bytes="bytes", tag="3")]
-    pub secret: ::prost::bytes::Bytes,
-    #[prost(int64, tag="4")]
-    pub timestamp: i64,
-    #[prost(bytes="bytes", tag="5")]
-    pub verify_hash: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub public_key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint32, optional, tag="2")]
+    pub r#type: ::core::option::Option<u32>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub secret: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int64, optional, tag="4")]
+    pub timestamp: ::core::option::Option<i64>,
+    #[prost(bytes="bytes", optional, tag="5")]
+    pub verify_hash: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeyExchangeResponse {
-    #[prost(bytes="bytes", tag="1")]
-    pub secret: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub field2: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="3")]
-    pub public_key: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub secret: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub field2: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub public_key: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeyExchangeRequestBuf {
-    #[prost(string, tag="1")]
-    pub uin: ::prost::alloc::string::String,
-    #[prost(bytes="bytes", tag="2")]
-    pub guid: ::prost::bytes::Bytes,
+    #[prost(string, optional, tag="1")]
+    pub uin: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub guid: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KeyExchangeResponseSecret {
-    #[prost(bytes="bytes", tag="1")]
-    pub session_key: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub session_ticket: ::prost::bytes::Bytes,
-    #[prost(uint32, tag="3")]
-    pub expiration: u32,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub session_key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub session_ticket: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint32, optional, tag="3")]
+    pub expiration: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginForwardRequest {
-    #[prost(bytes="bytes", tag="1")]
-    pub session_ticket: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="3")]
-    pub buffer: ::prost::bytes::Bytes,
-    #[prost(uint32, tag="4")]
-    pub r#type: u32,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub session_ticket: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub buffer: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint32, optional, tag="4")]
+    pub r#type: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -75,58 +75,58 @@ pub struct NtLoginHead {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginUserInfo {
-    #[prost(string, tag="1")]
-    pub account: ::prost::alloc::string::String,
-    #[prost(uint32, tag="2")]
-    pub country_code: u32,
+    #[prost(string, optional, tag="1")]
+    pub account: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="2")]
+    pub country_code: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginClientInfo {
-    #[prost(string, tag="1")]
-    pub device_type: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub device_name: ::prost::alloc::string::String,
-    #[prost(enumeration="NtLoginPlatform", tag="3")]
-    pub platform: i32,
-    #[prost(bytes="bytes", tag="4")]
-    pub guid: ::prost::bytes::Bytes,
-    #[prost(uint32, tag="5")]
-    pub pubno: u32,
-    #[prost(uint32, tag="6")]
-    pub client_ver: u32,
-    #[prost(uint32, tag="7")]
-    pub client_type: u32,
-    #[prost(uint32, tag="8")]
-    pub sso_ver: u32,
+    #[prost(string, optional, tag="1")]
+    pub device_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub device_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(enumeration="NtLoginPlatform", optional, tag="3")]
+    pub platform: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="4")]
+    pub guid: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint32, optional, tag="5")]
+    pub pubno: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="6")]
+    pub client_ver: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="7")]
+    pub client_type: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="8")]
+    pub sso_ver: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginAppInfo {
-    #[prost(string, tag="1")]
-    pub version: ::prost::alloc::string::String,
-    #[prost(int32, tag="2")]
-    pub app_id: i32,
-    #[prost(string, tag="3")]
-    pub app_name: ::prost::alloc::string::String,
-    #[prost(uint32, tag="4")]
-    pub client_a1_version: u32,
-    #[prost(string, tag="5")]
-    pub qua: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag="2")]
+    pub app_id: ::core::option::Option<i32>,
+    #[prost(string, optional, tag="3")]
+    pub app_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="4")]
+    pub client_a1_version: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="5")]
+    pub qua: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="6")]
     pub open_info: ::core::option::Option<NtLoginOpenInfo>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginOpenInfo {
-    #[prost(uint32, tag="1")]
-    pub app_id: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub app_id: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginSdkInfo {
-    #[prost(uint32, tag="1")]
-    pub version: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub version: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
@@ -135,28 +135,28 @@ pub struct NtLoginSecurityInfo {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginCookie {
-    #[prost(string, tag="1")]
-    pub cookie_content: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub cookie_content: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginLongCookie {
-    #[prost(bytes="bytes", tag="1")]
-    pub content: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub content: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginErrorInfo {
-    #[prost(uint64, tag="1")]
-    pub err_code: u64,
-    #[prost(string, tag="2")]
-    pub str_tips_title: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub str_tips_content: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub str_jump_wording: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub str_jump_url: ::prost::alloc::string::String,
+    #[prost(uint64, optional, tag="1")]
+    pub err_code: ::core::option::Option<u64>,
+    #[prost(string, optional, tag="2")]
+    pub str_tips_title: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub str_tips_content: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub str_jump_wording: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="5")]
+    pub str_jump_url: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="6")]
     pub msg_detail: ::core::option::Option<NtLoginErrorDetail>,
     #[prost(message, repeated, tag="7")]
@@ -177,194 +177,194 @@ pub struct NtLoginErrorDetail {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginErrorNeedVerifyNewDevice {
-    #[prost(bool, tag="1")]
-    pub allow_gate_way_verify: bool,
+    #[prost(bool, optional, tag="1")]
+    pub allow_gate_way_verify: ::core::option::Option<bool>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginErrorUnregistered {
-    #[prost(string, tag="1")]
-    pub unregistered_sig: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub unregistered_sig: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginErrorBeenForbiden {
-    #[prost(uint32, tag="1")]
-    pub area: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub area: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginErrorNiceAccountExpire {
-    #[prost(string, tag="1")]
-    pub expire_sig: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub expire_sig: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginButton {
-    #[prost(string, tag="1")]
-    pub wording: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub url: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub wording: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub url: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginCommonInfo {
-    #[prost(uint32, tag="1")]
-    pub face: u32,
-    #[prost(string, tag="2")]
-    pub nick: ::prost::alloc::string::String,
-    #[prost(uint32, tag="3")]
-    pub gender: u32,
-    #[prost(uint32, tag="4")]
-    pub flag: u32,
-    #[prost(uint32, tag="5")]
-    pub age: u32,
-    #[prost(int32, tag="6")]
-    pub svr_flag: i32,
+    #[prost(uint32, optional, tag="1")]
+    pub face: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="2")]
+    pub nick: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="3")]
+    pub gender: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="4")]
+    pub flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="5")]
+    pub age: ::core::option::Option<u32>,
+    #[prost(int32, optional, tag="6")]
+    pub svr_flag: ::core::option::Option<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginTgtInfo {
-    #[prost(bytes="bytes", tag="1")]
-    pub tgt: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub gtkey_tgt: ::prost::bytes::Bytes,
-    #[prost(uint32, tag="3")]
-    pub tgt_ver: u32,
-    #[prost(uint64, tag="4")]
-    pub priority: u64,
-    #[prost(uint64, tag="5")]
-    pub refresh_interval: u64,
-    #[prost(uint64, tag="6")]
-    pub validate_interval: u64,
-    #[prost(uint64, tag="7")]
-    pub try_refresh_interval: u64,
-    #[prost(uint64, tag="8")]
-    pub try_refresh_count: u64,
-    #[prost(uint64, tag="9")]
-    pub dst_appid: u64,
-    #[prost(bytes="bytes", tag="10")]
-    pub gtkey_tgtpwd: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub tgt: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub gtkey_tgt: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint32, optional, tag="3")]
+    pub tgt_ver: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="4")]
+    pub priority: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="5")]
+    pub refresh_interval: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="6")]
+    pub validate_interval: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="7")]
+    pub try_refresh_interval: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="8")]
+    pub try_refresh_count: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="9")]
+    pub dst_appid: ::core::option::Option<u64>,
+    #[prost(bytes="bytes", optional, tag="10")]
+    pub gtkey_tgtpwd: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(message, optional, tag="11")]
     pub comm_info: ::core::option::Option<NtLoginCommonInfo>,
-    #[prost(bytes="bytes", tag="12")]
-    pub sig_session: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="13")]
-    pub sig_session_key: ::prost::bytes::Bytes,
-    #[prost(uint64, tag="14")]
-    pub next_refresh_gap: u64,
+    #[prost(bytes="bytes", optional, tag="12")]
+    pub sig_session: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="13")]
+    pub sig_session_key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint64, optional, tag="14")]
+    pub next_refresh_gap: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginStInfo {
-    #[prost(bytes="bytes", tag="1")]
-    pub st: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub gtkey_st: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub st: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub gtkey_st: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginStHttpInfo {
-    #[prost(uint32, tag="1")]
-    pub allow_ptlogin: u32,
-    #[prost(bytes="bytes", tag="2")]
-    pub st_http: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="3")]
-    pub gtkey_st_http: ::prost::bytes::Bytes,
+    #[prost(uint32, optional, tag="1")]
+    pub allow_ptlogin: ::core::option::Option<u32>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub st_http: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub gtkey_st_http: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginControlRefreshTime {
-    #[prost(uint64, tag="1")]
-    pub next_start_refresh_time: u64,
-    #[prost(uint64, tag="2")]
-    pub expire_time: u64,
+    #[prost(uint64, optional, tag="1")]
+    pub next_start_refresh_time: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="2")]
+    pub expire_time: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginTickets {
-    #[prost(bytes="bytes", tag="3")]
-    pub a1: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="4")]
-    pub a2: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="5")]
-    pub d2: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="6")]
-    pub d2_key: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="7")]
-    pub auth_code: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="4")]
+    pub a2: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="5")]
+    pub d2: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="6")]
+    pub d2_key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="7")]
+    pub auth_code: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(message, optional, tag="8")]
     pub tgt_info: ::core::option::Option<NtLoginTgtInfo>,
     #[prost(message, optional, tag="9")]
     pub st_info: ::core::option::Option<NtLoginStInfo>,
-    #[prost(bytes="bytes", tag="10")]
-    pub sec_extra: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="10")]
+    pub sec_extra: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(message, optional, tag="11")]
     pub st_http_info: ::core::option::Option<NtLoginStHttpInfo>,
     #[prost(message, optional, tag="12")]
     pub a1_refresh_time: ::core::option::Option<NtLoginControlRefreshTime>,
-    #[prost(bytes="bytes", tag="13")]
-    pub nopicsig: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="14")]
-    pub a1_key: ::prost::bytes::Bytes,
-    #[prost(uint64, tag="15")]
-    pub a1_seq: u64,
+    #[prost(bytes="bytes", optional, tag="13")]
+    pub nopicsig: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="14")]
+    pub a1_key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(uint64, optional, tag="15")]
+    pub a1_seq: ::core::option::Option<u64>,
     #[prost(message, optional, tag="16")]
     pub a2_refresh_time: ::core::option::Option<NtLoginControlRefreshTime>,
-    #[prost(bytes="bytes", tag="17")]
-    pub a2_key: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="17")]
+    pub a2_key: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginUserProfile {
-    #[prost(bytes="bytes", tag="1")]
-    pub nick_name: ::prost::bytes::Bytes,
-    #[prost(bool, tag="2")]
-    pub register_without_password: bool,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub nick_name: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bool, optional, tag="2")]
+    pub register_without_password: ::core::option::Option<bool>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginAccoutInfo {
-    #[prost(uint64, tag="1")]
-    pub uin: u64,
-    #[prost(string, tag="2")]
-    pub uid: ::prost::alloc::string::String,
+    #[prost(uint64, optional, tag="1")]
+    pub uin: ::core::option::Option<u64>,
+    #[prost(string, optional, tag="2")]
+    pub uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="3")]
     pub user_profile: ::core::option::Option<NtLoginUserProfile>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginIframe {
-    #[prost(string, tag="1")]
-    pub iframe_sig: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub iframe_randstr: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub iframe_sid: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub iframe_sig: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub iframe_randstr: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub iframe_sid: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginSecProtect {
-    #[prost(bytes="bytes", tag="1")]
-    pub new_device_check_sig: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub unusual_device_check_sig: ::prost::bytes::Bytes,
-    #[prost(string, tag="3")]
-    pub unusual_device_qr_sig: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub uin_token: ::prost::alloc::string::String,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub new_device_check_sig: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub unusual_device_check_sig: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(string, optional, tag="3")]
+    pub unusual_device_qr_sig: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub uin_token: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginSecCheck {
-    #[prost(string, tag="3")]
-    pub iframe_url: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="3")]
+    pub iframe_url: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct NtLoginLoginProcessReqBody {
-    #[prost(bool, tag="1")]
-    pub need_remind_cancellated_status: bool,
+    #[prost(bool, optional, tag="1")]
+    pub need_remind_cancellated_status: ::core::option::Option<bool>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
@@ -373,14 +373,14 @@ pub struct NtLoginLoginProcessRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginPasswordLoginReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a1: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(message, optional, tag="2")]
     pub iframe: ::core::option::Option<NtLoginIframe>,
-    #[prost(bytes="bytes", tag="3")]
-    pub new_device_check_succeed_sig: ::prost::bytes::Bytes,
-    #[prost(string, tag="4")]
-    pub register_succeed_sig: ::prost::alloc::string::String,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub new_device_check_succeed_sig: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(string, optional, tag="4")]
+    pub register_succeed_sig: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="5")]
     pub login_process_req: ::core::option::Option<NtLoginLoginProcessReqBody>,
 }
@@ -401,8 +401,8 @@ pub struct NtLoginPasswordLoginRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginPasswordLoginNewDeviceReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub new_device_check_succeed_sig: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub new_device_check_succeed_sig: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -415,10 +415,10 @@ pub struct NtLoginPasswordLoginNewDeviceRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginPasswordLoginUnusualDeviceReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a1: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub unusual_device_check_succeed_sig: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub unusual_device_check_succeed_sig: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -431,8 +431,8 @@ pub struct NtLoginPasswordLoginUnusualDeviceRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginEasyLoginReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a1: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -447,10 +447,10 @@ pub struct NtLoginEasyLoginRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginEasyLoginUnusualDeviceReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a1: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub unusual_device_check_succeed_sig: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub unusual_device_check_succeed_sig: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -461,12 +461,12 @@ pub struct NtLoginEasyLoginUnusualDeviceRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginTgtExchangeFastLoginReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub tgt: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub sec_extra: ::prost::bytes::Bytes,
-    #[prost(int32, tag="3")]
-    pub code_type: i32,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub tgt: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub sec_extra: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int32, optional, tag="3")]
+    pub code_type: ::core::option::Option<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -477,10 +477,10 @@ pub struct NtLoginTgtExchangeFastLoginRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginRefreshTicketReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a1: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub nopicsig: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a1: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub nopicsig: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -493,12 +493,12 @@ pub struct NtLoginRefreshTicketRspBody {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtLoginRefreshA2ReqBody {
-    #[prost(bytes="bytes", tag="1")]
-    pub a2: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub d2: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="3")]
-    pub d2_key: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub a2: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub d2: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub d2_key: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -513,14 +513,14 @@ pub struct NtLoginRefreshA2RspBody {
 pub struct NtLoginCommon {
     #[prost(message, optional, tag="1")]
     pub head: ::core::option::Option<NtLoginHead>,
-    #[prost(bytes="bytes", tag="2")]
-    pub body: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub body: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QrLogin {
-    #[prost(uint32, tag="1")]
-    pub scan_result: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub scan_result: ::core::option::Option<u32>,
     #[prost(message, optional, tag="2")]
     pub safe_info: ::core::option::Option<SafeInfo>,
     #[prost(message, optional, tag="3")]
@@ -535,124 +535,124 @@ pub struct QrLogin {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SafeInfo {
-    #[prost(string, tag="1")]
-    pub tips_template: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub login_loc: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub app_name: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub new_tips_template: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub tips_template: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub login_loc: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub app_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub new_tips_template: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RiskInfo {
-    #[prost(string, tag="1")]
-    pub tips_template: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub login_loc: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub app_name: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub new_tips_template: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub tips_template: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub login_loc: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub app_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub new_tips_template: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RejectInfo {
-    #[prost(string, tag="1")]
-    pub tips: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub tips: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AutoRenewTicketInfo {
-    #[prost(bool, tag="1")]
-    pub is_show_switch: bool,
-    #[prost(bool, tag="2")]
-    pub is_open_switch: bool,
-    #[prost(string, tag="3")]
-    pub tips_title: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub tips_template: ::prost::alloc::string::String,
+    #[prost(bool, optional, tag="1")]
+    pub is_show_switch: ::core::option::Option<bool>,
+    #[prost(bool, optional, tag="2")]
+    pub is_open_switch: ::core::option::Option<bool>,
+    #[prost(string, optional, tag="3")]
+    pub tips_title: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub tips_template: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TipsCtrl {
-    #[prost(uint32, tag="1")]
-    pub normal_tips_color: u32,
-    #[prost(bool, tag="2")]
-    pub sec_check: bool,
-    #[prost(string, tag="3")]
-    pub sec_check_tips: ::prost::alloc::string::String,
-    #[prost(uint32, tag="4")]
-    pub sec_tips_color: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub normal_tips_color: ::core::option::Option<u32>,
+    #[prost(bool, optional, tag="2")]
+    pub sec_check: ::core::option::Option<bool>,
+    #[prost(string, optional, tag="3")]
+    pub sec_check_tips: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="4")]
+    pub sec_tips_color: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DevInfo {
-    #[prost(string, tag="1")]
-    pub dev_type: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub dev_name: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub dev_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub dev_name: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GenInfo {
-    #[prost(uint32, tag="1")]
-    pub client_type: u32,
-    #[prost(uint32, tag="2")]
-    pub client_ver: u32,
-    #[prost(uint32, tag="3")]
-    pub client_appid: u32,
-    #[prost(uint32, tag="6")]
-    pub field6: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub client_type: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub client_ver: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="3")]
+    pub client_appid: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="6")]
+    pub field6: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QrExtInfo {
     #[prost(message, optional, tag="1")]
     pub dev_info: ::core::option::Option<DevInfo>,
-    #[prost(string, tag="2")]
-    pub qr_url: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub qr_sig: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="2")]
+    pub qr_url: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub qr_sig: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="4")]
     pub gen_info: ::core::option::Option<GenInfo>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScanExtInfo {
-    #[prost(bytes="bytes", tag="1")]
-    pub guid: ::prost::bytes::Bytes,
-    #[prost(string, tag="2")]
-    pub imei: ::prost::alloc::string::String,
-    #[prost(uint32, tag="3")]
-    pub scan_scene: u32,
-    #[prost(bool, tag="4")]
-    pub allow_auto_renew_ticket: bool,
-    #[prost(bool, tag="5")]
-    pub invalid_gen_ticket: bool,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub guid: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(string, optional, tag="2")]
+    pub imei: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="3")]
+    pub scan_scene: ::core::option::Option<u32>,
+    #[prost(bool, optional, tag="4")]
+    pub allow_auto_renew_ticket: ::core::option::Option<bool>,
+    #[prost(bool, optional, tag="5")]
+    pub invalid_gen_ticket: ::core::option::Option<bool>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceReport {
-    #[prost(string, tag="1")]
-    pub bootloader: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub proc_version: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub code_name: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub incremental: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub fingerprint: ::prost::alloc::string::String,
-    #[prost(string, tag="6")]
-    pub boot_id: ::prost::alloc::string::String,
-    #[prost(string, tag="7")]
-    pub android_id: ::prost::alloc::string::String,
-    #[prost(string, tag="8")]
-    pub base_band: ::prost::alloc::string::String,
-    #[prost(string, tag="9")]
-    pub inner_version: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub bootloader: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub proc_version: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub code_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub incremental: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="5")]
+    pub fingerprint: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="6")]
+    pub boot_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="7")]
+    pub android_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="8")]
+    pub base_band: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="9")]
+    pub inner_version: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

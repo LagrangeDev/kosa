@@ -39,14 +39,14 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         let req = IncPullRequest {
-            req_count: 300,
-            local_seq: 13,
-            cookie: req.cookie,
-            flag: 1,
-            proxy_seq: i32::MAX as u32,
+            req_count: Some(300),
+            local_seq: Some(13),
+            cookie: Some(req.cookie),
+            flag: Some(1),
+            proxy_seq: Some(i32::MAX as u32),
             request_biz: vec![
                 IncPullRequestBiz {
-                    biz_type: 1,
+                    biz_type: Some(1),
                     biz_data: Some(IncPullRequestBizBusi {
                         /*
                          * 102：个性签名
@@ -57,7 +57,7 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
                     }),
                 },
                 IncPullRequestBiz {
-                    biz_type: 4,
+                    biz_type: Some(4),
                     biz_data: Some(IncPullRequestBizBusi {
                         ext_busi: vec![100, 101, 102],
                     }),
@@ -82,12 +82,12 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
             AHashMap::with_capacity(resp.category.len());
         for category in resp.category {
             categories.insert(
-                category.category_id,
+                category.category_id.unwrap_or_default(),
                 FriendCategory {
-                    id: category.category_id,
-                    name: category.category_name,
-                    member_count: category.category_member_count,
-                    sort_id: category.catogory_sort_id,
+                    id: category.category_id.unwrap_or_default(),
+                    name: category.category_name.unwrap_or_default(),
+                    member_count: category.category_member_count.unwrap_or_default(),
+                    sort_id: category.catogory_sort_id.unwrap_or_default(),
                 },
             );
         }
@@ -102,10 +102,10 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
                 let age = sub_biz.num_data.remove(&20037).unwrap_or_default();
                 let gender = sub_biz.num_data.remove(&20009).unwrap_or_default();
                 friends.insert(
-                    friend.uin,
+                    friend.uin.unwrap_or_default(),
                     Friend {
-                        uin: friend.uin,
-                        uid: friend.uid,
+                        uin: friend.uin.unwrap_or_default(),
+                        uid: friend.uid.unwrap_or_default(),
                         nick_name,
                         personal_sign,
                         remark,
@@ -120,7 +120,7 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
         Ok(FetchFriendResp {
             friends,
             categories,
-            cookie: resp.cookie,
+            cookie: resp.cookie.unwrap_or_default(),
         })
     }
 }

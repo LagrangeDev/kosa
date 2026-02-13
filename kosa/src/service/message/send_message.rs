@@ -33,8 +33,7 @@ pub(crate) struct SendMessageReq {
 }
 
 pub(crate) struct SendMessageResp {
-    // pub(crate) message: BotMessage,
-    pub(crate) sequence: i32,
+    pub(crate) resp: PbSendMsgResp,
 }
 
 #[register_service]
@@ -54,21 +53,23 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
         let routing_head = match req.receiver {
             Receiver::Friend(uin, uid) => SendRoutingHead {
                 c2_c: Some(C2c {
-                    peer_uin: uin,
-                    peer_uid: uid,
+                    peer_uin: Some(uin),
+                    peer_uid: Some(uid),
                 }),
                 ..Default::default()
             },
             Receiver::Group(group) => SendRoutingHead {
-                group: Some(Grp { group_uin: group }),
+                group: Some(Grp {
+                    group_uin: Some(group),
+                }),
                 ..Default::default()
             },
         };
 
         let content_head = SendContentHead {
-            pkg_num: 1,
-            pkg_index: 0,
-            div_seq: 0,
+            pkg_num: Some(1),
+            pkg_index: Some(0),
+            div_seq: Some(0),
             ..Default::default()
         };
 
@@ -85,8 +86,8 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
             routing_head: Some(routing_head),
             content_head: Some(content_head),
             message_body: Some(msg_body),
-            client_sequence: req.sequence,
-            random: req.random,
+            client_sequence: Some(req.sequence),
+            random: Some(req.random),
         }
         .encode_to_vec()
         .into())
@@ -99,14 +100,15 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
         _session: &Session,
     ) -> anyhow::Result<SendMessageResp> {
         let resp = PbSendMsgResp::decode(data)?;
-        let seq = if resp.client_sequence != 0 {
-            // 私聊
-            resp.client_sequence
-        } else {
-            // 群聊
-            resp.sequence
-        };
-        Ok(SendMessageResp { sequence: seq })
+        // todo 上层判断
+        // let seq = if resp.client_sequence != 0 {
+        //     // 私聊
+        //     resp.client_sequence
+        // } else {
+        //     // 群聊
+        //     resp.sequence
+        // };
+        Ok(SendMessageResp { resp })
     }
 }
 

@@ -40,50 +40,50 @@ impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
     ) -> anyhow::Result<Bytes> {
         // todo support android
         let pkt = SsoInfoSyncRequest {
-            sync_flag: 735,
-            req_random: rand::random(),
-            cur_active_status: 2,
-            group_last_msg_time: 0,
+            sync_flag: Some(735),
+            req_random: Some(rand::random()),
+            cur_active_status: Some(2),
+            group_last_msg_time: Some(0),
             c2_c_sync_info: Some(SsoC2cSyncInfo {
                 c2_c_msg_cookie: Some(SsoC2cMsgCookie {
-                    c2_c_last_msg_time: 0,
+                    c2_c_last_msg_time: Some(0),
                 }),
-                c2_c_last_msg_time: 0,
+                c2_c_last_msg_time: Some(0),
                 last_c2_c_msg_cookie: Some(SsoC2cMsgCookie {
-                    c2_c_last_msg_time: 0,
+                    c2_c_last_msg_time: Some(0),
                 }),
             }),
             normal_config: Some(NormalConfig {
                 int_cfg: HashMap::new(),
             }),
             register_info: Some(RegisterInfo {
-                guid: hex::encode_upper(session.guid.as_slice()),
-                kick_pc: 0,
-                build_ver: app_info.current_version.clone(),
-                is_first_register_proxy_online: 1,
-                locale_id: 2052,
+                guid: Some(hex::encode_upper(session.guid.as_slice())),
+                kick_pc: Some(0),
+                build_ver: Some(app_info.current_version.clone()),
+                is_first_register_proxy_online: Some(1),
+                locale_id: Some(2052),
                 device_info: Some(DeviceInfo {
-                    dev_name: session.device_name.clone(),
-                    dev_type: app_info.kernel.clone(),
-                    os_ver: "".to_string(),
-                    brand: "".to_string(),
-                    vendor_os_name: app_info.vendor_os.clone(),
+                    dev_name: Some(session.device_name.clone()),
+                    dev_type: Some(app_info.kernel.clone()),
+                    os_ver: Some("".to_string()),
+                    brand: Some("".to_string()),
+                    vendor_os_name: Some(app_info.vendor_os.clone()),
                 }),
-                set_mute: 0,
-                register_vendor_type: 6,
-                reg_type: 0,
+                set_mute: Some(0),
+                register_vendor_type: Some(6),
+                reg_type: Some(0),
                 business_info: Some(OnlineBusinessInfo {
-                    notify_switch: 1,
-                    bind_uin_notify_switch: 1,
+                    notify_switch: Some(1),
+                    bind_uin_notify_switch: Some(1),
                 }),
-                battery_status: 0,
+                battery_status: Some(0),
                 field12: Some(1),
             }),
             unknown: HashMap::from_iter([(0, 2)]),
             app_state: Some(CurAppState {
-                is_delay_request: 0,
-                app_status: 0,
-                silence_status: 0,
+                is_delay_request: Some(0),
+                app_status: Some(0),
+                silence_status: Some(0),
             }),
         };
         Ok(Bytes::from(pkt.encode_to_vec()))
@@ -96,7 +96,11 @@ impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
         _session: &Session,
     ) -> anyhow::Result<InfoSyncResponse> {
         let resp = SsoSyncInfoResponse::decode(data)?;
-        let msg = resp.register_response.unwrap_or_default().msg;
+        let msg = resp
+            .register_response
+            .unwrap_or_default()
+            .msg
+            .unwrap_or_default();
         Ok(InfoSyncResponse { message: msg })
     }
 }

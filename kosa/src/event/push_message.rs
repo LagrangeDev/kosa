@@ -34,7 +34,8 @@ impl PushEvent for PushMessageEvent {
 
         let event = PushMessageEvent { message };
 
-        if let Some(event_type) = PushEventType::from_repr(content_head.r#type) {
+        if let Some(event_type) = PushEventType::from_repr(content_head.r#type.unwrap_or_default())
+        {
             match event_type {
                 PushEventType::GroupMessage
                 | PushEventType::PrivateMessage

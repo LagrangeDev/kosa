@@ -3,34 +3,34 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SsoSecureInfo {
-    #[prost(bytes="bytes", tag="1")]
-    pub sec_sign: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="2")]
-    pub sec_token: ::prost::bytes::Bytes,
-    #[prost(bytes="bytes", tag="3")]
-    pub sec_extra: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub sec_sign: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub sec_token: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="3")]
+    pub sec_extra: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SsoReserveFields {
-    #[prost(bytes="bytes", tag="8")]
-    pub client_ip_cookie: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="8")]
+    pub client_ip_cookie: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="9")]
     pub flag: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="10")]
     pub env_id: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="11")]
     pub locale_id: ::core::option::Option<u32>,
-    #[prost(string, tag="12")]
-    pub qimei: ::prost::alloc::string::String,
-    #[prost(bytes="bytes", tag="13")]
-    pub env: ::prost::bytes::Bytes,
+    #[prost(string, optional, tag="12")]
+    pub qimei: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bytes="bytes", optional, tag="13")]
+    pub env: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="14")]
     pub new_conn_flag: ::core::option::Option<u32>,
-    #[prost(string, tag="15")]
-    pub trace_parent: ::prost::alloc::string::String,
-    #[prost(string, tag="16")]
-    pub uid: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="15")]
+    pub trace_parent: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="16")]
+    pub uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(uint32, optional, tag="18")]
     pub imsi: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="19")]
@@ -39,8 +39,8 @@ pub struct SsoReserveFields {
     pub ip_stack_type: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="21")]
     pub msg_type: ::core::option::Option<u32>,
-    #[prost(string, tag="22")]
-    pub trpc_rsp: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="22")]
+    pub trpc_rsp: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(map="string, string", tag="23")]
     pub trans_info: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     #[prost(message, optional, tag="24")]
@@ -53,60 +53,60 @@ pub struct SsoReserveFields {
     pub sso_route_cost: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="28")]
     pub sso_ip_origin: ::core::option::Option<u32>,
-    #[prost(bytes="bytes", tag="30")]
-    pub presure_token: ::prost::bytes::Bytes,
+    #[prost(bytes="bytes", optional, tag="30")]
+    pub presure_token: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullRequest {
-    #[prost(uint32, tag="2")]
-    pub req_count: u32,
-    #[prost(int64, tag="3")]
-    pub time: i64,
-    #[prost(uint32, tag="4")]
-    pub local_seq: u32,
-    #[prost(bytes="bytes", tag="5")]
-    pub cookie: ::prost::bytes::Bytes,
-    #[prost(int32, tag="6")]
-    pub flag: i32,
-    #[prost(uint32, tag="7")]
-    pub proxy_seq: u32,
+    #[prost(uint32, optional, tag="2")]
+    pub req_count: ::core::option::Option<u32>,
+    #[prost(int64, optional, tag="3")]
+    pub time: ::core::option::Option<i64>,
+    #[prost(uint32, optional, tag="4")]
+    pub local_seq: ::core::option::Option<u32>,
+    #[prost(bytes="bytes", optional, tag="5")]
+    pub cookie: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int32, optional, tag="6")]
+    pub flag: ::core::option::Option<i32>,
+    #[prost(uint32, optional, tag="7")]
+    pub proxy_seq: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="10001")]
     pub request_biz: ::prost::alloc::vec::Vec<IncPullRequestBiz>,
-    #[prost(uint32, repeated, tag="10002")]
+    #[prost(uint32, repeated, packed="false", tag="10002")]
     pub ext_sns_flag_key: ::prost::alloc::vec::Vec<u32>,
-    #[prost(uint32, repeated, tag="10003")]
+    #[prost(uint32, repeated, packed="false", tag="10003")]
     pub ext_private_id_list_key: ::prost::alloc::vec::Vec<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullRequestBiz {
-    #[prost(int32, tag="1")]
-    pub biz_type: i32,
+    #[prost(int32, optional, tag="1")]
+    pub biz_type: ::core::option::Option<i32>,
     #[prost(message, optional, tag="2")]
     pub biz_data: ::core::option::Option<IncPullRequestBizBusi>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullRequestBizBusi {
-    #[prost(int32, repeated, tag="1")]
+    #[prost(int32, repeated, packed="false", tag="1")]
     pub ext_busi: ::prost::alloc::vec::Vec<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullResponse {
-    #[prost(uint32, tag="1")]
-    pub seq: u32,
-    #[prost(bytes="bytes", tag="2")]
-    pub cookie: ::prost::bytes::Bytes,
-    #[prost(bool, tag="3")]
-    pub is_end: bool,
-    #[prost(int64, tag="6")]
-    pub time: i64,
-    #[prost(int64, tag="7")]
-    pub self_uin: i64,
-    #[prost(uint32, tag="8")]
-    pub small_seq: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub seq: ::core::option::Option<u32>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub cookie: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bool, optional, tag="3")]
+    pub is_end: ::core::option::Option<bool>,
+    #[prost(int64, optional, tag="6")]
+    pub time: ::core::option::Option<i64>,
+    #[prost(int64, optional, tag="7")]
+    pub self_uin: ::core::option::Option<i64>,
+    #[prost(uint32, optional, tag="8")]
+    pub small_seq: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="101")]
     pub friend_list: ::prost::alloc::vec::Vec<IncPullResponseFriend>,
     #[prost(message, repeated, tag="102")]
@@ -115,12 +115,12 @@ pub struct IncPullResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullResponseFriend {
-    #[prost(string, tag="1")]
-    pub uid: ::prost::alloc::string::String,
-    #[prost(int32, tag="2")]
-    pub category_id: i32,
-    #[prost(int64, tag="3")]
-    pub uin: i64,
+    #[prost(string, optional, tag="1")]
+    pub uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag="2")]
+    pub category_id: ::core::option::Option<i32>,
+    #[prost(int64, optional, tag="3")]
+    pub uin: ::core::option::Option<i64>,
     #[prost(map="int32, message", tag="10001")]
     pub sub_biz: ::std::collections::HashMap<i32, IncPullResponseSubBiz>,
 }
@@ -135,25 +135,25 @@ pub struct IncPullResponseSubBiz {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IncPullResponseCategory {
-    #[prost(int32, tag="1")]
-    pub category_id: i32,
-    #[prost(string, tag="2")]
-    pub category_name: ::prost::alloc::string::String,
-    #[prost(int32, tag="3")]
-    pub category_member_count: i32,
-    #[prost(int32, tag="4")]
-    pub catogory_sort_id: i32,
+    #[prost(int32, optional, tag="1")]
+    pub category_id: ::core::option::Option<i32>,
+    #[prost(string, optional, tag="2")]
+    pub category_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag="3")]
+    pub category_member_count: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="4")]
+    pub catogory_sort_id: ::core::option::Option<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KickNtReq {
-    #[prost(int64, tag="1")]
-    pub uin: i64,
-    #[prost(bool, tag="2")]
-    pub is_same_device: bool,
-    #[prost(string, tag="3")]
-    pub tips_info: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub tips_title: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag="1")]
+    pub uin: ::core::option::Option<i64>,
+    #[prost(bool, optional, tag="2")]
+    pub is_same_device: ::core::option::Option<bool>,
+    #[prost(string, optional, tag="3")]
+    pub tips_info: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub tips_title: ::core::option::Option<::prost::alloc::string::String>,
 }
 // @@protoc_insertion_point(module)

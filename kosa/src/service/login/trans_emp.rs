@@ -174,7 +174,9 @@ impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
         let qr_sig = reader.read_bytes_with_prefix(Prefix::U16, false)?;
         state.qr_sig.store(Arc::new(Some(qr_sig)));
         let mut tlvs = decode_tlv(&mut reader)?;
-        let url = QrExtInfo::decode(tlvs.remove(&0xD1).unwrap_or_default())?.qr_url;
+        let url = QrExtInfo::decode(tlvs.remove(&0xD1).unwrap_or_default())?
+            .qr_url
+            .unwrap_or_default();
 
         let image = tlvs.remove(&0x17).unwrap_or_default();
 

@@ -35,10 +35,10 @@ pub(crate) fn handle_message(event: PushMessageEvent) -> anyhow::Result<()> {
     };
 
     let message = BotMessage {
-        random: content_head.random,
-        sequence: content_head.sequence,
-        client_sequence: content_head.client_sequence,
-        message_id: content_head.msg_uid,
+        random: content_head.random.unwrap_or_default(),
+        sequence: content_head.sequence.unwrap_or_default(),
+        client_sequence: content_head.client_sequence.unwrap_or_default(),
+        message_id: content_head.msg_uid.unwrap_or_default(),
         messages: chain,
     };
 
@@ -46,11 +46,14 @@ pub(crate) fn handle_message(event: PushMessageEvent) -> anyhow::Result<()> {
 
     if let Some(group) = routing_head.group {
         Broker::<ArbiterBroker>::issue_async(GroupMessageEvent {
-            group_uin: group.group_code,
-            group_name: group.group_name,
-            member_uin: routing_head.from_uin,
-            member_card: group.group_card,
-            timestamp: Utc.timestamp_opt(content_head.time, 0).single().unwrap(),
+            group_uin: group.group_code.unwrap_or_default(),
+            group_name: group.group_name.unwrap_or_default(),
+            member_uin: routing_head.from_uin.unwrap_or_default(),
+            member_card: group.group_card.unwrap_or_default(),
+            timestamp: Utc
+                .timestamp_opt(content_head.time.unwrap_or_default(), 0)
+                .single()
+                .unwrap(),
             message,
         });
     }

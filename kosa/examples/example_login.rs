@@ -101,9 +101,9 @@ impl Sign for LinuxSign {
             .await?;
 
         Ok(Some(SsoSecureInfo {
-            sec_sign: hex::decode(resp.sign.as_str())?.into(),
-            sec_token: hex::decode(resp.token.as_str())?.into(),
-            sec_extra: hex::decode(resp.extra.as_str())?.into(),
+            sec_sign: Some(hex::decode(resp.sign.as_str())?.into()),
+            sec_token: Some(hex::decode(resp.token.as_str())?.into()),
+            sec_extra: Some(hex::decode(resp.extra.as_str())?.into()),
         }))
     }
 

@@ -3,70 +3,70 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InfoSyncPush {
-    #[prost(uint32, tag="1")]
-    pub result: u32,
-    #[prost(string, tag="2")]
-    pub err_msg: ::prost::alloc::string::String,
-    #[prost(uint32, tag="3")]
-    pub push_flag: u32,
-    #[prost(uint32, tag="4")]
-    pub push_seq: u32,
-    #[prost(uint32, tag="5")]
-    pub retry_flag: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub result: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="2")]
+    pub err_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="3")]
+    pub push_flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="4")]
+    pub push_seq: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="5")]
+    pub retry_flag: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="6")]
     pub group_nodes: ::prost::alloc::vec::Vec<GroupNode>,
     #[prost(message, optional, tag="7")]
     pub notifications: ::core::option::Option<GroupSystemNotifications>,
     #[prost(message, optional, tag="8")]
     pub sys_notifications: ::core::option::Option<SystemNotifications>,
-    #[prost(uint32, tag="10")]
-    pub use_init_cache_data: u32,
+    #[prost(uint32, optional, tag="10")]
+    pub use_init_cache_data: ::core::option::Option<u32>,
     #[prost(message, optional, tag="11")]
     pub guild_nodes: ::core::option::Option<GuildNode>,
-    #[prost(uint32, tag="12")]
-    pub discuss_list_flag: u32,
-    #[prost(uint32, tag="13")]
-    pub roam_msg_optimize_flag: u32,
-    #[prost(uint32, tag="14")]
-    pub group_guild_flag: u32,
+    #[prost(uint32, optional, tag="12")]
+    pub discuss_list_flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="13")]
+    pub roam_msg_optimize_flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="14")]
+    pub group_guild_flag: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupNode {
-    #[prost(uint64, tag="1")]
-    pub group_code: u64,
-    #[prost(uint64, tag="2")]
-    pub group_seq: u64,
-    #[prost(uint64, tag="3")]
-    pub read_msg_seq: u64,
-    #[prost(uint64, tag="4")]
-    pub mask: u64,
-    #[prost(uint64, tag="5")]
-    pub longest_msg_time: u64,
-    #[prost(bool, tag="6")]
-    pub has_message: bool,
-    #[prost(uint64, tag="8")]
-    pub latest_msg_time: u64,
-    #[prost(string, tag="9")]
-    pub peer_name: ::prost::alloc::string::String,
-    #[prost(uint64, tag="10")]
-    pub longest_msg_seq: u64,
-    #[prost(uint64, tag="11")]
-    pub uin_flag_ex2: u64,
-    #[prost(uint32, tag="12")]
-    pub important_msg_latest_seq: u32,
-    #[prost(uint32, tag="13")]
-    pub group_max_event_seq: u32,
-    #[prost(uint32, tag="14")]
-    pub random: u32,
-    #[prost(uint32, tag="15")]
-    pub need_to_check_seq_on_aio_open: u32,
+    #[prost(uint64, optional, tag="1")]
+    pub group_code: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="2")]
+    pub group_seq: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="3")]
+    pub read_msg_seq: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="4")]
+    pub mask: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="5")]
+    pub longest_msg_time: ::core::option::Option<u64>,
+    #[prost(bool, optional, tag="6")]
+    pub has_message: ::core::option::Option<bool>,
+    #[prost(uint64, optional, tag="8")]
+    pub latest_msg_time: ::core::option::Option<u64>,
+    #[prost(string, optional, tag="9")]
+    pub peer_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint64, optional, tag="10")]
+    pub longest_msg_seq: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="11")]
+    pub uin_flag_ex2: ::core::option::Option<u64>,
+    #[prost(uint32, optional, tag="12")]
+    pub important_msg_latest_seq: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="13")]
+    pub group_max_event_seq: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="14")]
+    pub random: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="15")]
+    pub need_to_check_seq_on_aio_open: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GuildNode {
-    #[prost(uint64, tag="1")]
-    pub peer_id: u64,
+    #[prost(uint64, optional, tag="1")]
+    pub peer_id: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -83,52 +83,52 @@ pub struct SystemNotifications {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupSystemNotificationsInfo {
-    #[prost(int64, tag="3")]
-    pub group_code: i64,
-    #[prost(uint32, tag="4")]
-    pub start_seq: u32,
-    #[prost(uint32, tag="5")]
-    pub end_seq: u32,
+    #[prost(int64, optional, tag="3")]
+    pub group_code: ::core::option::Option<i64>,
+    #[prost(uint32, optional, tag="4")]
+    pub start_seq: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="5")]
+    pub end_seq: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="6")]
     pub messages: ::prost::alloc::vec::Vec<super::super::message::v2::CommonMessage>,
-    #[prost(int64, tag="8")]
-    pub last_speak_timestamp: i64,
+    #[prost(int64, optional, tag="8")]
+    pub last_speak_timestamp: ::core::option::Option<i64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SystemNotificationsInfo {
-    #[prost(int64, tag="1")]
-    pub peer_uin: i64,
-    #[prost(string, tag="2")]
-    pub peer_uid: ::prost::alloc::string::String,
-    #[prost(int64, tag="5")]
-    pub last_speak_timestamp: i64,
+    #[prost(int64, optional, tag="1")]
+    pub peer_uin: ::core::option::Option<i64>,
+    #[prost(string, optional, tag="2")]
+    pub peer_uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag="5")]
+    pub last_speak_timestamp: ::core::option::Option<i64>,
     #[prost(message, repeated, tag="8")]
     pub messages: ::prost::alloc::vec::Vec<super::super::message::v2::CommonMessage>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoHeartBeatRequest {
-    #[prost(uint32, tag="1")]
-    pub r#type: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub r#type: ::core::option::Option<u32>,
     #[prost(message, optional, tag="2")]
     pub local_silence: ::core::option::Option<SilenceState>,
-    #[prost(uint32, tag="3")]
-    pub battery_state: u32,
-    #[prost(uint64, tag="4")]
-    pub time: u64,
+    #[prost(uint32, optional, tag="3")]
+    pub battery_state: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="4")]
+    pub time: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoHeartBeatResponse {
-    #[prost(uint64, tag="3")]
-    pub interval: u64,
+    #[prost(uint64, optional, tag="3")]
+    pub interval: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SilenceState {
-    #[prost(uint32, tag="1")]
-    pub local_silence: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub local_silence: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -137,100 +137,100 @@ pub struct PushParams {
     pub online_devices: ::prost::alloc::vec::Vec<OnlineDevice>,
     #[prost(message, optional, tag="6")]
     pub guild_params: ::core::option::Option<GuildParams>,
-    #[prost(string, tag="7")]
-    pub err_msg: ::prost::alloc::string::String,
-    #[prost(uint32, tag="9")]
-    pub group_msg_storage_time: u32,
+    #[prost(string, optional, tag="7")]
+    pub err_msg: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="9")]
+    pub group_msg_storage_time: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GuildParams {
-    #[prost(uint32, tag="1")]
-    pub guild_flag: u32,
-    #[prost(uint32, tag="2")]
-    pub guild_switch_flag: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub guild_flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub guild_switch_flag: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OnlineDevice {
-    #[prost(uint32, tag="1")]
-    pub inst_id: u32,
-    #[prost(uint32, tag="2")]
-    pub client_type: u32,
-    #[prost(uint32, tag="3")]
-    pub state: u32,
-    #[prost(uint32, tag="4")]
-    pub plat_id: u32,
-    #[prost(string, tag="5")]
-    pub plat_type: ::prost::alloc::string::String,
-    #[prost(uint32, tag="6")]
-    pub new_client_type: u32,
-    #[prost(string, tag="7")]
-    pub device_name: ::prost::alloc::string::String,
+    #[prost(uint32, optional, tag="1")]
+    pub inst_id: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub client_type: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="3")]
+    pub state: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="4")]
+    pub plat_id: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="5")]
+    pub plat_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="6")]
+    pub new_client_type: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="7")]
+    pub device_name: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoC2cMsgCookie {
-    #[prost(uint64, tag="1")]
-    pub c2_c_last_msg_time: u64,
+    #[prost(uint64, optional, tag="1")]
+    pub c2_c_last_msg_time: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoC2cSyncInfo {
     #[prost(message, optional, tag="1")]
     pub c2_c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
-    #[prost(uint64, tag="2")]
-    pub c2_c_last_msg_time: u64,
+    #[prost(uint64, optional, tag="2")]
+    pub c2_c_last_msg_time: ::core::option::Option<u64>,
     #[prost(message, optional, tag="3")]
     pub last_c2_c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeviceInfo {
-    #[prost(string, tag="1")]
-    pub dev_name: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub dev_type: ::prost::alloc::string::String,
-    #[prost(string, tag="3")]
-    pub os_ver: ::prost::alloc::string::String,
-    #[prost(string, tag="4")]
-    pub brand: ::prost::alloc::string::String,
-    #[prost(string, tag="5")]
-    pub vendor_os_name: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="1")]
+    pub dev_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub dev_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub os_ver: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="4")]
+    pub brand: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="5")]
+    pub vendor_os_name: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct OnlineBusinessInfo {
-    #[prost(uint32, tag="1")]
-    pub notify_switch: u32,
-    #[prost(uint32, tag="2")]
-    pub bind_uin_notify_switch: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub notify_switch: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub bind_uin_notify_switch: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegisterInfo {
-    #[prost(string, tag="1")]
-    pub guid: ::prost::alloc::string::String,
-    #[prost(uint32, tag="2")]
-    pub kick_pc: u32,
-    #[prost(string, tag="3")]
-    pub build_ver: ::prost::alloc::string::String,
-    #[prost(uint32, tag="4")]
-    pub is_first_register_proxy_online: u32,
-    #[prost(uint32, tag="5")]
-    pub locale_id: u32,
+    #[prost(string, optional, tag="1")]
+    pub guid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="2")]
+    pub kick_pc: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="3")]
+    pub build_ver: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="4")]
+    pub is_first_register_proxy_online: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="5")]
+    pub locale_id: ::core::option::Option<u32>,
     #[prost(message, optional, tag="6")]
     pub device_info: ::core::option::Option<DeviceInfo>,
-    #[prost(uint32, tag="7")]
-    pub set_mute: u32,
-    #[prost(uint32, tag="8")]
-    pub register_vendor_type: u32,
-    #[prost(uint32, tag="9")]
-    pub reg_type: u32,
+    #[prost(uint32, optional, tag="7")]
+    pub set_mute: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="8")]
+    pub register_vendor_type: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="9")]
+    pub reg_type: ::core::option::Option<u32>,
     #[prost(message, optional, tag="10")]
     pub business_info: ::core::option::Option<OnlineBusinessInfo>,
-    #[prost(uint32, tag="11")]
-    pub battery_status: u32,
+    #[prost(uint32, optional, tag="11")]
+    pub battery_status: ::core::option::Option<u32>,
     #[prost(int32, optional, tag="12")]
     pub field12: ::core::option::Option<i32>,
 }
@@ -243,24 +243,24 @@ pub struct NormalConfig {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct CurAppState {
-    #[prost(uint32, tag="1")]
-    pub is_delay_request: u32,
-    #[prost(uint32, tag="2")]
-    pub app_status: u32,
-    #[prost(uint32, tag="3")]
-    pub silence_status: u32,
+    #[prost(uint32, optional, tag="1")]
+    pub is_delay_request: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub app_status: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="3")]
+    pub silence_status: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SsoInfoSyncRequest {
-    #[prost(uint32, tag="1")]
-    pub sync_flag: u32,
-    #[prost(uint32, tag="2")]
-    pub req_random: u32,
-    #[prost(uint32, tag="4")]
-    pub cur_active_status: u32,
-    #[prost(uint64, tag="5")]
-    pub group_last_msg_time: u64,
+    #[prost(uint32, optional, tag="1")]
+    pub sync_flag: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="2")]
+    pub req_random: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="4")]
+    pub cur_active_status: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="5")]
+    pub group_last_msg_time: ::core::option::Option<u64>,
     #[prost(message, optional, tag="6")]
     pub c2_c_sync_info: ::core::option::Option<SsoC2cSyncInfo>,
     #[prost(message, optional, tag="8")]
@@ -275,8 +275,8 @@ pub struct SsoInfoSyncRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegisterResponse {
-    #[prost(string, tag="2")]
-    pub msg: ::prost::alloc::string::String,
+    #[prost(string, optional, tag="2")]
+    pub msg: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -287,37 +287,37 @@ pub struct SsoSyncInfoResponse {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SsoUnregister {
-    #[prost(int32, tag="1")]
-    pub reg_type: i32,
+    #[prost(int32, optional, tag="1")]
+    pub reg_type: ::core::option::Option<i32>,
     #[prost(message, optional, tag="2")]
     pub device_info: ::core::option::Option<DeviceInfo>,
-    #[prost(int32, tag="3")]
-    pub user_trigger: i32,
+    #[prost(int32, optional, tag="3")]
+    pub user_trigger: ::core::option::Option<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ThirdPartyLoginResponse {
-    #[prost(uint64, tag="1")]
-    pub seq: u64,
+    #[prost(uint64, optional, tag="1")]
+    pub seq: ::core::option::Option<u64>,
     #[prost(message, optional, tag="9")]
     pub common_info: ::core::option::Option<RespCommonInfo>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RespCommonInfo {
-    #[prost(uint32, tag="10")]
-    pub need_verify_scenes: u32,
+    #[prost(uint32, optional, tag="10")]
+    pub need_verify_scenes: ::core::option::Option<u32>,
     #[prost(message, optional, tag="11")]
     pub rsp_nt: ::core::option::Option<RspNt>,
-    #[prost(uint32, tag="12")]
-    pub a1_seq: u32,
+    #[prost(uint32, optional, tag="12")]
+    pub a1_seq: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RspNt {
-    #[prost(string, tag="1")]
-    pub uid: ::prost::alloc::string::String,
-    #[prost(bytes="bytes", tag="2")]
-    pub ua2: ::prost::bytes::Bytes,
+    #[prost(string, optional, tag="1")]
+    pub uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub ua2: ::core::option::Option<::prost::bytes::Bytes>,
 }
 // @@protoc_insertion_point(module)

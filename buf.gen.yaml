@@ -10,7 +10,7 @@ plugins:
     opt:
       - no_features=true
 inputs:
-  - git_repo: https://github.com/Redmomn/LagrangeProto.git
+  - git_repo: https://github.com/LagrangeDev/LagrangeProto.git
     branch: master
     depth: 1
     subdir: proto

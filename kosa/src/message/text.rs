@@ -27,7 +27,7 @@ impl MessageEncode for Text {
     fn encode(&self) -> Vec<Elem> {
         vec![Elem {
             text: Some(PbText {
-                text_msg: self.content.clone(),
+                text_msg: self.content.clone().into(),
                 ..Default::default()
             }),
             ..Default::default()
@@ -40,13 +40,13 @@ impl MessageDecode for Text {
         let ok = elems
             .front()
             .and_then(|e| e.text.as_ref())
-            .filter(|t| t.attr6_buf.is_empty())
+            .filter(|t| t.attr6_buf.as_ref().is_none_or(|t1| t1.is_empty()))
             .is_some();
 
         if ok {
             let text = elems.pop_front().unwrap().text.unwrap();
             Ok(Some(Self {
-                content: text.text_msg,
+                content: text.text_msg.unwrap_or_default(),
             }))
         } else {
             Ok(None)

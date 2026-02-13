@@ -173,8 +173,8 @@ impl SsoPacket {
         sso_secure_info: Option<SsoSecureInfo>,
     ) {
         let mut reserved = SsoReserveFields {
-            trace_parent: Self::generate_trace_parent(),
-            uid: session.uid(),
+            trace_parent: Some(Self::generate_trace_parent()),
+            uid: Some(session.uid()),
             sec_info: sso_secure_info,
             ..Default::default()
         };

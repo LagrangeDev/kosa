@@ -158,6 +158,7 @@ impl ServiceContext {
                     .rsp_nt
                     .unwrap_or_default()
                     .uid
+                    .unwrap_or_default()
                     .to_owned();
             };
             Ok(())

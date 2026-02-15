@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use chrono::Utc;
-use kosa_macros::{ServiceState, command};
+use kosa_macros::{ServiceState, command, register_service};
 use kosa_proto::system::v2::{SilenceState, SsoHeartBeatRequest, SsoHeartBeatResponse};
 use prost::Message;
 
@@ -17,6 +17,7 @@ pub(crate) struct SsoHeartBeatEventResp {
     pub(crate) interval: i32,
 }
 
+#[register_service]
 impl Service<SsoHeartBeatEventReq, SsoHeartBeatEventResp> for SsoHeartBeatService {
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::D2,
@@ -27,10 +28,10 @@ impl Service<SsoHeartBeatEventReq, SsoHeartBeatEventResp> for SsoHeartBeatServic
     fn build(
         _state: &Self,
         _req: SsoHeartBeatEventReq,
-        _app_info: &AppInfo,
+        app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
-        match Self::METADATA.support_protocols {
+        match app_info.protocol {
             protocol if Protocol::PC.contains(protocol) => Ok(SsoHeartBeatRequest {
                 r#type: Some(1),
                 ..Default::default()

@@ -10,6 +10,7 @@ use dashmap::DashMap;
 #[cfg(feature = "telemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Gauge};
 use tokio::{task::JoinHandle, time};
+use tracing::error;
 
 use crate::{
     common::{appinfo::AppInfo, cache::Cache, session::Session, sign::Sign},
@@ -64,8 +65,10 @@ impl Bot {
             let mut interval = time::interval(Duration::from_secs(10));
             interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
             loop {
-                let _ = service_clone.heart_beat().await;
                 interval.tick().await;
+                if let Err(e) = service_clone.heart_beat().await {
+                    error!("heartbeat failed: {}", e);
+                };
             }
         });
         tasks.insert("heartbeat".to_string(), handle);

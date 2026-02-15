@@ -8,6 +8,7 @@ use kosa_proto::system::v2::{
 };
 use prost::Message;
 use tokio::time;
+use tracing::error;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
@@ -129,8 +130,10 @@ impl Bot {
                 let mut interval = time::interval(Duration::from_secs(270));
                 interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
                 loop {
-                    let _ = service.sso_heartbeat().await;
                     interval.tick().await;
+                    if let Err(e) = service.sso_heartbeat().await {
+                        error!("sso heartbeat failed: {}", e);
+                    }
                 }
             });
             self.tasks.insert("sso_heartbeat".to_string(), handle);

@@ -1,10 +1,15 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
 };
 
+use dashmap::DashMap;
 #[cfg(feature = "telemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Gauge};
+use tokio::{task::JoinHandle, time};
 
 use crate::{
     common::{appinfo::AppInfo, cache::Cache, session::Session, sign::Sign},
@@ -18,6 +23,7 @@ pub struct Bot {
 
     pub cache: Arc<Cache>,
     pub(crate) service: Arc<ServiceContext>,
+    pub(crate) tasks: DashMap<String, JoinHandle<()>>,
 
     #[cfg(feature = "telemetry")]
     metrics: BotMetrics,
@@ -51,11 +57,25 @@ impl Bot {
         let service = ServiceContext::new(1, app_info.clone(), session.clone(), sign).await?;
         let service = Arc::new(service);
         let cache = Arc::new(Cache::new(service.clone()));
+        let tasks = DashMap::new();
+
+        let service_clone = service.clone();
+        let handle = tokio::spawn(async move {
+            let mut interval = time::interval(Duration::from_secs(10));
+            interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
+            loop {
+                let _ = service_clone.heart_beat().await;
+                interval.tick().await;
+            }
+        });
+        tasks.insert("heartbeat".to_string(), handle);
+
         Ok(Self {
             online: AtomicBool::new(false),
             session,
             cache,
             service,
+            tasks,
             #[cfg(feature = "telemetry")]
             metrics: BotMetrics::new(),
         })

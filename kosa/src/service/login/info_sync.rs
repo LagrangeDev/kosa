@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::atomic::Ordering, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use bytes::Bytes;
 use kosa_macros::{ServiceState, command, register_service};
@@ -125,17 +125,15 @@ impl Bot {
             );
             let service = self.service.clone();
 
-            tokio::spawn(async move {
-                // todo 心跳包
-                let mut interval = time::interval(Duration::from_secs(180));
-
+            let handle = tokio::spawn(async move {
+                let mut interval = time::interval(Duration::from_secs(270));
                 interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
-
                 loop {
-                    let _ = service.heart_beat().await;
+                    let _ = service.sso_heartbeat().await;
                     interval.tick().await;
                 }
             });
+            self.tasks.insert("sso_heartbeat".to_string(), handle);
 
             Ok(())
         } else {

@@ -107,7 +107,7 @@ impl StreamHandler<Result<Packet, io::Error>> for TcpClient {
             Ok(packet) => {
                 trace!("received a packet");
                 #[cfg(feature = "telemetry")]
-                self.metrics.tx_bytes.add((packet.0.len() + 4) as u64, &[]);
+                self.metrics.rx_bytes.add((packet.0.len() + 4) as u64, &[]);
                 self.broker.issue_async(packet)
             }
             Err(e) => {
@@ -133,7 +133,7 @@ impl Handler<Packet> for TcpClient {
                 framed.write(packet);
                 #[cfg(feature = "telemetry")]
                 {
-                    self.metrics.rx_bytes.add((packet_len + 4) as u64, &[])
+                    self.metrics.tx_bytes.add((packet_len + 4) as u64, &[])
                 }
             }
         }

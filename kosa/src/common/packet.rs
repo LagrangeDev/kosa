@@ -140,7 +140,7 @@ impl Handler<SsoRequest> for PacketContext {
                 "send packet"
             );
 
-            let resp_sso_packet = timeout(Duration::from_secs(5), rx)
+            let resp_sso_packet = timeout(Duration::from_secs(10), rx)
                 .await
                 .context("packet timeout")??;
             Ok(resp_sso_packet)

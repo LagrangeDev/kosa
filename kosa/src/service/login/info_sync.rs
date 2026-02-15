@@ -118,7 +118,11 @@ impl Bot {
     pub async fn online(&self) -> anyhow::Result<()> {
         let resp = self.service.register().await?;
         if resp.message == "register success" {
-            self.online.store(true, Ordering::SeqCst);
+            self.set_online(
+                true,
+                #[cfg(feature = "telemetry")]
+                Some(resp.message),
+            );
             let service = self.service.clone();
 
             tokio::spawn(async move {

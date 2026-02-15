@@ -41,9 +41,9 @@ impl Service<AliveEventReq, AliveEventResp> for AliveService {
 
 impl ServiceContext {
     pub(crate) async fn heart_beat(&self) -> anyhow::Result<()> {
-        let _ = self
+        let _resp = self
             .send_request::<AliveService, AliveEventReq, AliveEventResp>(AliveEventReq)
-            .await;
+            .await?;
         Ok(())
     }
 }

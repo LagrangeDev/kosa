@@ -1,4 +1,6 @@
 use std::sync::Arc;
+#[cfg(feature = "telemetry")]
+use std::time::Duration;
 
 use actix_broker::ArbiterBroker;
 use ahash::AHashSet;
@@ -12,6 +14,15 @@ use kosa::{
     service::login::QrcodeState,
 };
 use kosa_proto::common::v2::SsoSecureInfo;
+#[cfg(feature = "telemetry")]
+use opentelemetry::{KeyValue, global};
+#[cfg(feature = "telemetry")]
+use opentelemetry_otlp::WithExportConfig;
+#[cfg(feature = "telemetry")]
+use opentelemetry_sdk::{
+    Resource,
+    metrics::{PeriodicReader, SdkMeterProvider},
+};
 use serde::{Deserialize, Serialize};
 use tokio::{fs, time};
 use tracing::{Level, error, info};
@@ -223,6 +234,29 @@ async fn main() -> anyhow::Result<()> {
         app_client_version: 13172,
         protocol: Protocol::MACOS,
     };
+
+    #[cfg(feature = "telemetry")]
+    {
+        let resource = Resource::builder()
+            .with_attributes([KeyValue::new("service.name", "kosa")])
+            .build();
+
+        let metrics_exporter = opentelemetry_otlp::MetricExporter::builder()
+            .with_http()
+            .with_endpoint("http://192.168.3.96:30318/v1/metrics")
+            .build()?;
+
+        let reader = PeriodicReader::builder(metrics_exporter)
+            .with_interval(Duration::from_secs(10))
+            .build();
+
+        let metrics_provider = SdkMeterProvider::builder()
+            .with_resource(resource.clone())
+            .with_reader(reader)
+            .build();
+
+        global::set_meter_provider(metrics_provider);
+    }
 
     let session_path = "session.bin";
     let session = if let Ok(sess) = Session::load(session_path).await {

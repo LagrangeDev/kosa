@@ -1,8 +1,5 @@
-use std::sync::Arc;
-#[cfg(feature = "telemetry")]
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use actix_broker::ArbiterBroker;
 use ahash::AHashSet;
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -149,8 +146,10 @@ impl Actor for EventSubscriber {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self.subscribe_async::<ArbiterBroker, SessionUpdated>(ctx);
-        self.subscribe_async::<ArbiterBroker, GroupMessageEvent>(ctx);
+        self.bot.event.subscribe_async::<Self, SessionUpdated>(ctx);
+        self.bot
+            .event
+            .subscribe_async::<Self, GroupMessageEvent>(ctx);
     }
 }
 
@@ -236,7 +235,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     #[cfg(feature = "telemetry")]
-    {
+    let metrics_provider = {
         let resource = Resource::builder()
             .with_attributes([KeyValue::new("service.name", "kosa")])
             .build();
@@ -255,8 +254,9 @@ async fn main() -> anyhow::Result<()> {
             .with_reader(reader)
             .build();
 
-        global::set_meter_provider(metrics_provider);
-    }
+        global::set_meter_provider(metrics_provider.clone());
+        metrics_provider
+    };
 
     let session_path = "session.bin";
     let session = if let Ok(sess) = Session::load(session_path).await {
@@ -285,7 +285,7 @@ async fn main() -> anyhow::Result<()> {
         fs::write("./qrcode.png", image.1).await?;
 
         loop {
-            time::sleep(time::Duration::from_secs(1)).await;
+            time::sleep(Duration::from_secs(1)).await;
             let state = bot.get_qrcode_result().await?;
             info!("QR code result: {:?}", state);
             if state == QrcodeState::Confirmed {
@@ -310,6 +310,8 @@ async fn main() -> anyhow::Result<()> {
     bot.cache.refresh_friends().await?;
 
     tokio::signal::ctrl_c().await?;
-
+    bot.release();
+    #[cfg(feature = "telemetry")]
+    metrics_provider.force_flush()?;
     Ok(())
 }

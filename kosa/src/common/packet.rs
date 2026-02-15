@@ -1,7 +1,6 @@
 use std::{io, ops::Deref, sync::Arc, time::Duration};
 
 use actix::{Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, WrapFuture};
-use actix_broker::{ArbiterBroker, BrokerSubscribe};
 use anyhow::Context;
 use dashmap::DashMap;
 use futures::channel::oneshot;
@@ -16,35 +15,43 @@ use crate::{
     },
     event::EventContext,
     service::{Metadata, packet::sso_packet::SsoPacket},
+    utils::broker::Broker,
 };
 
 #[derive(Debug)]
 pub(crate) struct PacketContext {
     pub(crate) app_info: Arc<AppInfo>,
     pub(crate) session: Arc<Session>,
-    pub(crate) event: EventContext,
+    pub(crate) event: Arc<EventContext>,
     pub(crate) network: Addr<TcpClient>,
 
     pub(crate) pending: Arc<DashMap<i32, oneshot::Sender<SsoPacket>>>,
     pub(crate) sign: Arc<dyn Sign>,
+    broker: Arc<Broker>,
 }
 
 impl PacketContext {
     pub(crate) async fn new(
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
+        event: Arc<EventContext>,
         sign: Arc<dyn Sign>,
     ) -> Result<Self, io::Error> {
-        let tcp_client = TcpClient::new(format!("{}:{}", DEFAULT_SERVER, DEFAULT_PORT));
+        let broker = Arc::new(Broker::new());
+        let tcp_client = TcpClient::new(
+            format!("{}:{}", DEFAULT_SERVER, DEFAULT_PORT),
+            broker.clone(),
+        );
         let tcp_client_addr = tcp_client.start();
 
         Ok(Self {
             app_info,
             session,
-            event: EventContext::new(),
+            event,
             network: tcp_client_addr,
             pending: Arc::new(DashMap::new()),
             sign,
+            broker,
         })
     }
 }
@@ -53,7 +60,7 @@ impl Actor for PacketContext {
     type Context = actix::Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self.subscribe_async::<ArbiterBroker, Packet>(ctx)
+        self.broker.subscribe_async::<Self, Packet>(ctx);
     }
 }
 

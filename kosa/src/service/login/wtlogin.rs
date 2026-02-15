@@ -1,4 +1,3 @@
-use actix_broker::{ArbiterBroker, Broker};
 use ahash::AHashMap;
 use bytes::Bytes;
 use kosa_macros::{ServiceState, command, register_service};
@@ -132,10 +131,15 @@ impl Service<LoginReq, LoginResp> for LoginService {
 }
 
 impl ServiceContext {
-    pub(crate) async fn qrcode_login(&self) -> anyhow::Result<()> {
-        let mut resp = self
-            .send_request::<LoginService, LoginReq, LoginResp>(LoginReq::Qrcode)
-            .await?;
+    pub(crate) async fn qrcode_login(&self) -> anyhow::Result<LoginResp> {
+        self.send_request::<LoginService, LoginReq, LoginResp>(LoginReq::Qrcode)
+            .await
+    }
+}
+
+impl Bot {
+    pub async fn qrcode_login(&self) -> anyhow::Result<()> {
+        let mut resp = self.service.qrcode_login().await?;
 
         // todo 判断retcode
 
@@ -197,15 +201,10 @@ impl ServiceContext {
             }
             Ok(())
         })?;
-        Broker::<ArbiterBroker>::issue_async(SessionUpdated {
+
+        self.event.issue_async(SessionUpdated {
             session: self.session.clone(),
         });
         Ok(())
-    }
-}
-
-impl Bot {
-    pub async fn qrcode_login(&self) -> anyhow::Result<()> {
-        self.service.qrcode_login().await
     }
 }

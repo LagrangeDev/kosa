@@ -14,6 +14,7 @@ use tracing::error;
 
 use crate::{
     common::{appinfo::AppInfo, cache::Cache, session::Session, sign::Sign},
+    event::EventContext,
     service::ServiceContext,
 };
 
@@ -23,6 +24,7 @@ pub struct Bot {
     pub(crate) session: Arc<Session>,
 
     pub cache: Arc<Cache>,
+    pub event: Arc<EventContext>,
     pub(crate) service: Arc<ServiceContext>,
     pub(crate) tasks: DashMap<String, JoinHandle<()>>,
 
@@ -55,7 +57,9 @@ impl Bot {
         session: Arc<Session>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
-        let service = ServiceContext::new(1, app_info.clone(), session.clone(), sign).await?;
+        let event = Arc::new(EventContext::new());
+        let service =
+            ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign).await?;
         let service = Arc::new(service);
         let cache = Arc::new(Cache::new(service.clone()));
         let tasks = DashMap::new();
@@ -77,6 +81,7 @@ impl Bot {
             online: AtomicBool::new(false),
             session,
             cache,
+            event,
             service,
             tasks,
             #[cfg(feature = "telemetry")]
@@ -89,7 +94,15 @@ impl Bot {
         #[cfg(feature = "telemetry")]
         self.metrics.online.record(
             online as u64,
-            &[KeyValue::new("reason", reason.unwrap_or_default())],
+            &[
+                KeyValue::new("uin", self.uin()),
+                KeyValue::new("nickname", self.session.bot_info.load().name.clone()),
+                KeyValue::new("reason", reason.unwrap_or_default()),
+            ],
         )
+    }
+
+    pub fn release(&self) {
+        self.set_online(false, Some("exited".to_string()));
     }
 }

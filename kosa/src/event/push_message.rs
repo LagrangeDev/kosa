@@ -7,6 +7,7 @@ use strum::FromRepr;
 use crate::{
     common::{AppInfo, Session},
     event::{EventEntry, PushEvent, message::handle_message},
+    utils::broker::Broker,
 };
 
 #[derive(Debug, Clone)]
@@ -24,7 +25,12 @@ inventory::submit! {
 }
 
 impl PushEvent for PushMessageEvent {
-    fn handle(data: Bytes, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<()> {
+    fn handle(
+        data: Bytes,
+        broker: &Broker,
+        _app_info: &AppInfo,
+        _session: &Session,
+    ) -> anyhow::Result<()> {
         let message = if let Some(common_message) = MsgPush::decode(data.clone())?.common_message {
             common_message
         } else {
@@ -40,7 +46,7 @@ impl PushEvent for PushMessageEvent {
                 PushEventType::GroupMessage
                 | PushEventType::PrivateMessage
                 | PushEventType::TempMessage => {
-                    handle_message(event)?;
+                    handle_message(event, broker)?;
                 }
                 PushEventType::GroupMemberIncreaseNotice => {}
                 PushEventType::GroupMemberDecreaseNotice => {}

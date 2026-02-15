@@ -1,12 +1,11 @@
 use std::collections::VecDeque;
 
 use actix::Message as ActixMessage;
-use actix_broker::{ArbiterBroker, Broker};
 use chrono::{DateTime, TimeZone, Utc};
 use kosa_proto::message::v2::Elem;
 
 use crate::{
-    event::push_message::PushMessageEvent,
+    event::{Broker as EB, push_message::PushMessageEvent},
     message::{BotMessage, Message, MessageChain, MessageDecode, Text},
 };
 
@@ -21,7 +20,7 @@ pub struct GroupMessageEvent {
     pub message: BotMessage,
 }
 
-pub(crate) fn handle_message(event: PushMessageEvent) -> anyhow::Result<()> {
+pub(crate) fn handle_message(event: PushMessageEvent, broker: &EB) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
     let chain = if let Some(elems) = common
@@ -45,7 +44,7 @@ pub(crate) fn handle_message(event: PushMessageEvent) -> anyhow::Result<()> {
     let routing_head = common.routing_head.unwrap_or_default();
 
     if let Some(group) = routing_head.group {
-        Broker::<ArbiterBroker>::issue_async(GroupMessageEvent {
+        let event = GroupMessageEvent {
             group_uin: group.group_code.unwrap_or_default(),
             group_name: group.group_name.unwrap_or_default(),
             member_uin: routing_head.from_uin.unwrap_or_default(),
@@ -55,7 +54,8 @@ pub(crate) fn handle_message(event: PushMessageEvent) -> anyhow::Result<()> {
                 .single()
                 .unwrap(),
             message,
-        });
+        };
+        broker.issue_async(event);
     }
 
     Ok(())

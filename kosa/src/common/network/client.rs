@@ -1,18 +1,20 @@
-use std::{io, time::Duration};
+use std::{io, sync::Arc, time::Duration};
 
 use actix::{
     Actor, ActorContext, ActorFutureExt, AsyncContext, Context, ContextFutureSpawner, Handler,
     Running, StreamHandler, WrapFuture,
     io::{FramedWrite, WriteHandler},
 };
-use actix_broker::{ArbiterBroker, Broker};
 #[cfg(feature = "telemetry")]
 use opentelemetry::{InstrumentationScope, global, metrics::Counter};
 use tokio::{io::WriteHalf, net::TcpStream, time};
 use tokio_util::codec::FramedRead;
 use tracing::{debug, error, info, trace};
 
-use crate::common::network::codec::{LengthCodec, Packet};
+use crate::{
+    common::network::codec::{LengthCodec, Packet},
+    utils::broker::Broker,
+};
 
 pub const DEFAULT_SERVER: &str = "msfwifi.3g.qq.com";
 pub const DEFAULT_PORT: u16 = 8080;
@@ -41,15 +43,18 @@ pub(crate) struct TcpClient {
     pub(crate) address: String,
     pub(crate) framed: Option<FramedWrite<Packet, WriteHalf<TcpStream>, LengthCodec>>,
 
+    broker: Arc<Broker>,
+
     #[cfg(feature = "telemetry")]
     metrics: TcpMetrics,
 }
 
 impl TcpClient {
-    pub(crate) fn new(address: String) -> Self {
+    pub(crate) fn new(address: String, broker: Arc<Broker>) -> Self {
         Self {
             address,
             framed: None,
+            broker,
             #[cfg(feature = "telemetry")]
             metrics: TcpMetrics::new(),
         }
@@ -103,7 +108,7 @@ impl StreamHandler<Result<Packet, io::Error>> for TcpClient {
                 trace!("received a packet");
                 #[cfg(feature = "telemetry")]
                 self.metrics.tx_bytes.add((packet.0.len() + 4) as u64, &[]);
-                Broker::<ArbiterBroker>::issue_async(packet)
+                self.broker.issue_async(packet)
             }
             Err(e) => {
                 error!(err = %e, "received from server error");

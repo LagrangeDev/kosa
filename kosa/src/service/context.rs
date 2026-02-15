@@ -12,6 +12,7 @@ use tracing::trace;
 
 use crate::{
     common::{AppInfo, PacketContext, Session, Sign, SsoRequest},
+    event::EventContext,
     service::{Metadata, Service, ServiceEntry, ServiceState, packet::sso_packet::SsoPacket},
 };
 
@@ -29,6 +30,7 @@ impl ServiceContext {
         seq: i32,
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
+        event: Arc<EventContext>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
         let mut services = AHashMap::new();
@@ -39,7 +41,8 @@ impl ServiceContext {
             services.insert(cmd, service);
         }
 
-        let packet_context = PacketContext::new(app_info.clone(), session.clone(), sign).await?;
+        let packet_context =
+            PacketContext::new(app_info.clone(), session.clone(), event, sign).await?;
         let addr = packet_context.start();
 
         Ok(Self {

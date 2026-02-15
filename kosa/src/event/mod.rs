@@ -14,8 +14,8 @@ mod context;
 mod login;
 mod message;
 mod push_message;
-
-pub(crate) type EventHandlerFn = fn(Bytes, &AppInfo, &Session) -> anyhow::Result<()>;
+use crate::utils::broker::Broker;
+pub(crate) type EventHandlerFn = fn(Bytes, &Broker, &AppInfo, &Session) -> anyhow::Result<()>;
 
 pub(crate) struct EventEntry {
     pub(crate) creator: fn() -> (&'static str, EventHandlerFn),
@@ -24,5 +24,10 @@ pub(crate) struct EventEntry {
 inventory::collect!(EventEntry);
 
 pub(crate) trait PushEvent: Debug + Clone + Send + Sync + CommandMarker {
-    fn handle(data: Bytes, app_info: &AppInfo, session: &Session) -> anyhow::Result<()>;
+    fn handle(
+        data: Bytes,
+        broker: &Broker,
+        app_info: &AppInfo,
+        session: &Session,
+    ) -> anyhow::Result<()>;
 }

@@ -4,6 +4,8 @@ use actix::{Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, Wr
 use anyhow::Context;
 use dashmap::DashMap;
 use futures::channel::oneshot;
+#[cfg(feature = "telemetry")]
+use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Counter};
 use scopeguard::defer;
 use tokio::time::timeout;
 use tracing::{debug, error};
@@ -28,6 +30,28 @@ pub(crate) struct PacketContext {
     pub(crate) pending: Arc<DashMap<i32, oneshot::Sender<SsoPacket>>>,
     pub(crate) sign: Arc<dyn Sign>,
     broker: Arc<Broker>,
+    #[cfg(feature = "telemetry")]
+    metrics: Arc<PacketMetrics>,
+}
+
+#[cfg(feature = "telemetry")]
+#[derive(Debug)]
+struct PacketMetrics {
+    sso_tx: Counter<u64>,
+    sso_rx: Counter<u64>,
+}
+
+#[cfg(feature = "telemetry")]
+impl PacketMetrics {
+    fn new() -> Self {
+        let scope = InstrumentationScope::builder(env!("CARGO_PKG_NAME"))
+            .with_version(env!("CARGO_PKG_VERSION"))
+            .build();
+        let meter = global::meter_with_scope(scope);
+        let sso_tx = meter.u64_counter("sso_tx").build();
+        let sso_rx = meter.u64_counter("sso_rx").build();
+        Self { sso_tx, sso_rx }
+    }
 }
 
 impl PacketContext {
@@ -52,6 +76,8 @@ impl PacketContext {
             pending: Arc::new(DashMap::new()),
             sign,
             broker,
+            #[cfg(feature = "telemetry")]
+            metrics: Arc::new(PacketMetrics::new()),
         })
     }
 }
@@ -70,6 +96,15 @@ impl Handler<Packet> for PacketContext {
     fn handle(&mut self, msg: Packet, _ctx: &mut Self::Context) -> Self::Result {
         match SsoPacket::decode(msg.0, self.session.deref()) {
             Ok(pkt) => {
+                #[cfg(feature = "telemetry")]
+                self.metrics.sso_rx.add(
+                    1,
+                    &[
+                        KeyValue::new("uin", self.session.uin()),
+                        KeyValue::new("command", pkt.command.clone()),
+                    ],
+                );
+
                 debug!(
                     command = pkt.command,
                     seq = pkt.sequence,
@@ -118,6 +153,9 @@ impl Handler<SsoRequest> for PacketContext {
         let sign = self.sign.clone();
         let pending = self.pending.clone();
 
+        #[cfg(feature = "telemetry")]
+        let metrics = self.metrics.clone();
+
         async move {
             let SsoRequest {
                 sso_packet,
@@ -139,6 +177,15 @@ impl Handler<SsoRequest> for PacketContext {
                 .await?;
             let data = sso_packet.encode(metadata, app_info.deref(), session.deref(), secure_info);
             tcp_cleint.send(Packet(data)).await?;
+
+            #[cfg(feature = "telemetry")]
+            metrics.sso_tx.add(
+                1,
+                &[
+                    KeyValue::new("uin", uin),
+                    KeyValue::new("command", sso_packet.command.clone()),
+                ],
+            );
 
             debug!(
                 seq = sso_packet.sequence,

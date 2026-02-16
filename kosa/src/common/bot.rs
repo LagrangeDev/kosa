@@ -96,7 +96,6 @@ impl Bot {
             online as u64,
             &[
                 KeyValue::new("uin", self.uin()),
-                KeyValue::new("nickname", self.session.bot_info.load().name.clone()),
                 KeyValue::new("reason", reason.unwrap_or_default()),
             ],
         )

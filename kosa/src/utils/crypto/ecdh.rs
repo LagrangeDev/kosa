@@ -24,7 +24,7 @@ pub enum EcdhError {
 }
 
 #[derive(Debug)]
-pub struct EcdhClient {
+pub(crate) struct EcdhClient {
     private_key: SecretKey,
     public_key: PublicKey,
     shared_secret: SharedSecret,
@@ -49,11 +49,14 @@ impl Default for EcdhClient {
 }
 
 impl EcdhClient {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn compute_shared_secret(&self, peer_public_key: &[u8]) -> Result<Vec<u8>, EcdhError> {
+    pub(crate) fn compute_shared_secret(
+        &self,
+        peer_public_key: &[u8],
+    ) -> Result<Vec<u8>, EcdhError> {
         let peer_pub_key =
             PublicKey::from_sec1_bytes(peer_public_key).map_err(EcdhError::PeerPublicKey)?;
         let shared_secret = diffie_hellman(
@@ -65,7 +68,7 @@ impl EcdhClient {
         Ok(raw_share.to_vec())
     }
 
-    pub fn compute_shared_secret_hash(
+    pub(crate) fn compute_shared_secret_hash(
         &self,
         peer_public_key: &[u8],
     ) -> Result<[u8; 16], EcdhError> {
@@ -82,15 +85,15 @@ impl EcdhClient {
         Ok(*Md5::digest(input_slice).as_ref())
     }
 
-    pub fn public_key_bytes(&self) -> Vec<u8> {
+    pub(crate) fn public_key_bytes(&self) -> Vec<u8> {
         self.public_key.to_sec1_bytes().to_vec()
     }
 
-    pub fn share_key(&self) -> Vec<u8> {
+    pub(crate) fn share_key(&self) -> Vec<u8> {
         self.shared_secret.raw_secret_bytes().to_vec()
     }
 
-    pub fn share_key_hash(&self) -> [u8; 16] {
+    pub(crate) fn share_key_hash(&self) -> [u8; 16] {
         let raw_share = self.shared_secret.raw_secret_bytes();
         let input_slice = &raw_share.as_slice()[..16];
         *Md5::digest(input_slice).as_ref()

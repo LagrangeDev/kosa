@@ -16,6 +16,8 @@ use opentelemetry::{KeyValue, global};
 #[cfg(feature = "telemetry")]
 use opentelemetry_otlp::WithExportConfig;
 #[cfg(feature = "telemetry")]
+use opentelemetry_sdk::logs;
+#[cfg(feature = "telemetry")]
 use opentelemetry_sdk::{
     Resource,
     metrics::{PeriodicReader, SdkMeterProvider},
@@ -24,6 +26,13 @@ use serde::{Deserialize, Serialize};
 use tokio::{fs, time};
 use tracing::{Level, error, info};
 use tracing_subscriber::fmt::time::LocalTime;
+#[cfg(feature = "telemetry")]
+use tracing_subscriber::{
+    Layer,
+    filter::{LevelFilter, Targets},
+    layer::SubscriberExt,
+    util::SubscriberInitExt,
+};
 
 #[derive(Debug)]
 struct LinuxSign {
@@ -199,6 +208,7 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
 
 #[kosa::main]
 async fn main() -> anyhow::Result<()> {
+    #[cfg(not(feature = "telemetry"))]
     tracing_subscriber::fmt()
         .with_timer(LocalTime::rfc_3339())
         .with_max_level(Level::TRACE)
@@ -235,11 +245,12 @@ async fn main() -> anyhow::Result<()> {
     };
 
     #[cfg(feature = "telemetry")]
-    let metrics_provider = {
-        let resource = Resource::builder()
-            .with_attributes([KeyValue::new("service.name", "kosa")])
-            .build();
+    let resource = Resource::builder()
+        .with_attributes([KeyValue::new("service.name", "kosa")])
+        .build();
 
+    #[cfg(feature = "telemetry")]
+    let metrics_provider = {
         let metrics_exporter = opentelemetry_otlp::MetricExporter::builder()
             .with_http()
             .with_endpoint("http://192.168.3.96:30318/v1/metrics")
@@ -257,6 +268,37 @@ async fn main() -> anyhow::Result<()> {
         global::set_meter_provider(metrics_provider.clone());
         metrics_provider
     };
+
+    #[cfg(feature = "telemetry")]
+    {
+        let fmt_layer = tracing_subscriber::fmt::layer()
+            .with_timer(LocalTime::rfc_3339()) // 使用本地时间
+            .with_writer(std::io::stdout)
+            .with_filter(LevelFilter::TRACE);
+        let log_exporter = opentelemetry_otlp::LogExporter::builder()
+            .with_http()
+            .with_endpoint("http://192.168.3.96:30318/v1/logs")
+            .build()?;
+
+        let log_provider = logs::SdkLoggerProvider::builder()
+            .with_resource(resource.clone())
+            .with_batch_exporter(log_exporter)
+            .build();
+        let otel_log_filter = Targets::new()
+            .with_default(Level::INFO)
+            .with_target("hyper_util", Level::WARN)
+            .with_target("reqwest", Level::WARN)
+            .with_target("opentelemetry-otlp", Level::WARN)
+            .with_target("opentelemetry_sdk", Level::WARN)
+            .with_target(env!("CARGO_PKG_NAME"), Level::DEBUG);
+        let otel_log_layer =
+            opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(&log_provider)
+                .with_filter(otel_log_filter);
+        tracing_subscriber::registry()
+            .with(fmt_layer)
+            .with(otel_log_layer)
+            .init();
+    }
 
     let session_path = "session.bin";
     let session = if let Ok(sess) = Session::load(session_path).await {

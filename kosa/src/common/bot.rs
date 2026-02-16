@@ -102,6 +102,10 @@ impl Bot {
     }
 
     pub fn release(&self) {
-        self.set_online(false, Some("exited".to_string()));
+        self.set_online(
+            false,
+            #[cfg(feature = "telemetry")]
+            Some("exited".to_string()),
+        );
     }
 }

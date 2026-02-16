@@ -50,5 +50,7 @@ opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"], optional = tr
 telemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
 
 [dev-dependencies]
+opentelemetry-appender-tracing = "0.31.1"
 opentelemetry-otlp = "0.31.0"
+tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.22", features = ["local-time"] }

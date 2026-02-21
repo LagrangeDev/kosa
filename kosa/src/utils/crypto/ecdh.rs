@@ -3,6 +3,7 @@ use p256::{
     PublicKey, SecretKey,
     ecdh::{SharedSecret, diffie_hellman},
     elliptic_curve,
+    elliptic_curve::Generate,
 };
 use thiserror::Error;
 

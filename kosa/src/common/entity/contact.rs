@@ -43,7 +43,7 @@ impl Identity for Group {
     }
 
     fn uid(&self) -> String {
-        self.uin.to_string()
+        unimplemented!()
     }
 
     fn name(&self) -> String {

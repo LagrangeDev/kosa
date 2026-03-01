@@ -66,6 +66,27 @@ pub(crate) fn expand_oidb_command(attr: TokenStream, item: TokenStream) -> Token
     TokenStream::from(expand)
 }
 
+pub(crate) fn expand_push_event_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let cmd_lit = parse_macro_input!(attr as LitStr);
+    let input_struct = parse_macro_input!(item as ItemStruct);
+    let struct_name = &input_struct.ident;
+    let command_impl = proc_macro2::TokenStream::from(expand_command_impl(&cmd_lit, struct_name));
+    let expand = quote! {
+        #input_struct
+
+        #command_impl
+
+        inventory::submit! {
+            crate::event::EventEntry {
+                creator: || {
+                    (#cmd_lit, <#struct_name as crate::event::PushEvent>::handle)
+                }
+            }
+        }
+    };
+    TokenStream::from(expand)
+}
+
 fn expand_command_impl(cmd_lit: &LitStr, struct_name: &Ident) -> TokenStream {
     let expand = quote! {
         impl crate::utils::marker::CommandMarker for #struct_name {

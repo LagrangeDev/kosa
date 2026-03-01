@@ -1,27 +1,22 @@
 use bytes::Bytes;
-use kosa_macros::command;
+use kosa_macros::push_event;
 use kosa_proto::message::v2::{CommonMessage, MsgPush};
 use prost::Message;
 use strum::FromRepr;
 
 use crate::{
     common::{AppInfo, Session},
-    event::{EventEntry, PushEvent, message::handle_message},
+    event::{
+        PushEvent,
+        message::{handle_group_message, handle_private_message},
+    },
     utils::broker::Broker,
 };
 
 #[derive(Debug, Clone)]
-#[command("trpc.msg.olpush.OlPushService.MsgPush")]
+#[push_event("trpc.msg.olpush.OlPushService.MsgPush")]
 pub(crate) struct PushMessageEvent {
     pub(crate) message: CommonMessage,
-}
-
-inventory::submit! {
-    EventEntry {
-        creator: || {
-            ("trpc.msg.olpush.OlPushService.MsgPush", <PushMessageEvent as PushEvent>::handle)
-        }
-    }
 }
 
 impl PushEvent for PushMessageEvent {
@@ -43,11 +38,13 @@ impl PushEvent for PushMessageEvent {
         if let Some(event_type) = PushEventType::from_repr(content_head.r#type.unwrap_or_default())
         {
             match event_type {
-                PushEventType::GroupMessage
-                | PushEventType::PrivateMessage
-                | PushEventType::TempMessage => {
-                    handle_message(event, broker)?;
+                PushEventType::GroupMessage => {
+                    handle_group_message(event, broker)?;
                 }
+                PushEventType::PrivateMessage => {
+                    handle_private_message(event, broker)?;
+                }
+                PushEventType::TempMessage => {}
                 PushEventType::GroupMemberIncreaseNotice => {}
                 PushEventType::GroupMemberDecreaseNotice => {}
                 PushEventType::GroupJoinNotification => {}

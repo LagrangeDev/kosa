@@ -5,7 +5,7 @@ use actix::{
     Running, StreamHandler, WrapFuture,
     io::{FramedWrite, WriteHandler},
 };
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, global, metrics::Counter};
 use tokio::{io::WriteHalf, net::TcpStream, time};
 use tokio_util::codec::FramedRead;
@@ -19,7 +19,7 @@ use crate::{
 pub const DEFAULT_SERVER: &str = "msfwifi.3g.qq.com";
 pub const DEFAULT_PORT: u16 = 8080;
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 #[derive(Debug)]
 struct TcpMetrics {
     tx_bytes: Counter<u64>,
@@ -32,7 +32,7 @@ struct DisconnectState {
     detail: String,
 }
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 impl TcpMetrics {
     fn new() -> Self {
         let scope = InstrumentationScope::builder(env!("CARGO_PKG_NAME"))
@@ -53,7 +53,7 @@ pub(crate) struct TcpClient {
 
     broker: Arc<Broker>,
 
-    #[cfg(feature = "telemetry")]
+    #[cfg(feature = "opentelemetry")]
     metrics: TcpMetrics,
 }
 
@@ -65,7 +65,7 @@ impl TcpClient {
             peer_addr: None,
             disconnect_state: None,
             broker,
-            #[cfg(feature = "telemetry")]
+            #[cfg(feature = "opentelemetry")]
             metrics: TcpMetrics::new(),
         }
     }
@@ -143,7 +143,7 @@ impl StreamHandler<Result<Packet, io::Error>> for TcpClient {
         match item {
             Ok(packet) => {
                 trace!("received a packet");
-                #[cfg(feature = "telemetry")]
+                #[cfg(feature = "opentelemetry")]
                 self.metrics.rx_bytes.add((packet.0.len() + 4) as u64, &[]);
                 self.broker.issue_async(packet)
             }
@@ -190,10 +190,10 @@ impl Handler<Packet> for TcpClient {
                 debug!("no active connection, dropped message")
             }
             Some(ref mut framed) => {
-                #[cfg(feature = "telemetry")]
+                #[cfg(feature = "opentelemetry")]
                 let packet_len = packet.0.len();
                 framed.write(packet);
-                #[cfg(feature = "telemetry")]
+                #[cfg(feature = "opentelemetry")]
                 {
                     self.metrics.tx_bytes.add((packet_len + 4) as u64, &[])
                 }

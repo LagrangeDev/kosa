@@ -1,12 +1,19 @@
 use std::collections::VecDeque;
 
 use actix::Message as ActixMessage;
-use chrono::{DateTime, TimeZone, Utc};
-use kosa_proto::message::v2::Elem;
+use chrono::{DateTime, Utc};
+use kosa_proto::{
+    message::v2::{ContentHead, Elem, MessageBody},
+    service::highway::v2::MsgInfo,
+};
+use prost::Message as PbMessage;
 
 use crate::{
-    event::{Broker as EB, push_message::PushMessageEvent},
-    message::{BotMessage, Message, MessageChain, MessageDecode, Text},
+    common::entity::Scene,
+    event::{Broker, push_message::PushMessageEvent},
+    message::{
+        BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem, Text,
+    },
 };
 
 #[derive(Debug, Clone, ActixMessage)]
@@ -20,15 +27,56 @@ pub struct GroupMessageEvent {
     pub message: BotMessage,
 }
 
-pub(crate) fn handle_message(event: PushMessageEvent, broker: &EB) -> anyhow::Result<()> {
+pub(crate) fn handle_group_message(event: PushMessageEvent, broker: &Broker) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
-    let chain = if let Some(elems) = common
-        .message_body
-        .and_then(|message_body| message_body.rich_text)
-        .map(|rich_text| rich_text.elems)
-    {
-        parse_elements(elems)?
+    let routing_head = common.routing_head.unwrap_or_default();
+    match routing_head.group {
+        None => {
+            unreachable!()
+        }
+        Some(ref group) => {
+            let event = GroupMessageEvent {
+                group_uin: group.group_code(),
+                group_name: group.group_name().to_string(),
+                member_uin: routing_head.from_uin(),
+                member_card: group.group_card().to_string(),
+                timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
+                    .unwrap_or_default(),
+                message: handle_message(
+                    Scene::Group(group.group_code()),
+                    content_head,
+                    common.message_body.unwrap_or_default(),
+                )?,
+            };
+            broker.issue_async(event);
+            Ok(())
+        }
+    }
+}
+
+pub(crate) fn handle_private_message(
+    event: PushMessageEvent,
+    broker: &Broker,
+) -> anyhow::Result<()> {
+    let common = event.message;
+    let content_head = common.content_head.unwrap_or_default();
+    let routing_head = common.routing_head.unwrap_or_default();
+    match routing_head.from_uin {
+        None => {
+            unreachable!()
+        }
+        Some(uin) => Ok(()),
+    }
+}
+
+pub(crate) fn handle_message(
+    scene: Scene,
+    content_head: ContentHead,
+    message_body: MessageBody,
+) -> anyhow::Result<BotMessage> {
+    let chain = if let Some(elems) = message_body.rich_text.map(|rich_text| rich_text.elems) {
+        parse_elements(&scene, elems)?
     } else {
         MessageChain::default()
     };
@@ -38,49 +86,55 @@ pub(crate) fn handle_message(event: PushMessageEvent, broker: &EB) -> anyhow::Re
         sequence: content_head.sequence.unwrap_or_default(),
         client_sequence: content_head.client_sequence.unwrap_or_default(),
         message_id: content_head.msg_uid.unwrap_or_default(),
+        scene,
         messages: chain,
     };
 
-    let routing_head = common.routing_head.unwrap_or_default();
-
-    if let Some(group) = routing_head.group {
-        let event = GroupMessageEvent {
-            group_uin: group.group_code.unwrap_or_default(),
-            group_name: group.group_name.unwrap_or_default(),
-            member_uin: routing_head.from_uin.unwrap_or_default(),
-            member_card: group.group_card.unwrap_or_default(),
-            timestamp: Utc
-                .timestamp_opt(content_head.time.unwrap_or_default(), 0)
-                .single()
-                .unwrap(),
-            message,
-        };
-        broker.issue_async(event);
-    }
-
-    Ok(())
+    Ok(message)
 }
 
 macro_rules! decode_messages {
-    ($data:expr, $chain:expr, [ $($msg_type:ident),* ]) => {
-        $(
-            if let Some(message) = $msg_type::decode(&mut $data)? {
-                $chain.push(Message::$msg_type(message));
+    ($source:expr, $data:expr, $chain:expr, [ $($msg_type:ident),* ], [ $($msg_type_common_elem:ident),* ]) => {
+        while let Some(elem) = $data.pop_front() {
+            if let Some((Some(service_type), Some(business_type))) = elem
+                .common_elem
+                .as_ref()
+                .map(|c| (c.service_type, c.business_type))
+            {
+                let msg_info = MsgInfo::decode(
+                    elem.common_elem
+                        .as_ref()
+                        .and_then(|common_elem| common_elem.pb_elem.clone())
+                        .unwrap_or_default(),
+                )?;
+                match (service_type, business_type % 10) {
+                    $(
+                        ($msg_type_common_elem::SERVICE_TYPE, $msg_type_common_elem::CATEGORY) => {
+                            if let Some(message) = $msg_type_common_elem::decode_commom_elem(msg_info, elem, &mut $data, $source)?{
+                                $chain.push(Element::$msg_type_common_elem(message));
+                            }
+                        }
+                    )*
+                    (_, _) => {}
+                }
                 continue;
-            }
-        )*
+            } else {
+                $(
+                    if let Some(message) = $msg_type::decode(&elem, &mut $data, $source)? {
+                        $chain.push(Element::$msg_type(message));
+                        continue;
+                    }
+                )*
+            };
+        }
     };
 }
 
-pub(crate) fn parse_elements(elems: Vec<Elem>) -> anyhow::Result<MessageChain> {
+pub(crate) fn parse_elements(scene: &Scene, elems: Vec<Elem>) -> anyhow::Result<MessageChain> {
     let mut elems = VecDeque::from(elems);
     let mut chain = MessageChain::default();
 
-    while !elems.is_empty() {
-        decode_messages!(elems, chain, [Text]);
-        // 遍历完所有消息都没有解码的情况，需要消耗一个elem，不然变成死循环
-        elems.pop_front();
-    }
+    decode_messages!(scene, elems, chain, [Text, Image], [Image]);
 
     Ok(chain)
 }

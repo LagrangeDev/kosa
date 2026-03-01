@@ -1210,8 +1210,8 @@ pub struct SrvAddrs {
 pub struct IpAddr {
     #[prost(uint32, optional, tag="1")]
     pub r#type: ::core::option::Option<u32>,
-    #[prost(sint32, optional, tag="2")]
-    pub ip: ::core::option::Option<i32>,
+    #[prost(fixed32, optional, tag="2")]
+    pub ip: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="3")]
     pub port: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="4")]

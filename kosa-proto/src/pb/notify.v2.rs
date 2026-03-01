@@ -248,7 +248,7 @@ pub struct GeneralGrayTipInfo {
     #[prost(uint32, optional, tag="3")]
     pub ctrl_flag: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="4")]
-    pub c2_c_type: ::core::option::Option<u32>,
+    pub c2c_type: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="5")]
     pub service_type: ::core::option::Option<u32>,
     #[prost(uint64, optional, tag="6")]

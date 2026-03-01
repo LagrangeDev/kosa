@@ -172,17 +172,17 @@ pub struct OnlineDevice {
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoC2cMsgCookie {
     #[prost(uint64, optional, tag="1")]
-    pub c2_c_last_msg_time: ::core::option::Option<u64>,
+    pub c2c_last_msg_time: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct SsoC2cSyncInfo {
     #[prost(message, optional, tag="1")]
-    pub c2_c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
+    pub c2c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
     #[prost(uint64, optional, tag="2")]
-    pub c2_c_last_msg_time: ::core::option::Option<u64>,
+    pub c2c_last_msg_time: ::core::option::Option<u64>,
     #[prost(message, optional, tag="3")]
-    pub last_c2_c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
+    pub last_c2c_msg_cookie: ::core::option::Option<SsoC2cMsgCookie>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -262,7 +262,7 @@ pub struct SsoInfoSyncRequest {
     #[prost(uint64, optional, tag="5")]
     pub group_last_msg_time: ::core::option::Option<u64>,
     #[prost(message, optional, tag="6")]
-    pub c2_c_sync_info: ::core::option::Option<SsoC2cSyncInfo>,
+    pub c2c_sync_info: ::core::option::Option<SsoC2cSyncInfo>,
     #[prost(message, optional, tag="8")]
     pub normal_config: ::core::option::Option<NormalConfig>,
     #[prost(message, optional, tag="9")]

@@ -2,7 +2,10 @@ use std::{collections::VecDeque, fmt::Display};
 
 use kosa_proto::message::v2::{Elem, Text as PbText};
 
-use crate::message::{MessageDecode, MessageEncode};
+use crate::{
+    common::entity::Scene,
+    message::{MessageDecode, MessageEncode},
+};
 
 #[derive(Debug, Clone)]
 pub struct Text {
@@ -24,32 +27,32 @@ impl Display for Text {
 }
 
 impl MessageEncode for Text {
-    fn encode(&self) -> Vec<Elem> {
-        vec![Elem {
+    fn encode(self, _scene: &Scene) -> anyhow::Result<Vec<Elem>> {
+        let elems = vec![Elem {
             text: Some(PbText {
-                text_msg: self.content.clone().into(),
+                text_msg: self.content.into(),
                 ..Default::default()
             }),
             ..Default::default()
-        }]
+        }];
+        Ok(elems)
     }
 }
 
 impl MessageDecode for Text {
-    fn decode(elems: &mut VecDeque<Elem>) -> anyhow::Result<Option<Self>> {
-        let ok = elems
-            .front()
-            .and_then(|e| e.text.as_ref())
-            .filter(|t| t.attr6_buf.as_ref().is_none_or(|t1| t1.is_empty()))
-            .is_some();
+    fn decode(
+        elem: &Elem,
+        _elems: &mut VecDeque<Elem>,
+        _scene: &Scene,
+    ) -> anyhow::Result<Option<Self>> {
+        let res = elem
+            .text
+            .as_ref()
+            .filter(|t| t.attr6_buf.is_none())
+            .map(|t| Self {
+                content: t.text_msg().to_owned(),
+            });
 
-        if ok {
-            let text = elems.pop_front().unwrap().text.unwrap();
-            Ok(Some(Self {
-                content: text.text_msg.unwrap_or_default(),
-            }))
-        } else {
-            Ok(None)
-        }
+        Ok(res)
     }
 }

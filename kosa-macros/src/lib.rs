@@ -28,6 +28,11 @@ pub fn tlv(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+pub fn push_event(attr: TokenStream, item: TokenStream) -> TokenStream {
+    command::expand_push_event_impl(attr, item)
+}
+
+#[proc_macro_attribute]
 pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
     command::expand_command(attr, item)
 }

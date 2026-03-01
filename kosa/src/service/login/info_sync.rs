@@ -45,13 +45,13 @@ impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
             req_random: Some(rand::random()),
             cur_active_status: Some(2),
             group_last_msg_time: Some(0),
-            c2_c_sync_info: Some(SsoC2cSyncInfo {
-                c2_c_msg_cookie: Some(SsoC2cMsgCookie {
-                    c2_c_last_msg_time: Some(0),
+            c2c_sync_info: Some(SsoC2cSyncInfo {
+                c2c_msg_cookie: Some(SsoC2cMsgCookie {
+                    c2c_last_msg_time: Some(0),
                 }),
-                c2_c_last_msg_time: Some(0),
-                last_c2_c_msg_cookie: Some(SsoC2cMsgCookie {
-                    c2_c_last_msg_time: Some(0),
+                c2c_last_msg_time: Some(0),
+                last_c2c_msg_cookie: Some(SsoC2cMsgCookie {
+                    c2c_last_msg_time: Some(0),
                 }),
             }),
             normal_config: Some(NormalConfig {
@@ -121,7 +121,7 @@ impl Bot {
         if resp.message == "register success" {
             self.set_online(
                 true,
-                #[cfg(feature = "telemetry")]
+                #[cfg(feature = "opentelemetry")]
                 Some(resp.message),
             );
             let service = self.service.clone();

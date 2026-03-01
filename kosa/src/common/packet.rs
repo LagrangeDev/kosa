@@ -4,7 +4,7 @@ use actix::{Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, Wr
 use anyhow::Context;
 use dashmap::DashMap;
 use futures::channel::oneshot;
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Counter};
 use scopeguard::defer;
 use tokio::time::timeout;
@@ -30,18 +30,18 @@ pub(crate) struct PacketContext {
     pub(crate) pending: Arc<DashMap<i32, oneshot::Sender<SsoPacket>>>,
     pub(crate) sign: Arc<dyn Sign>,
     broker: Arc<Broker>,
-    #[cfg(feature = "telemetry")]
+    #[cfg(feature = "opentelemetry")]
     metrics: Arc<PacketMetrics>,
 }
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 #[derive(Debug)]
 struct PacketMetrics {
     sso_tx: Counter<u64>,
     sso_rx: Counter<u64>,
 }
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 impl PacketMetrics {
     fn new() -> Self {
         let scope = InstrumentationScope::builder(env!("CARGO_PKG_NAME"))
@@ -76,7 +76,7 @@ impl PacketContext {
             pending: Arc::new(DashMap::new()),
             sign,
             broker,
-            #[cfg(feature = "telemetry")]
+            #[cfg(feature = "opentelemetry")]
             metrics: Arc::new(PacketMetrics::new()),
         })
     }
@@ -96,7 +96,7 @@ impl Handler<Packet> for PacketContext {
     fn handle(&mut self, msg: Packet, _ctx: &mut Self::Context) -> Self::Result {
         match SsoPacket::decode(msg.0, self.session.deref()) {
             Ok(pkt) => {
-                #[cfg(feature = "telemetry")]
+                #[cfg(feature = "opentelemetry")]
                 self.metrics.sso_rx.add(
                     1,
                     &[
@@ -153,7 +153,7 @@ impl Handler<SsoRequest> for PacketContext {
         let sign = self.sign.clone();
         let pending = self.pending.clone();
 
-        #[cfg(feature = "telemetry")]
+        #[cfg(feature = "opentelemetry")]
         let metrics = self.metrics.clone();
 
         async move {
@@ -178,7 +178,7 @@ impl Handler<SsoRequest> for PacketContext {
             let data = sso_packet.encode(metadata, app_info.deref(), session.deref(), secure_info);
             tcp_cleint.send(Packet(data)).await?;
 
-            #[cfg(feature = "telemetry")]
+            #[cfg(feature = "opentelemetry")]
             metrics.sso_tx.add(
                 1,
                 &[

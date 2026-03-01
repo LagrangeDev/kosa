@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [features]
-telemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
+opentelemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
 
 [dependencies]
 actix = "0.13.5"
@@ -28,6 +28,7 @@ enum_dispatch = "0.3.13"
 flate2 = "1.1.5"
 futures = { workspace = true }
 hex = { workspace = true }
+imagesize = "0.14.0"
 inventory = "0.3.21"
 kosa-macros = { path = "../kosa-macros" }
 kosa-proto = { path = "../kosa-proto" }

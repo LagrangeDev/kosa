@@ -120,7 +120,7 @@ pub struct NtHighwayHash {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NtHighwayNetwork {
     #[prost(message, repeated, tag="1")]
-    pub i_pv4s: ::prost::alloc::vec::Vec<NtHighwayIPv4>,
+    pub ipv4s: ::prost::alloc::vec::Vec<NtHighwayIPv4>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -190,7 +190,7 @@ pub struct SceneInfo {
     #[prost(uint32, optional, tag="200")]
     pub scene_type: ::core::option::Option<u32>,
     #[prost(message, optional, tag="201")]
-    pub c2_c: ::core::option::Option<C2cUserInfo>,
+    pub c2c: ::core::option::Option<C2cUserInfo>,
     #[prost(message, optional, tag="202")]
     pub group: ::core::option::Option<GroupInfo>,
 }
@@ -578,9 +578,9 @@ pub struct DownloadInfo {
     #[prost(uint32, optional, tag="3")]
     pub https_port: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="4")]
-    pub i_pv4s: ::prost::alloc::vec::Vec<IPv4>,
+    pub ipv4s: ::prost::alloc::vec::Vec<IPv4>,
     #[prost(message, repeated, tag="5")]
-    pub i_pv6s: ::prost::alloc::vec::Vec<IPv6>,
+    pub ipv6s: ::prost::alloc::vec::Vec<IPv6>,
     #[prost(message, optional, tag="6")]
     pub pic_url_ext_info: ::core::option::Option<PicUrlExtInfo>,
     #[prost(message, optional, tag="7")]
@@ -622,9 +622,9 @@ pub struct UploadResp {
     #[prost(uint32, optional, tag="2")]
     pub u_key_ttl_second: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="3")]
-    pub i_pv4s: ::prost::alloc::vec::Vec<IPv4>,
+    pub ipv4s: ::prost::alloc::vec::Vec<IPv4>,
     #[prost(message, repeated, tag="4")]
-    pub i_pv6s: ::prost::alloc::vec::Vec<IPv6>,
+    pub ipv6s: ::prost::alloc::vec::Vec<IPv6>,
     #[prost(uint64, optional, tag="5")]
     pub msg_seq: ::core::option::Option<u64>,
     #[prost(message, optional, tag="6")]
@@ -656,9 +656,9 @@ pub struct SubFileInfo {
     #[prost(uint32, optional, tag="3")]
     pub u_key_ttl_second: ::core::option::Option<u32>,
     #[prost(message, repeated, tag="4")]
-    pub i_pv4s: ::prost::alloc::vec::Vec<IPv4>,
+    pub ipv4s: ::prost::alloc::vec::Vec<IPv4>,
     #[prost(message, repeated, tag="5")]
-    pub i_pv6s: ::prost::alloc::vec::Vec<IPv6>,
+    pub ipv6s: ::prost::alloc::vec::Vec<IPv6>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]

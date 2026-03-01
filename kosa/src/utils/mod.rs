@@ -2,6 +2,8 @@ pub mod binary;
 pub mod broker;
 pub mod compress;
 pub mod crypto;
+pub mod image;
+pub mod io;
 pub mod marker;
 
 use base64::{Engine, prelude::BASE64_STANDARD};

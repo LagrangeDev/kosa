@@ -6,7 +6,7 @@ use kosa_proto::message::v2::{
 use prost::Message;
 
 use crate::{
-    common::{AppInfo, Bot, Protocol, Session},
+    common::{AppInfo, Bot, Protocol, Session, entity::Scene},
     message::MessageChain,
     service::{EncryptType, Metadata, RequestType, Service, ServiceContext},
 };
@@ -15,23 +15,16 @@ use crate::{
 #[derive(Debug, Default, ServiceState)]
 pub(crate) struct SendMessageService;
 
-pub(crate) enum Receiver {
-    /// 临时消息 uin uid
-    // Temp(i64, String),
-    /// 私聊 uin uid
-    Friend(i64, String),
-    /// 群 uin
-    Group(i64),
-}
-
+#[derive(Debug)]
 pub(crate) struct SendMessageReq {
-    pub(crate) receiver: Receiver,
+    pub(crate) scene: Scene,
     pub(crate) messages: MessageChain,
 
     pub(crate) sequence: i32,
     pub(crate) random: u32,
 }
 
+#[derive(Debug)]
 pub(crate) struct SendMessageResp {
     pub(crate) resp: PbSendMsgResp,
 }
@@ -50,15 +43,24 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
-        let routing_head = match req.receiver {
-            Receiver::Friend(uin, uid) => SendRoutingHead {
-                c2_c: Some(C2c {
+        let elems = req.messages.encode(&req.scene)?;
+        let msg_body = MessageBody {
+            rich_text: Some(RichText {
+                elems,
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let routing_head = match req.scene {
+            Scene::Private(uin, uid) => SendRoutingHead {
+                c2c: Some(C2c {
                     peer_uin: Some(uin),
                     peer_uid: Some(uid),
                 }),
                 ..Default::default()
             },
-            Receiver::Group(group) => SendRoutingHead {
+            Scene::Group(group) => SendRoutingHead {
                 group: Some(Grp {
                     group_uin: Some(group),
                 }),
@@ -70,15 +72,6 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
             pkg_num: Some(1),
             pkg_index: Some(0),
             div_seq: Some(0),
-            ..Default::default()
-        };
-
-        let elems = req.messages.encode();
-        let msg_body = MessageBody {
-            rich_text: Some(RichText {
-                elems,
-                ..Default::default()
-            }),
             ..Default::default()
         };
 
@@ -120,7 +113,7 @@ impl ServiceContext {
         messages: MessageChain,
     ) -> anyhow::Result<()> {
         let req = SendMessageReq {
-            receiver: Receiver::Friend(uin, uid),
+            scene: Scene::Private(uin, uid),
             messages,
             sequence: rand::random(),
             random: rand::random(),
@@ -137,7 +130,7 @@ impl ServiceContext {
         messages: MessageChain,
     ) -> anyhow::Result<()> {
         let req = SendMessageReq {
-            receiver: Receiver::Group(group),
+            scene: Scene::Group(group),
             messages,
             sequence: rand::random(),
             random: rand::random(),
@@ -158,7 +151,6 @@ impl Bot {
         let uid = self
             .cache
             .get_uid(uin)
-            .await
             .ok_or_else(|| anyhow::anyhow!("not found uid for {}", uin))?;
         self.service.send_private_message(uin, uid, messages).await
     }

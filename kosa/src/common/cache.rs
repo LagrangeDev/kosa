@@ -35,7 +35,7 @@ impl Cache {
         }
     }
 
-    pub async fn get_uid(&self, uin: i64) -> Option<String> {
+    pub fn get_uid(&self, uin: i64) -> Option<String> {
         self.uin2uid.get(&uin).as_deref().cloned()
     }
 

@@ -582,7 +582,7 @@ pub struct ContentHead {
     #[prost(int32, optional, tag="2")]
     pub sub_type: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="3")]
-    pub c2_c_command: ::core::option::Option<i32>,
+    pub c2c_command: ::core::option::Option<i32>,
     #[prost(uint32, optional, tag="4")]
     pub random: ::core::option::Option<u32>,
     #[prost(int32, optional, tag="5")]
@@ -618,7 +618,7 @@ pub struct RoutingHead {
     #[prost(string, optional, tag="6")]
     pub to_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="7")]
-    pub common_c2_c: ::core::option::Option<CommonC2c>,
+    pub common_c2c: ::core::option::Option<CommonC2c>,
     #[prost(message, optional, tag="8")]
     pub group: ::core::option::Option<CommonGroup>,
 }
@@ -626,7 +626,7 @@ pub struct RoutingHead {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CommonC2c {
     #[prost(int32, optional, tag="1")]
-    pub c2_c_type: ::core::option::Option<i32>,
+    pub c2c_type: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="2")]
     pub service_type: ::core::option::Option<i32>,
     #[prost(bytes="bytes", optional, tag="3")]
@@ -840,7 +840,7 @@ pub struct Trans211TmpMsg {
     #[prost(bytes="bytes", optional, tag="1")]
     pub msg_body: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="2")]
-    pub c2_c_cmd: ::core::option::Option<u32>,
+    pub c2c_cmd: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -896,7 +896,7 @@ pub struct SendContentHead {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SendRoutingHead {
     #[prost(message, optional, tag="1")]
-    pub c2_c: ::core::option::Option<C2c>,
+    pub c2c: ::core::option::Option<C2c>,
     #[prost(message, optional, tag="2")]
     pub group: ::core::option::Option<Grp>,
     #[prost(message, optional, tag="15")]

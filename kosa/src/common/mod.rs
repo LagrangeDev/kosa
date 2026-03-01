@@ -2,6 +2,7 @@ mod appinfo;
 mod bot;
 mod cache;
 pub mod entity;
+pub(crate) mod highway;
 pub(crate) mod network;
 mod packet;
 mod session;

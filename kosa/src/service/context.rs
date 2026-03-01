@@ -54,11 +54,11 @@ impl ServiceContext {
         })
     }
 
-    pub(crate) fn new_sequence(&self) -> i32 {
+    fn new_sequence(&self) -> i32 {
         self.sequence.fetch_add(1, Ordering::SeqCst)
     }
 
-    pub(crate) fn encode<S, Req, Resp>(
+    fn encode<S, Req, Resp>(
         &self,
         req: Req,
         app_info: &AppInfo,
@@ -96,7 +96,7 @@ impl ServiceContext {
         ))
     }
 
-    pub(crate) fn decode<S, Req, Resp>(
+    fn decode<S, Req, Resp>(
         &self,
         packet: SsoPacket,
         app_info: &AppInfo,

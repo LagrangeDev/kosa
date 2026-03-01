@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use md5::{Digest, Md5};
 use p256::{
     PublicKey, SecretKey,

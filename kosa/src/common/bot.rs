@@ -7,13 +7,15 @@ use std::{
 };
 
 use dashmap::DashMap;
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Gauge};
 use tokio::{task::JoinHandle, time};
 use tracing::error;
 
 use crate::{
-    common::{appinfo::AppInfo, cache::Cache, session::Session, sign::Sign},
+    common::{
+        appinfo::AppInfo, cache::Cache, highway::HighWayContext, session::Session, sign::Sign,
+    },
     event::EventContext,
     service::ServiceContext,
 };
@@ -26,19 +28,20 @@ pub struct Bot {
     pub cache: Arc<Cache>,
     pub event: Arc<EventContext>,
     pub(crate) service: Arc<ServiceContext>,
+    pub(crate) highway: Arc<HighWayContext>,
     pub(crate) tasks: DashMap<String, JoinHandle<()>>,
 
-    #[cfg(feature = "telemetry")]
+    #[cfg(feature = "opentelemetry")]
     metrics: BotMetrics,
 }
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 #[derive(Debug)]
 pub struct BotMetrics {
     online: Gauge<u64>,
 }
 
-#[cfg(feature = "telemetry")]
+#[cfg(feature = "opentelemetry")]
 impl BotMetrics {
     fn new() -> Self {
         let scope = InstrumentationScope::builder(env!("CARGO_PKG_NAME"))
@@ -61,6 +64,11 @@ impl Bot {
         let service =
             ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign).await?;
         let service = Arc::new(service);
+        let highway = Arc::new(HighWayContext::new(
+            service.clone(),
+            app_info.clone(),
+            session.clone(),
+        ));
         let cache = Arc::new(Cache::new(service.clone()));
         let tasks = DashMap::new();
 
@@ -83,15 +91,20 @@ impl Bot {
             cache,
             event,
             service,
+            highway,
             tasks,
-            #[cfg(feature = "telemetry")]
+            #[cfg(feature = "opentelemetry")]
             metrics: BotMetrics::new(),
         })
     }
 
-    pub fn set_online(&self, online: bool, #[cfg(feature = "telemetry")] reason: Option<String>) {
+    pub fn set_online(
+        &self,
+        online: bool,
+        #[cfg(feature = "opentelemetry")] reason: Option<String>,
+    ) {
         self.online.store(online, Ordering::SeqCst);
-        #[cfg(feature = "telemetry")]
+        #[cfg(feature = "opentelemetry")]
         self.metrics.online.record(
             online as u64,
             &[
@@ -104,7 +117,7 @@ impl Bot {
     pub fn release(&self) {
         self.set_online(
             false,
-            #[cfg(feature = "telemetry")]
+            #[cfg(feature = "opentelemetry")]
             Some("exited".to_string()),
         );
     }

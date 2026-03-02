@@ -96,10 +96,6 @@ impl Bot {
                 &image,
             )
             .await?;
-        let md5 = image.md5;
-        let sha1 = image.sha1;
-        let summary = image.summary.clone();
-        let sub_type = image.sub_type;
         let mut stream = image
             .stream
             .take()
@@ -111,27 +107,26 @@ impl Bot {
                     1003,
                     &mut stream,
                     image.size,
-                    md5,
+                    image.md5,
                     Some(ext.encode_to_vec().into()),
                 )
                 .await?;
         }
 
+        let index0 = upload_resp.msg_info.msg_info_body[0].index.as_ref();
+
         let image = Image {
-            name: hex::encode(&md5),
-            file_uuid: upload_resp.msg_info.msg_info_body[0]
-                .index
-                .as_ref()
-                .and_then(|t| t.file_uuid.as_ref())
-                .cloned()
+            name: index0
+                .and_then(|t| t.info.as_ref())
+                .and_then(|t| t.file_name.clone())
                 .unwrap_or_default(),
-            sub_type,
-            summary: summary.unwrap_or_default(),
-            md5,
-            sha1,
-            // todo
-            width: 400,
-            height: 400,
+            file_uuid: index0.and_then(|t| t.file_uuid.clone()).unwrap_or_default(),
+            sub_type: image.sub_type,
+            summary: image.summary.unwrap_or_default(),
+            md5: image.md5,
+            sha1: image.sha1,
+            width: image.width,
+            height: image.height,
             msg_info: upload_resp.msg_info,
             compact: upload_resp.compat_qmsg,
         };

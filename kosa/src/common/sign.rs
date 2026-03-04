@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use kosa_proto::common::v2::SsoSecureInfo;
+pub use kosa_proto::common::v2::SsoSecureInfo;
 
 #[async_trait]
 pub trait Sign: Debug + Send + Sync {

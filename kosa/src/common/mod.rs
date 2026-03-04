@@ -12,4 +12,4 @@ pub use appinfo::{AppInfo, Protocol, Sig, WtLoginSdkInfo};
 pub use bot::Bot;
 pub(crate) use packet::{PacketContext, SsoRequest};
 pub use session::Session;
-pub use sign::Sign;
+pub use sign::{Sign, SsoSecureInfo};

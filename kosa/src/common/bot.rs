@@ -1,4 +1,5 @@
 use std::{
+    rc::Rc,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -26,7 +27,7 @@ pub struct Bot {
     pub(crate) session: Arc<Session>,
 
     pub cache: Arc<Cache>,
-    pub event: Arc<EventContext>,
+    pub event: Rc<EventContext>,
     pub(crate) service: Arc<ServiceContext>,
     pub(crate) highway: Arc<HighWayContext>,
     pub(crate) tasks: DashMap<String, JoinHandle<()>>,
@@ -60,7 +61,7 @@ impl Bot {
         session: Arc<Session>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
-        let event = Arc::new(EventContext::new());
+        let event = Rc::new(EventContext::new());
         let service =
             ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign).await?;
         let service = Arc::new(service);

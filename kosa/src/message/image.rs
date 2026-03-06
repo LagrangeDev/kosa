@@ -29,7 +29,7 @@ pub struct Image {
     pub width: u32,
     pub height: u32,
 
-    pub(crate) msg_info: MsgInfo,
+    pub(crate) msg_info: Box<MsgInfo>,
     pub(crate) compact: Bytes,
 }
 
@@ -56,8 +56,8 @@ impl MessageEncode for Image {
                 common_elem: Some(CommonElem {
                     service_type: Some(48),
                     pb_elem: Some(self.msg_info.encode_to_vec().into()),
+                    #[allow(clippy::identity_op)]
                     business_type: Some(scene.business_type() * 10 + 0),
-                    ..Default::default()
                 }),
                 ..Default::default()
             },
@@ -109,7 +109,7 @@ impl MessageDecodeCommonElem for Image {
                 .and_then(|t| t.text_summary.as_ref())
                 .cloned()
                 .unwrap_or_default(),
-            msg_info,
+            msg_info: msg_info.into(),
             ..Default::default()
         }))
     }
@@ -133,8 +133,8 @@ impl RichMedia for LocalImage {
     const BUSINESS_TYPE: u32 = 1;
 
     fn build_file_info(&self) -> anyhow::Result<FileInfo> {
-        let md5 = hex::encode(&self.md5);
-        let sha1 = hex::encode(&self.sha1);
+        let md5 = hex::encode(self.md5);
+        let sha1 = hex::encode(self.sha1);
         let file_name = format!("{}.{}", md5, "png");
         let info = FileInfo {
             file_size: Some(self.size as u32),

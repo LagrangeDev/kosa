@@ -43,6 +43,7 @@ pub enum LoginState {
 #[derive(Debug, Default, ServiceState)]
 pub(crate) struct LoginService;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) enum LoginReq {
     Qrcode,
@@ -52,6 +53,7 @@ pub(crate) enum LoginReq {
     SubmitSmsCode { code: String },
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct LoginResp {
     pub(crate) ret_code: u8,
@@ -104,20 +106,27 @@ impl Service<LoginReq, LoginResp> for LoginService {
         let state = reader.read_u8()?;
         let mut tlvs = decode_tlv(&mut reader)?;
 
-        if let Some(error_tlv) = tlvs.get(&0x146).cloned() {
-            let mut err_reader = Reader::new(error_tlv);
-            let _ = err_reader.read_u32()?;
-            let title = err_reader.read_string_with_prefix(Prefix::U16, false)?;
-            let message = err_reader.read_string_with_prefix(Prefix::U16, false)?;
-            anyhow::bail!("login failed: {}:{}", title, message);
-        };
-
-        if let Some(tgtgt) = tlvs.get(&0x119).cloned() {
-            let decrypted = tea::decrypt(tgtgt, &session.wlogin_sigs.load().tgtgt_key);
-            let mut tlv_reader = Reader::new(decrypted);
-            let tlv119s = decode_tlv(&mut tlv_reader)?;
-            for (k, v) in tlv119s {
-                tlvs.insert(k, v);
+        match state {
+            0 => {
+                if let Some(tgtgt) = tlvs.get(&0x119).cloned() {
+                    let decrypted = tea::decrypt(tgtgt, &session.wlogin_sigs.load().tgtgt_key);
+                    let mut tlv_reader = Reader::new(decrypted);
+                    let tlv119s = decode_tlv(&mut tlv_reader)?;
+                    for (k, v) in tlv119s {
+                        tlvs.insert(k, v);
+                    }
+                };
+            }
+            _ => {
+                if let Some(error_tlv) = tlvs.get(&0x146).cloned() {
+                    let mut err_reader = Reader::new(error_tlv);
+                    let _ = err_reader.read_u32()?;
+                    let title = err_reader.read_string_with_prefix(Prefix::U16, false)?;
+                    let message = err_reader.read_string_with_prefix(Prefix::U16, false)?;
+                    anyhow::bail!("login failed: [0x{:02x}]{}:{}", state, title, message);
+                } else {
+                    anyhow::bail!("login failed: unknown error")
+                };
             }
         };
 
@@ -140,8 +149,6 @@ impl ServiceContext {
 impl Bot {
     pub async fn qrcode_login(&self) -> anyhow::Result<()> {
         let mut resp = self.service.qrcode_login().await?;
-
-        // todo 判断retcode
 
         let bot_info_data = resp.tlvs.remove(&0x11A);
         let login_resp_data = resp.tlvs.remove(&0x543);

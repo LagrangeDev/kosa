@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use bytes::Bytes;
 pub(crate) use context::EventContext;
 pub use login::SessionUpdated;
-pub use message::GroupMessageEvent;
+pub use message::{GroupMessageEvent, PrivateMessageEvent};
 
 use crate::{
     common::{AppInfo, Session},

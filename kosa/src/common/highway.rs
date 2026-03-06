@@ -116,7 +116,7 @@ impl HighWayContext {
         let url = self
             .url
             .load()
-            .get(0)
+            .first()
             .ok_or_else(|| anyhow::anyhow!("no url"))?
             .clone();
 

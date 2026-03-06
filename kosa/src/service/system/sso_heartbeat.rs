@@ -14,7 +14,7 @@ use crate::{
 pub(crate) struct SsoHeartBeatService;
 pub(crate) struct SsoHeartBeatEventReq;
 pub(crate) struct SsoHeartBeatEventResp {
-    pub(crate) interval: i32,
+    _interval: i32,
 }
 
 #[register_service]
@@ -62,7 +62,7 @@ impl Service<SsoHeartBeatEventReq, SsoHeartBeatEventResp> for SsoHeartBeatServic
     ) -> anyhow::Result<SsoHeartBeatEventResp> {
         let resp = SsoHeartBeatResponse::decode(data)?;
         Ok(SsoHeartBeatEventResp {
-            interval: resp.interval.unwrap_or_default() as i32,
+            _interval: resp.interval.unwrap_or_default() as i32,
         })
     }
 }

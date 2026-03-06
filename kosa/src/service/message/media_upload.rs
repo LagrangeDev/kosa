@@ -127,7 +127,7 @@ impl Bot {
             sha1: image.sha1,
             width: image.width,
             height: image.height,
-            msg_info: upload_resp.msg_info,
+            msg_info: upload_resp.msg_info.into(),
             compact: upload_resp.compat_qmsg,
         };
         Ok(image)

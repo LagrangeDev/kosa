@@ -84,7 +84,7 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
         let future = async move {
             if msg.message.to_string() == "114514" {
                 if let Err(e) = bot
-                    .send_private_message(msg.member_uin, MessageChain::new().text("1919810"))
+                    .send_group_message(msg.group_uin, MessageChain::new().text("1919810"))
                     .await
                 {
                     error!("send_group_message error: {:?}", e)
@@ -110,15 +110,7 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
                 } else {
                     warn!("upload failed")
                 }
-                println!("end")
             }
-
-            if msg.message.to_string() == "fr" {
-                let (friends, _) = bot.fetch_friends().await.unwrap();
-                let _ = friends
-                    .iter()
-                    .for_each(|(_, f)| info!("friend: {}", f.nick_name));
-            };
         };
         ctx.spawn(fut::wrap_future(future));
     }

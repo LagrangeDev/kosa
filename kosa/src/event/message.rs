@@ -22,7 +22,17 @@ pub struct GroupMessageEvent {
     pub group_uin: i64,
     pub group_name: String,
     pub member_uin: i64,
+    /// 群名片
     pub member_card: String,
+    pub timestamp: DateTime<Utc>,
+    pub message: BotMessage,
+}
+
+#[derive(Debug, Clone, ActixMessage)]
+#[rtype(result = "()")]
+pub struct PrivateMessageEvent {
+    pub uin: i64,
+    pub uid: String,
     pub timestamp: DateTime<Utc>,
     pub message: BotMessage,
 }
@@ -62,12 +72,20 @@ pub(crate) fn handle_private_message(
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
     let routing_head = common.routing_head.unwrap_or_default();
-    match routing_head.from_uin {
-        None => {
-            unreachable!()
-        }
-        Some(uin) => Ok(()),
-    }
+
+    let event = PrivateMessageEvent {
+        uin: routing_head.from_uin(),
+        uid: routing_head.from_uid().to_string(),
+        timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
+            .unwrap_or_default(),
+        message: handle_message(
+            Scene::Private(routing_head.from_uin(), routing_head.from_uid().to_string()),
+            content_head,
+            common.message_body.unwrap_or_default(),
+        )?,
+    };
+    broker.issue_async(event);
+    Ok(())
 }
 
 pub(crate) fn handle_message(

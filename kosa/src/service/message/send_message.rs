@@ -20,14 +20,12 @@ pub(crate) struct SendMessageReq {
     pub(crate) scene: Scene,
     pub(crate) messages: MessageChain,
 
-    pub(crate) sequence: i32,
+    pub(crate) client_sequence: i32,
     pub(crate) random: u32,
 }
 
 #[derive(Debug)]
-pub(crate) struct SendMessageResp {
-    pub(crate) resp: PbSendMsgResp,
-}
+pub(crate) struct SendMessageResp(pub PbSendMsgResp);
 
 #[register_service]
 impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
@@ -79,7 +77,7 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
             routing_head: Some(routing_head),
             content_head: Some(content_head),
             message_body: Some(msg_body),
-            client_sequence: Some(req.sequence),
+            client_sequence: Some(req.client_sequence),
             random: Some(req.random),
         }
         .encode_to_vec()
@@ -93,52 +91,56 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
         _session: &Session,
     ) -> anyhow::Result<SendMessageResp> {
         let resp = PbSendMsgResp::decode(data)?;
-        // todo 上层判断
-        // let seq = if resp.client_sequence != 0 {
-        //     // 私聊
-        //     resp.client_sequence
-        // } else {
-        //     // 群聊
-        //     resp.sequence
-        // };
-        Ok(SendMessageResp { resp })
+        Ok(SendMessageResp(resp))
     }
 }
 
 impl ServiceContext {
+    /// 发送私聊消息，返回client_seq
     pub(crate) async fn send_private_message(
         &self,
         uin: i64,
         uid: String,
         messages: MessageChain,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i32> {
         let req = SendMessageReq {
             scene: Scene::Private(uin, uid),
             messages,
-            sequence: rand::random(),
+            client_sequence: rand::random(),
             random: rand::random(),
         };
         let resp = self
             .send_request::<SendMessageService, SendMessageReq, SendMessageResp>(req)
-            .await?;
-        Ok(())
+            .await?
+            .0;
+        if resp.client_sequence() == 0 {
+            Err(anyhow::anyhow!("private message send failed"))
+        } else {
+            Ok(resp.client_sequence())
+        }
     }
 
+    /// 发送群聊消息，返回seq
     pub async fn send_group_message(
         &self,
         group: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i32> {
         let req = SendMessageReq {
             scene: Scene::Group(group),
             messages,
-            sequence: rand::random(),
+            client_sequence: rand::random(),
             random: rand::random(),
         };
         let resp = self
             .send_request::<SendMessageService, SendMessageReq, SendMessageResp>(req)
-            .await?;
-        Ok(())
+            .await?
+            .0;
+        if let Some(seq) = resp.sequence {
+            Ok(seq)
+        } else {
+            Err(anyhow::anyhow!("group message send failed"))
+        }
     }
 }
 
@@ -147,7 +149,7 @@ impl Bot {
         &self,
         uin: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i32> {
         let uid = self
             .cache
             .get_uid(uin)
@@ -159,7 +161,7 @@ impl Bot {
         &self,
         group: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i32> {
         self.service.send_group_message(group, messages).await
     }
 }

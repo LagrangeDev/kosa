@@ -12,7 +12,7 @@ use crate::{
     common::entity::Scene,
     event::{Broker, push_message::PushMessageEvent},
     message::{
-        BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem, Text,
+        At, BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem, Text,
     },
 };
 
@@ -152,7 +152,7 @@ pub(crate) fn parse_elements(scene: &Scene, elems: Vec<Elem>) -> anyhow::Result<
     let mut elems = VecDeque::from(elems);
     let mut chain = MessageChain::default();
 
-    decode_messages!(scene, elems, chain, [Text, Image], [Image]);
+    decode_messages!(scene, elems, chain, [At, Text, Image], [Image]);
 
     Ok(chain)
 }

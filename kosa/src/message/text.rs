@@ -9,7 +9,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Text {
-    content: String,
+    pub content: String,
 }
 
 impl Text {

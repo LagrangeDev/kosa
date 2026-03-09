@@ -1,3 +1,4 @@
+mod at;
 mod image;
 mod text;
 
@@ -17,6 +18,7 @@ use kosa_proto::{
 
 use crate::common::entity::Scene;
 pub use crate::message::{
+    at::At,
     image::{Image, LocalImage},
     text::Text,
 };
@@ -58,6 +60,7 @@ pub(crate) trait RichMedia {
 #[enum_dispatch(MessageEncode)]
 #[derive(Debug, Clone, Display)]
 pub enum Element {
+    At,
     Text,
     Image,
 }
@@ -101,6 +104,11 @@ impl MessageChain {
         Self(Vec::new())
     }
 
+    pub fn at(mut self, at: At) -> Self {
+        self.push(Element::At(at));
+        self
+    }
+
     /// 添加文本消息段
     pub fn text(mut self, content: impl Into<String>) -> Self {
         self.push(Element::Text(Text::new(content)));
@@ -130,6 +138,7 @@ impl MessageChain {
     }
 }
 
+// todo 要考虑部分无法发送的消息段怎么加入到messagechain
 #[derive(Debug, Clone)]
 pub struct BotMessage {
     pub random: u32,

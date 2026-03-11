@@ -89,11 +89,12 @@ impl MessageDecodeCommonElem for Image {
     const CATEGORY: u32 = 0;
 
     fn decode_commom_elem(
-        mut msg_info: MsgInfo,
+        pb_elem: Bytes,
         _elem: Elem,
         _elems: &mut VecDeque<Elem>,
         _scene: &Scene,
     ) -> anyhow::Result<Option<Self>> {
+        let mut msg_info = MsgInfo::decode(pb_elem)?;
         let index0 = msg_info.msg_info_body.pop().unwrap().index.unwrap();
         let pic_ext_biz_info = msg_info
             .ext_biz_info

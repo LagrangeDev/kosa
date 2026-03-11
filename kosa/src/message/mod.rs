@@ -1,4 +1,5 @@
 mod at;
+mod face;
 mod image;
 mod text;
 
@@ -9,16 +10,18 @@ use std::{
     vec::IntoIter,
 };
 
+use bytes::Bytes;
 use derive_more::Display;
 use enum_dispatch::enum_dispatch;
 use kosa_proto::{
     message::v2::Elem,
-    service::highway::v2::{ExtBizInfo, FileInfo, MsgInfo},
+    service::highway::v2::{ExtBizInfo, FileInfo},
 };
 
 use crate::common::entity::Scene;
 pub use crate::message::{
     at::At,
+    face::QFace,
     image::{Image, LocalImage},
     text::Text,
 };
@@ -41,7 +44,7 @@ pub(crate) trait MessageDecodeCommonElem: Sized + Display {
     const CATEGORY: u32;
 
     fn decode_commom_elem(
-        msg_info: MsgInfo,
+        pb_elem: Bytes,
         elem: Elem,
         elems: &mut VecDeque<Elem>,
         scene: &Scene,
@@ -62,6 +65,7 @@ pub(crate) trait RichMedia {
 pub enum Element {
     At,
     Text,
+    QFace,
     Image,
 }
 
@@ -112,6 +116,11 @@ impl MessageChain {
     /// 添加文本消息段
     pub fn text(mut self, content: impl Into<String>) -> Self {
         self.push(Element::Text(Text::new(content)));
+        self
+    }
+
+    pub fn face(mut self, face_id: u32) -> Self {
+        self.push(Element::QFace(QFace::new(face_id)));
         self
     }
 

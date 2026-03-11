@@ -5,8 +5,14 @@
 pub struct Elem {
     #[prost(message, optional, tag="1")]
     pub text: ::core::option::Option<Text>,
+    #[prost(message, optional, tag="2")]
+    pub face: ::core::option::Option<Face>,
     #[prost(message, optional, tag="4")]
     pub not_online_image: ::core::option::Option<NotOnlineImage>,
+    #[prost(message, optional, tag="5")]
+    pub trans_elem: ::core::option::Option<TransElem>,
+    #[prost(message, optional, tag="6")]
+    pub market_face: ::core::option::Option<MarketFace>,
     #[prost(message, optional, tag="8")]
     pub custom_face: ::core::option::Option<CustomFace>,
     #[prost(message, optional, tag="12")]
@@ -35,6 +41,16 @@ pub struct Text {
     pub buf: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(bytes="bytes", optional, tag="12")]
     pub pb_reserve: ::core::option::Option<::prost::bytes::Bytes>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Face {
+    #[prost(int32, optional, tag="1")]
+    pub index: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub old: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="11")]
+    pub buf: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -96,6 +112,44 @@ pub struct NotOnlineImage {
     #[prost(uint32, optional, tag="28")]
     pub height400: ::core::option::Option<u32>,
     #[prost(bytes="bytes", optional, tag="29")]
+    pub pb_reserve: ::core::option::Option<::prost::bytes::Bytes>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransElem {
+    #[prost(int32, optional, tag="1")]
+    pub elem_type: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="2")]
+    pub elem_value: ::core::option::Option<::prost::bytes::Bytes>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MarketFace {
+    #[prost(bytes="bytes", optional, tag="1")]
+    pub face_name: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int32, optional, tag="2")]
+    pub item_type: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="3")]
+    pub face_info: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="4")]
+    pub face_id: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int32, optional, tag="5")]
+    pub tab_id: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="6")]
+    pub sub_type: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="7")]
+    pub key: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="8")]
+    pub param: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(int32, optional, tag="9")]
+    pub media_type: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="10")]
+    pub image_width: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="11")]
+    pub image_height: ::core::option::Option<i32>,
+    #[prost(bytes="bytes", optional, tag="12")]
+    pub mobileparam: ::core::option::Option<::prost::bytes::Bytes>,
+    #[prost(bytes="bytes", optional, tag="13")]
     pub pb_reserve: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1057,5 +1111,42 @@ pub struct PbReserve2 {
     pub field5: ::core::option::Option<i32>,
     #[prost(string, optional, tag="7")]
     pub md5_str: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct FaceExtra {
+    #[prost(int32, optional, tag="1")]
+    pub face_id: ::core::option::Option<i32>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QSmallFaceExtra {
+    #[prost(uint32, optional, tag="1")]
+    pub face_id: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="2")]
+    pub preview: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub preview2: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QFaceExtra {
+    #[prost(string, optional, tag="1")]
+    pub pack_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub sticker_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag="3")]
+    pub qsid: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="4")]
+    pub source_type: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag="5")]
+    pub sticker_type: ::core::option::Option<i32>,
+    #[prost(string, optional, tag="6")]
+    pub result_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="7")]
+    pub text: ::core::option::Option<::prost::alloc::string::String>,
+    /// optional bytes surprise_id = 8;
+    #[prost(int32, optional, tag="9")]
+    pub random_type: ::core::option::Option<i32>,
 }
 // @@protoc_insertion_point(module)

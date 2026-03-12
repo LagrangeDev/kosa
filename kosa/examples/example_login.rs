@@ -1,5 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
+use actix::prelude::*;
 use ahash::AHashSet;
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -7,7 +8,6 @@ use kosa::{
     common::{AppInfo, Bot, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
     event::{GroupMessageEvent, SessionUpdated},
     message::{Element, LocalImage, MessageChain},
-    prelude::*,
     service::login::QrcodeState,
 };
 use kosa_proto::common::v2::SsoSecureInfo;
@@ -70,10 +70,10 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
 
         for message in &msg.message.messages {
             match message {
-                Element::Text(_) => {}
                 Element::Image(img) => {
                     info!("image subtype:{}", img.sub_type)
                 }
+                _ => {}
             }
         }
 
@@ -116,7 +116,7 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
     }
 }
 
-#[kosa::main]
+#[actix::main]
 async fn main() -> anyhow::Result<()> {
     #[cfg(not(feature = "opentelemetry"))]
     tracing_subscriber::fmt()

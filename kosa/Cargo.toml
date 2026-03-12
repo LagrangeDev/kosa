@@ -30,8 +30,8 @@ futures = { workspace = true }
 hex = { workspace = true }
 imagesize = "0.14.0"
 inventory = "0.3.21"
-kosa-macros = { path = "../kosa-macros" }
-kosa-proto = { path = "../kosa-proto" }
+kosa-macros = { workspace = true }
+kosa-proto = { workspace = true }
 md-5 = "0.11.0-rc.5"
 num-bigint = "0.4.6"
 opentelemetry = { version = "0.31.0", optional = true }

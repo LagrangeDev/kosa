@@ -19,3 +19,7 @@ serde = "1.0.228"
 thiserror = "2.0.17"
 tokio-util = "0.7.17"
 tracing = "0.1.44"
+
+kosa = { version = "0.1.0", path = "kosa" }
+kosa-macros = { version = "0.1.0", path = "kosa-macros" }
+kosa-proto = { version = "0.1.0", path = "kosa-proto" }

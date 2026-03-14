@@ -20,7 +20,7 @@ use kosa_proto::{
 
 use crate::common::entity::Scene;
 pub use crate::message::{
-    at::At,
+    at::{At, AtType},
     face::QFace,
     image::{Image, LocalImage},
     text::Text,
@@ -127,6 +127,24 @@ impl MessageChain {
     pub fn image(mut self, image: Image) -> Self {
         self.push(Element::Image(image));
         self
+    }
+
+    /// 消息是否为纯文本
+    pub fn is_plain_text(&self) -> bool {
+        self.iter().all(|e| matches!(e, Element::Text(_)))
+    }
+
+    /// 获取一个消息中被@的所有人，不包含@全体
+    pub fn mentions(&self) -> Vec<i64> {
+        self.iter()
+            .filter_map(|e| match e {
+                Element::At(At {
+                    r#type: AtType::Specific(uin, _),
+                    ..
+                }) => Some(*uin),
+                _ => None,
+            })
+            .collect()
     }
 
     pub(crate) fn encode(self, scene: &Scene) -> anyhow::Result<Vec<Elem>> {

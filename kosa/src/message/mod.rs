@@ -21,7 +21,7 @@ use kosa_proto::{
 use crate::common::entity::Scene;
 pub use crate::message::{
     at::{At, AtType},
-    face::QFace,
+    face::{QFace, Roshambo, SuperFace},
     image::{Image, LocalImage},
     text::Text,
 };
@@ -66,6 +66,7 @@ pub enum Element {
     At,
     Text,
     QFace,
+    SuperFace,
     Image,
 }
 
@@ -108,19 +109,39 @@ impl MessageChain {
         Self(Vec::new())
     }
 
+    /// @消息
     pub fn at(mut self, at: At) -> Self {
         self.push(Element::At(at));
         self
     }
 
-    /// 添加文本消息段
+    /// 纯文本消息
     pub fn text(mut self, content: impl Into<String>) -> Self {
         self.push(Element::Text(Text::new(content)));
         self
     }
 
-    pub fn face(mut self, face_id: u32) -> Self {
+    /// 小表情
+    pub fn qface(mut self, face_id: u32) -> Self {
         self.push(Element::QFace(QFace::new(face_id)));
+        self
+    }
+
+    /// 超级表情
+    pub fn super_face(mut self, face_id: u32) -> Self {
+        self.push(Element::SuperFace(SuperFace::new(face_id)));
+        self
+    }
+
+    /// 掷骰子
+    pub fn dice(mut self, value: u32) -> Self {
+        self.push(Element::SuperFace(SuperFace::dice(value)));
+        self
+    }
+
+    /// 猜拳
+    pub fn roshambo(mut self, roshambo: Roshambo) -> Self {
+        self.push(Element::SuperFace(SuperFace::roshambo(roshambo)));
         self
     }
 

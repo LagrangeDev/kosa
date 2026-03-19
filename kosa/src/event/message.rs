@@ -3,13 +3,14 @@ use std::collections::VecDeque;
 use actix::Message as ActixMessage;
 use chrono::{DateTime, Utc};
 use kosa_proto::message::v2::{ContentHead, Elem, MessageBody};
+use tracing::debug;
 
 use crate::{
     common::entity::Scene,
     event::{Broker, push_message::PushMessageEvent},
     message::{
         At, BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem,
-        QFace, Text,
+        QFace, SuperFace, Text,
     },
 };
 
@@ -129,7 +130,9 @@ macro_rules! decode_messages {
                             }
                         }
                     )*
-                    (_, _) => {}
+                    (service_type, category) => {
+                        debug!(service_type = service_type, category = category, "unknown message")
+                    }
                 }
                 continue;
             } else {
@@ -153,7 +156,7 @@ pub(crate) fn parse_elements(scene: &Scene, elems: Vec<Elem>) -> anyhow::Result<
         elems,
         chain,
         [At, Text, QFace, Image],
-        [QFace, Image]
+        [QFace, SuperFace, Image]
     );
 
     Ok(chain)

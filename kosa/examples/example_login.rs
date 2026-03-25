@@ -5,10 +5,10 @@ use ahash::AHashSet;
 use async_trait::async_trait;
 use bytes::Bytes;
 use kosa::{
-    common::{AppInfo, Bot, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
+    common::{AppInfo, Bot, DEFAULT_PC_CMD_LIST, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
     event::{GroupMessageEvent, SessionUpdated},
-    message::{Element, LocalImage, MessageChain},
-    service::login::QrcodeState,
+    message::{Element, LocalImage, MessageChain, Roshambo},
+    service::{login::QrcodeState, system::ReactionType},
 };
 use kosa_proto::common::v2::SsoSecureInfo;
 #[cfg(feature = "opentelemetry")]
@@ -73,6 +73,15 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
                 Element::Image(img) => {
                     info!("image subtype:{}", img.sub_type)
                 }
+                Element::SuperFace(face) => {
+                    info!("SuperFace:{:?}", face)
+                }
+                Element::QFace(face) => {
+                    info!("QFace:{:?}", face)
+                }
+                Element::At(at) => {
+                    info!("At:{:?}", at)
+                }
                 _ => {}
             }
         }
@@ -82,6 +91,13 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
         }
         let bot = self.bot.clone();
         let future = async move {
+            let _ = bot
+                .add_group_reaction(msg.group_uin, msg.message.sequence, 32, ReactionType::FACE)
+                .await;
+            time::sleep(Duration::from_secs(3)).await;
+            let _ = bot
+                .remove_group_reaction(msg.group_uin, msg.message.sequence, 32, ReactionType::FACE)
+                .await;
             if msg.message.to_string() == "114514" {
                 if let Err(e) = bot
                     .send_group_message(msg.group_uin, MessageChain::new().text("1919810"))
@@ -250,7 +266,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("login successful!");
             }
             Err(err) => {
-                error!("login failed{}", err);
+                error!("login failed: {}", err);
             }
         }
     }
@@ -278,49 +294,7 @@ impl LinuxSign {
     fn new() -> Self {
         Self {
             client: reqwest::Client::default(),
-            list: AHashSet::from_iter([
-                "trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey",
-                "trpc.o3.ecdh_access.EcdhAccess.SsoSecureAccess",
-                "trpc.o3.report.Report.SsoReport",
-                "MessageSvc.PbSendMsg",
-                "wtlogin.trans_emp",
-                "wtlogin.login",
-                "wtlogin.exchange_emp",
-                "trpc.login.ecdh.EcdhService.SsoKeyExchange",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLogin",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginEasyLogin",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginNewDevice",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginEasyLoginUnusualDevice",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginUnusualDevice",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginRefreshTicket",
-                "trpc.login.ecdh.EcdhService.SsoNTLoginRefreshA2",
-                "OidbSvcTrpcTcp.0x11ec_1",
-                "OidbSvcTrpcTcp.0x758_1",
-                "OidbSvcTrpcTcp.0x7c1_1",
-                "OidbSvcTrpcTcp.0x7c2_5",
-                "OidbSvcTrpcTcp.0x10db_1",
-                "OidbSvcTrpcTcp.0x8a1_7",
-                "OidbSvcTrpcTcp.0x89a_0",
-                "OidbSvcTrpcTcp.0x89a_15",
-                "OidbSvcTrpcTcp.0x88d_0",
-                "OidbSvcTrpcTcp.0x88d_14",
-                "OidbSvcTrpcTcp.0x112a_1",
-                "OidbSvcTrpcTcp.0x587_74",
-                "OidbSvcTrpcTcp.0x1100_1",
-                "OidbSvcTrpcTcp.0x1102_1",
-                "OidbSvcTrpcTcp.0x1103_1",
-                "OidbSvcTrpcTcp.0x1107_1",
-                "OidbSvcTrpcTcp.0x1105_1",
-                "OidbSvcTrpcTcp.0xf88_1",
-                "OidbSvcTrpcTcp.0xf89_1",
-                "OidbSvcTrpcTcp.0xf57_1",
-                "OidbSvcTrpcTcp.0xf57_106",
-                "OidbSvcTrpcTcp.0xf57_9",
-                "OidbSvcTrpcTcp.0xf55_1",
-                "OidbSvcTrpcTcp.0xf67_1",
-                "OidbSvcTrpcTcp.0xf67_5",
-                "OidbSvcTrpcTcp.0x6d9_4",
-            ]),
+            list: AHashSet::from_iter(DEFAULT_PC_CMD_LIST),
         }
     }
 }

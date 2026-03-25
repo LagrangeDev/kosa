@@ -17,6 +17,10 @@ pub struct Oidb {
     pub reserved: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct GenericEmptyRspBody {
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct D102aReqBody {
     #[prost(string, repeated, tag="1")]
@@ -707,8 +711,17 @@ pub struct Ded3ReqBody {
     pub nudge_type: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct Ded3RspBody {
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SetGroupMessageReactionReq {
+    #[prost(int64, optional, tag="2")]
+    pub group_uin: ::core::option::Option<i64>,
+    #[prost(uint32, optional, tag="3")]
+    pub sequence: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="4")]
+    pub code: ::core::option::Option<::prost::alloc::string::String>,
+    /// 1 face 2 emoji
+    #[prost(uint32, optional, tag="5")]
+    pub r#type: ::core::option::Option<u32>,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

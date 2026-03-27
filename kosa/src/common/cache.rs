@@ -35,10 +35,12 @@ impl Cache {
         }
     }
 
+    /// 获取好友uid
     pub fn get_uid(&self, uin: i64) -> Option<String> {
         self.uin2uid.get(&uin).as_deref().cloned()
     }
 
+    /// 获取好友信息
     pub async fn get_friend_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<Friend>> {
         if !refresh {
             return Ok(self.friends.get(&uin).as_deref().cloned());
@@ -47,15 +49,34 @@ impl Cache {
         Ok(self.friends.get(&uin).as_deref().cloned())
     }
 
+    /// 获取群信息
+    pub async fn get_group_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<Group>> {
+        if !refresh {
+            return Ok(self.groups.get(&uin).as_deref().cloned());
+        }
+        self.refresh_groups().await?;
+        Ok(self.groups.get(&uin).as_deref().cloned())
+    }
+
+    /// 刷新好友列表缓存
     pub async fn refresh_friends(&self) -> anyhow::Result<()> {
         let (friends, categories) = self.service.fetch_friends().await?;
-        friends.into_iter().for_each(|(uin, friend)| {
-            self.uin2uid.insert(uin, friend.uid.clone());
-            self.uid2uin.insert(friend.uid.clone(), uin);
-            self.friends.insert(uin, friend);
+        friends.into_iter().for_each(|friend| {
+            self.uin2uid.insert(friend.uin, friend.uid.clone());
+            self.uid2uin.insert(friend.uid.clone(), friend.uin);
+            self.friends.insert(friend.uin, friend);
         });
-        categories.into_iter().for_each(|(id, category)| {
-            self.categories.insert(id, category);
+        categories.into_iter().for_each(|category| {
+            self.categories.insert(category.id, category);
+        });
+        Ok(())
+    }
+
+    /// 刷新群列表缓存
+    pub async fn refresh_groups(&self) -> anyhow::Result<()> {
+        let groups = self.service.fetch_groups().await?;
+        groups.into_iter().for_each(|group| {
+            self.groups.insert(group.uin, group);
         });
         Ok(())
     }

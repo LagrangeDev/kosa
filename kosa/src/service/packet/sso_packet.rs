@@ -121,11 +121,11 @@ impl SsoPacket {
 
     pub(crate) fn decode(data: Bytes, session: &Session) -> Result<SsoPacket, DecodeError> {
         let mut reader = Reader::new(data);
-        let _ = reader.read_u32()?; // length
-        let _ = reader.read_u32()?; // protocol
-        let auth_flag = reader.read_u8()?; // flag
-        let _ = reader.read_u8()?; // dummy
-        let _ = reader.read_string_with_prefix(Prefix::U32, true); // uin
+        let _length = reader.read_u32()?;
+        let _protocol = reader.read_u32()?;
+        let auth_flag = reader.read_u8()?;
+        let _dummy = reader.read_u8()?;
+        let _uin = reader.read_string_with_prefix(Prefix::U32, true);
 
         let encrypted = reader.bytes();
 
@@ -147,9 +147,9 @@ impl SsoPacket {
         let _ret_code = head_reader.read_i32()?;
         let _extra = head_reader.read_string_with_prefix(Prefix::U32, true)?;
         let command = head_reader.read_string_with_prefix(Prefix::U32, true)?;
-        let _ = head_reader.read_bytes_with_prefix(Prefix::U32, true)?; // msg cookie
+        let _msg_cookie = head_reader.read_bytes_with_prefix(Prefix::U32, true)?;
         let data_flag = head_reader.read_u32()?;
-        let _ = head_reader.read_bytes_with_prefix(Prefix::U32, true)?; // reserved
+        let _reserved = head_reader.read_bytes_with_prefix(Prefix::U32, true)?;
 
         let data = match data_flag {
             0 | 4 => body,

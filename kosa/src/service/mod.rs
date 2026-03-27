@@ -40,7 +40,9 @@ pub enum EncryptType {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, FromRepr)]
 #[repr(u8)]
 pub enum RequestType {
+    /// Protocol12
     D2Auth = 0x0C,
+    /// Protocol13
     Simple = 0x0D,
 }
 

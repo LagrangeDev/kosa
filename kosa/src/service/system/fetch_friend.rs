@@ -1,4 +1,5 @@
-use ahash::AHashMap;
+use std::vec;
+
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
 use kosa_proto::common::v2::{
@@ -23,8 +24,8 @@ pub(crate) struct FetchFriendReq {
 }
 
 pub(crate) struct FetchFriendResp {
-    pub(crate) friends: AHashMap<i64, Friend>,
-    pub(crate) categories: AHashMap<i32, FriendCategory>,
+    pub(crate) friends: Vec<Friend>,
+    pub(crate) categories: Vec<FriendCategory>,
     pub(crate) cookie: Bytes,
 }
 
@@ -78,44 +79,42 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
     ) -> anyhow::Result<FetchFriendResp> {
         let resp = IncPullResponse::decode(data.as_ref())?;
 
-        let mut categories: AHashMap<i32, FriendCategory> =
-            AHashMap::with_capacity(resp.category.len());
-        for category in resp.category {
-            categories.insert(
-                category.category_id.unwrap_or_default(),
-                FriendCategory {
-                    id: category.category_id.unwrap_or_default(),
-                    name: category.category_name.unwrap_or_default(),
-                    member_count: category.category_member_count.unwrap_or_default(),
-                    sort_id: category.catogory_sort_id.unwrap_or_default(),
-                },
-            );
-        }
+        let categories: Vec<FriendCategory> = resp
+            .category
+            .into_iter()
+            .map(|category| FriendCategory {
+                id: category.category_id.unwrap_or_default(),
+                name: category.category_name.unwrap_or_default(),
+                member_count: category.category_member_count.unwrap_or_default(),
+                sort_id: category.catogory_sort_id.unwrap_or_default(),
+            })
+            .collect();
 
-        let mut friends: AHashMap<i64, Friend> = AHashMap::with_capacity(resp.friend_list.len());
-        for mut friend in resp.friend_list {
-            if let Some(mut sub_biz) = friend.sub_biz.remove(&1) {
+        let friends: Vec<Friend> = resp
+            .friend_list
+            .into_iter()
+            .filter_map(|mut friend| {
+                let mut sub_biz = friend.sub_biz.remove(&1)?;
+
                 let nick_name = sub_biz.data.remove(&20002).unwrap_or_default();
                 let personal_sign = sub_biz.data.remove(&102).unwrap_or_default();
                 let remark = sub_biz.data.remove(&103).unwrap_or_default();
                 let qid = sub_biz.data.remove(&27394).unwrap_or_default();
                 let age = sub_biz.num_data.remove(&20037).unwrap_or_default();
                 let gender = sub_biz.num_data.remove(&20009).unwrap_or_default();
-                friends.insert(
-                    friend.uin.unwrap_or_default(),
-                    Friend {
-                        uin: friend.uin.unwrap_or_default(),
-                        uid: friend.uid.unwrap_or_default(),
-                        nick_name,
-                        personal_sign,
-                        remark,
-                        qid,
-                        age,
-                        gender: Gender::from_repr(gender).unwrap_or_default(),
-                    },
-                );
-            }
-        }
+
+                Some(Friend {
+                    uin: friend.uin.unwrap_or_default(),
+                    uid: friend.uid.unwrap_or_default(),
+                    nick_name,
+                    personal_sign,
+                    remark,
+                    qid,
+                    age,
+                    gender: Gender::from_repr(gender).unwrap_or_default(),
+                })
+            })
+            .collect();
 
         Ok(FetchFriendResp {
             friends,
@@ -126,11 +125,9 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
 }
 
 impl ServiceContext {
-    pub async fn fetch_friends(
-        &self,
-    ) -> anyhow::Result<(AHashMap<i64, Friend>, AHashMap<i32, FriendCategory>)> {
-        let mut friends = AHashMap::new();
-        let mut categories = AHashMap::new();
+    pub async fn fetch_friends(&self) -> anyhow::Result<(Vec<Friend>, Vec<FriendCategory>)> {
+        let mut friends = Vec::new();
+        let mut categories = Vec::new();
         let mut cookie: Bytes = Bytes::default();
         loop {
             let resp = self
@@ -152,9 +149,8 @@ impl ServiceContext {
 }
 
 impl Bot {
-    pub async fn fetch_friends(
-        &self,
-    ) -> anyhow::Result<(AHashMap<i64, Friend>, AHashMap<i32, FriendCategory>)> {
+    /// 获取好友列表
+    pub async fn fetch_friends(&self) -> anyhow::Result<(Vec<Friend>, Vec<FriendCategory>)> {
         self.service.fetch_friends().await
     }
 }

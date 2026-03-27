@@ -1,7 +1,8 @@
-pub(crate) mod alive;
-pub(crate) mod fetch_friend;
-pub(crate) mod group_reaction;
-pub(crate) mod highway_session;
-pub(crate) mod sso_heartbeat;
+mod alive;
+mod fetch_friend;
+mod fetch_group;
+mod group_reaction;
+mod highway_session;
+mod sso_heartbeat;
 
 pub use group_reaction::ReactionType;

@@ -60,7 +60,7 @@ impl OidbService<PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>
 }
 
 impl ServiceContext {
-    pub async fn get_private_voice_download_url(
+    pub(crate) async fn get_private_voice_download_url(
         &self,
         uin: i64,
         uid: String,

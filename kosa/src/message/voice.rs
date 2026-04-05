@@ -4,7 +4,7 @@ use bytes::Bytes;
 use digest::Digest;
 use kosa_proto::{
     message::v2::{CommonElem, Elem},
-    service::highway::v2::{ExtBizInfo, FileInfo, FileType, MsgInfo, PicExtBizInfo, PttExtBizInfo},
+    service::highway::v2::{FileInfo, FileType, MsgInfo},
 };
 use md5::Md5;
 use prost::Message;
@@ -117,25 +117,6 @@ impl RichMedia for LocalVoice {
             ..Default::default()
         };
         Ok(info)
-    }
-
-    fn build_ext_info(&self) -> anyhow::Result<ExtBizInfo> {
-        let ext = ExtBizInfo {
-            pic: Some(PicExtBizInfo {
-                text_summary: self.summary.clone(),
-                ..Default::default()
-            }),
-            ptt: Some(PttExtBizInfo {
-                bytes_reserve: None,
-                bytes_pb_reserve: Some(Bytes::from_static(&[0x08, 0x00, 0x38, 0x00])),
-                bytes_general_flags: Some(Bytes::from_static(&[
-                    0x9a, 0x01, 0x07, 0xaa, 0x03, 0x04, 0x08, 0x08, 0x12, 0x00,
-                ])),
-                ..Default::default()
-            }),
-            ..Default::default()
-        };
-        Ok(ext)
     }
 }
 

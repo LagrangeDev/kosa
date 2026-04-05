@@ -12,13 +12,11 @@ use std::{
     vec::IntoIter,
 };
 
+use anyhow::Context;
 use bytes::Bytes;
 use derive_more::Display;
 use enum_dispatch::enum_dispatch;
-use kosa_proto::{
-    message::v2::Elem,
-    service::highway::v2::{ExtBizInfo, FileInfo},
-};
+use kosa_proto::{message::v2::Elem, service::highway::v2::FileInfo};
 
 use crate::common::entity::Scene;
 pub use crate::message::{
@@ -59,8 +57,6 @@ pub(crate) trait RichMedia {
     const BUSINESS_TYPE: u32;
 
     fn build_file_info(&self) -> anyhow::Result<FileInfo>;
-
-    fn build_ext_info(&self) -> anyhow::Result<ExtBizInfo>;
 }
 
 #[enum_dispatch(MessageEncode)]
@@ -181,7 +177,7 @@ impl MessageChain {
         let len = self.len();
         self.into_iter()
             .try_fold(Vec::with_capacity(len), |mut acc, elem| {
-                acc.extend(elem.encode(scene)?);
+                acc.extend(elem.encode(scene).context("failed to encode elem")?);
                 Ok(acc)
             })
     }

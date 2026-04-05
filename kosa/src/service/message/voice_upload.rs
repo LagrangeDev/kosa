@@ -1,7 +1,8 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
 use kosa_proto::service::highway::v2::{
-    ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp,
+    ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp, PicExtBizInfo,
+    PttExtBizInfo,
 };
 use prost::Message;
 
@@ -42,7 +43,7 @@ impl OidbService<PrivateVoiceUploadReq, PrivateVoiceUploadResp> for PrivateVoice
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         Ok(
-            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info)?
+            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info, 1)?
                 .encode_to_vec()
                 .into(),
         )
@@ -66,17 +67,32 @@ impl OidbService<PrivateVoiceUploadReq, PrivateVoiceUploadResp> for PrivateVoice
 }
 
 impl ServiceContext {
-    pub async fn upload_private_voice(
+    pub(crate) async fn upload_private_voice(
         &self,
         uin: i64,
         uid: String,
         voice: &LocalVoice,
     ) -> anyhow::Result<PrivateVoiceUploadResp> {
+        let ext = ExtBizInfo {
+            pic: Some(PicExtBizInfo {
+                text_summary: voice.summary.clone(),
+                ..Default::default()
+            }),
+            ptt: Some(PttExtBizInfo {
+                bytes_reserve: None,
+                bytes_pb_reserve: Some(Bytes::from_static(&[0x08, 0x00, 0x38, 0x00])),
+                bytes_general_flags: Some(Bytes::from_static(&[
+                    0x9a, 0x01, 0x07, 0xaa, 0x03, 0x04, 0x08, 0x08, 0x12, 0x00,
+                ])),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
         self.send_request::<PrivateVoiceUploadService,PrivateVoiceUploadReq,PrivateVoiceUploadResp>(
             PrivateVoiceUploadReq{
                 scene:Scene::Private(uin,uid),
                 file_info:voice.build_file_info()?,
-                ext_biz_info:voice.build_ext_info()?
+                ext_biz_info:ext,
             }
         ).await
     }

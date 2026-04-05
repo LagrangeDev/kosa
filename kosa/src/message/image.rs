@@ -4,8 +4,8 @@ use bytes::Bytes;
 use digest::Digest;
 use imagesize::ImageSize;
 use kosa_proto::{
-    message::v2::{CommonElem, CustomFace, Elem, NotOnlineImage, PbReserve1},
-    service::highway::v2::{ExtBizInfo, FileInfo, FileType, MsgInfo, PicExtBizInfo},
+    message::v2::{CommonElem, Elem},
+    service::highway::v2::{FileInfo, FileType, MsgInfo},
 };
 use md5::Md5;
 use prost::Message;
@@ -33,6 +33,7 @@ pub struct Image {
     pub height: u32,
 
     pub(crate) msg_info: Box<MsgInfo>,
+    #[allow(dead_code)]
     pub(crate) compact: Bytes,
 }
 
@@ -45,16 +46,17 @@ impl Display for Image {
 impl MessageEncode for Image {
     fn encode(self, scene: &Scene) -> anyhow::Result<Vec<Elem>> {
         let elems = vec![
-            match scene {
-                Scene::Private(_, _) => Elem {
-                    not_online_image: Some(NotOnlineImage::decode(self.compact.clone())?),
-                    ..Default::default()
-                },
-                Scene::Group(_) => Elem {
-                    custom_face: Some(CustomFace::decode(self.compact.clone())?),
-                    ..Default::default()
-                },
-            },
+            // 这个应该是兼容旧客户端的，如果带上第一个elem，bot收到的消息是两个图片，暂时移除这个elem
+            // match scene {
+            //     Scene::Private(_, _) => Elem {
+            //         not_online_image: Some(NotOnlineImage::decode(self.compact.clone())?),
+            //         ..Default::default()
+            //     },
+            //     Scene::Group(_) => Elem {
+            //         custom_face: Some(CustomFace::decode(self.compact.clone())?),
+            //         ..Default::default()
+            //     },
+            // },
             Elem {
                 common_elem: Some(CommonElem {
                     service_type: Some(48),
@@ -82,9 +84,7 @@ impl MessageDecode for Image {
                 file_uuid: "".to_string(),
                 sub_type: pbres.sub_type.unwrap_or_default() as u32,
                 summary: pbres.summary.unwrap_or_default(),
-                md5: hex::decode(custom_face.md5())?
-                    .try_into()
-                    .map_err(|e| anyhow::anyhow!("parse image md5 error,raw data {:?}", e))?,
+                md5: custom_face.md5().try_into()?,
                 sha1: Default::default(),
                 width: custom_face.width() as u32,
                 height: custom_face.height() as u32,
@@ -186,29 +186,6 @@ impl RichMedia for LocalImage {
             original: Some(1),
         };
         Ok(info)
-    }
-
-    fn build_ext_info(&self) -> anyhow::Result<ExtBizInfo> {
-        let reserve = PbReserve1 {
-            sub_type: Some(self.sub_type as i32),
-            summary: self.summary.clone(),
-            ..Default::default()
-        };
-        let ext = ExtBizInfo {
-            pic: Some(PicExtBizInfo {
-                text_summary: self.summary.clone(),
-                bytes_pb_reserve_c2c: Bytes::from_static(&[
-                    0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x42, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92,
-                    0x01, 0x00, 0x9A, 0x01, 0x00, 0xA2, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18,
-                    0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00,
-                ])
-                .into(),
-                bytes_pb_reserve_troop: Some(reserve.encode_to_vec().into()),
-                ..Default::default()
-            }),
-            ..Default::default()
-        };
-        Ok(ext)
     }
 }
 

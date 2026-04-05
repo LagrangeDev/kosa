@@ -120,7 +120,7 @@ impl Handler<Packet> for PacketContext {
                             self.event
                                 .decode(pkt, self.app_info.deref(), self.session.deref())
                         {
-                            error!(err = %e, "failed to decode packet");
+                            error!(err = ?e, "failed to decode packet");
                         };
                     }
                 }

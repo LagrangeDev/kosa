@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use actix::Message as ActixMessage;
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use kosa_proto::message::v2::{ContentHead, Elem, MessageBody};
 use tracing::debug;
@@ -51,11 +52,12 @@ pub(crate) fn handle_group_message(event: PushMessageEvent, broker: &Broker) -> 
                 member_card: group.group_card().to_string(),
                 timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
                     .unwrap_or_default(),
-                message: handle_message(
+                message: decode_message(
                     Scene::Group(group.group_code()),
                     content_head,
                     common.message_body.unwrap_or_default(),
-                )?,
+                )
+                .context("failed to decode group message")?,
             };
             broker.issue_async(event);
             Ok(())
@@ -76,17 +78,18 @@ pub(crate) fn handle_private_message(
         uid: routing_head.from_uid().to_string(),
         timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
             .unwrap_or_default(),
-        message: handle_message(
+        message: decode_message(
             Scene::Private(routing_head.from_uin(), routing_head.from_uid().to_string()),
             content_head,
             common.message_body.unwrap_or_default(),
-        )?,
+        )
+        .context("failed to decode private message")?,
     };
     broker.issue_async(event);
     Ok(())
 }
 
-pub(crate) fn handle_message(
+pub(crate) fn decode_message(
     scene: Scene,
     content_head: ContentHead,
     message_body: MessageBody,
@@ -126,7 +129,9 @@ macro_rules! decode_messages {
                 match (service_type, business_type % 10) {
                     $(
                         ($msg_type_common_elem::SERVICE_TYPE, $msg_type_common_elem::CATEGORY) => {
-                            if let Some(message) = $msg_type_common_elem::decode_commom_elem(pb_elem, elem, &mut $data, $source)?{
+                            if let Some(message) = $msg_type_common_elem::decode_commom_elem(pb_elem, elem, &mut $data, $source).
+                                with_context(|| format!("failed to decode commom_elem message: {}", stringify!($msg_type_common_elem)))?
+                            {
                                 $chain.push(Element::$msg_type_common_elem(message));
                             }
                         }
@@ -138,7 +143,9 @@ macro_rules! decode_messages {
                 continue;
             } else {
                 $(
-                    if let Some(message) = $msg_type::decode(&elem, &mut $data, $source)? {
+                    if let Some(message) = $msg_type::decode(&elem, &mut $data, $source).
+                        with_context(|| format!("failed to decode message: {}", stringify!($msg_type)))?
+                    {
                         $chain.push(Element::$msg_type(message));
                         continue;
                     }

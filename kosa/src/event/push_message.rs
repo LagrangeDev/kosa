@@ -1,3 +1,4 @@
+use anyhow::Context;
 use bytes::Bytes;
 use kosa_macros::push_event;
 use kosa_proto::message::v2::{CommonMessage, MsgPush};
@@ -41,10 +42,12 @@ impl PushEvent for PushMessageEvent {
         {
             match event_type {
                 PushEventType::GroupMessage => {
-                    handle_group_message(event, broker)?;
+                    handle_group_message(event, broker)
+                        .context("failed to handle group message")?;
                 }
                 PushEventType::PrivateMessage | PushEventType::Event0xD0 => {
-                    handle_private_message(event, broker)?;
+                    handle_private_message(event, broker)
+                        .context("failed to handle private message")?;
                 }
                 PushEventType::TempMessage => {}
                 PushEventType::GroupMemberIncreaseNotice => {}

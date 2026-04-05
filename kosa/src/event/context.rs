@@ -1,5 +1,6 @@
 use actix::{Actor, AsyncContext, Handler, Message, dev::ToEnvelope};
 use ahash::AHashMap;
+use anyhow::Context;
 use tracing::trace;
 
 use crate::{
@@ -42,7 +43,8 @@ impl EventContext {
                 trace!("no event found for {}", packet.command);
                 Ok(())
             }
-            Some(decode_fn) => decode_fn(packet.data, &self.broker, app_info, session),
+            Some(decode_fn) => decode_fn(packet.data, &self.broker, app_info, session)
+                .with_context(|| format!("push event decode error, cmd: {}", packet.command)),
         }
     }
 

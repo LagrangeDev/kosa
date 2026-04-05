@@ -1,7 +1,10 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
-use kosa_proto::service::highway::v2::{
-    ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp,
+use kosa_proto::{
+    message::v2::PbReserve1,
+    service::highway::v2::{
+        ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp, PicExtBizInfo,
+    },
 };
 use prost::Message;
 
@@ -18,32 +21,36 @@ use crate::{
 #[derive(Debug, Default, ServiceState)]
 pub(crate) struct PrivateImageUploadService;
 
+#[oidb_command(0x11c4, 100)]
+#[derive(Debug, Default, ServiceState)]
+pub(crate) struct GroupImageUploadService;
+
 #[derive(Debug)]
-pub(crate) struct PrivateImageUploadReq {
+pub(crate) struct ImageUploadReq {
     file_info: FileInfo,
     ext_biz_info: ExtBizInfo,
     scene: Scene,
 }
 
 #[derive(Debug)]
-pub(crate) struct PrivateImageUploadResp {
+pub(crate) struct ImageUploadResp {
     msg_info: MsgInfo,
     compat_qmsg: Bytes,
     ext: Option<Ntv2RichMediaHighwayExt>,
 }
 
 #[register_oidb_service]
-impl OidbService<PrivateImageUploadReq, PrivateImageUploadResp> for PrivateImageUploadService {
+impl OidbService<ImageUploadReq, ImageUploadResp> for PrivateImageUploadService {
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
     fn build(
         _state: &Self,
-        req: PrivateImageUploadReq,
+        req: ImageUploadReq,
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         Ok(
-            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info)?
+            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info, 1)?
                 .encode_to_vec()
                 .into(),
         )
@@ -54,12 +61,47 @@ impl OidbService<PrivateImageUploadReq, PrivateImageUploadResp> for PrivateImage
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<PrivateImageUploadResp> {
+    ) -> anyhow::Result<ImageUploadResp> {
         let resp = Ntv2RichMediaResp::decode(data)?;
         let upload = resp
             .upload
             .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
-        Ok(PrivateImageUploadResp {
+        Ok(ImageUploadResp {
+            ext: gen_ext(upload.clone()),
+            msg_info: upload.msg_info.unwrap_or_default(),
+            compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
+        })
+    }
+}
+
+#[register_oidb_service]
+impl OidbService<ImageUploadReq, ImageUploadResp> for GroupImageUploadService {
+    const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
+
+    fn build(
+        _state: &Self,
+        req: ImageUploadReq,
+        _app_info: &AppInfo,
+        _session: &Session,
+    ) -> anyhow::Result<Bytes> {
+        Ok(
+            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info, 2)?
+                .encode_to_vec()
+                .into(),
+        )
+    }
+
+    fn parse(
+        _state: &Self,
+        data: Bytes,
+        _app_info: &AppInfo,
+        _session: &Session,
+    ) -> anyhow::Result<ImageUploadResp> {
+        let resp = Ntv2RichMediaResp::decode(data)?;
+        let upload = resp
+            .upload
+            .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
+        Ok(ImageUploadResp {
             ext: gen_ext(upload.clone()),
             msg_info: upload.msg_info.unwrap_or_default(),
             compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
@@ -73,12 +115,68 @@ impl ServiceContext {
         uin: i64,
         uid: String,
         image: &LocalImage,
-    ) -> anyhow::Result<PrivateImageUploadResp> {
-        self.send_request::<PrivateImageUploadService,PrivateImageUploadReq,PrivateImageUploadResp>(PrivateImageUploadReq{
-            scene:Scene::Private(uin,uid),
-            file_info:image.build_file_info()?,
-            ext_biz_info:image.build_ext_info()?
-        }).await
+    ) -> anyhow::Result<ImageUploadResp> {
+        let reserve = PbReserve1 {
+            sub_type: Some(image.sub_type as i32),
+            summary: image.summary.clone(),
+            ..Default::default()
+        };
+        let ext = ExtBizInfo {
+            pic: Some(PicExtBizInfo {
+                text_summary: image.summary.clone(),
+                bytes_pb_reserve_c2c: Bytes::from_static(&[
+                    0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x42, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92,
+                    0x01, 0x00, 0x9A, 0x01, 0x00, 0xA2, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18,
+                    0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00,
+                ])
+                .into(),
+                bytes_pb_reserve_troop: Some(reserve.encode_to_vec().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        self.send_request::<PrivateImageUploadService, ImageUploadReq, ImageUploadResp>(
+            ImageUploadReq {
+                scene: Scene::Private(uin, uid),
+                file_info: image.build_file_info()?,
+                ext_biz_info: ext,
+            },
+        )
+        .await
+    }
+
+    pub(crate) async fn upload_group_image(
+        &self,
+        group: i64,
+        image: &LocalImage,
+    ) -> anyhow::Result<ImageUploadResp> {
+        let reserve = PbReserve1 {
+            sub_type: Some(image.sub_type as i32),
+            summary: image.summary.clone(),
+            ..Default::default()
+        };
+        let ext = ExtBizInfo {
+            pic: Some(PicExtBizInfo {
+                text_summary: image.summary.clone(),
+                bytes_pb_reserve_c2c: Bytes::from_static(&[
+                    0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x4A, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92,
+                    0x01, 0x00, 0x9A, 0x01, 0x00, 0xAA, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18,
+                    0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00,
+                ])
+                .into(),
+                bytes_pb_reserve_troop: Some(reserve.encode_to_vec().into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        self.send_request::<GroupImageUploadService, ImageUploadReq, ImageUploadResp>(
+            ImageUploadReq {
+                scene: Scene::Group(group),
+                file_info: image.build_file_info()?,
+                ext_biz_info: ext,
+            },
+        )
+        .await
     }
 }
 
@@ -113,23 +211,61 @@ impl Bot {
                 .await?;
         }
 
-        let index0 = upload_resp.msg_info.msg_info_body[0].index.as_ref();
-
-        let image = Image {
-            name: index0
-                .and_then(|t| t.info.as_ref())
-                .and_then(|t| t.file_name.clone())
-                .unwrap_or_default(),
-            file_uuid: index0.and_then(|t| t.file_uuid.clone()).unwrap_or_default(),
-            sub_type: image.sub_type,
-            summary: image.summary.unwrap_or_default(),
-            md5: image.md5,
-            sha1: image.sha1,
-            width: image.width,
-            height: image.height,
-            msg_info: upload_resp.msg_info.into(),
-            compact: upload_resp.compat_qmsg,
-        };
-        Ok(image)
+        build_image(image, upload_resp.msg_info, upload_resp.compat_qmsg)
     }
+
+    pub async fn upload_group_image(
+        &self,
+        group: i64,
+        mut image: LocalImage,
+    ) -> anyhow::Result<Image> {
+        let upload_resp = self.service.upload_group_image(group, &image).await?;
+        let mut stream = image
+            .stream
+            .take()
+            .ok_or_else(|| anyhow::anyhow!("stream empty"))?;
+
+        if let Some(ext) = upload_resp.ext {
+            self.highway
+                .upload(
+                    1004,
+                    &mut stream,
+                    image.size,
+                    image.md5,
+                    Some(ext.encode_to_vec().into()),
+                )
+                .await?;
+        }
+
+        build_image(image, upload_resp.msg_info, upload_resp.compat_qmsg)
+    }
+}
+
+fn build_image(
+    local_image: LocalImage,
+    msg_info: MsgInfo,
+    compact: Bytes,
+) -> anyhow::Result<Image> {
+    let index0 = msg_info
+        .msg_info_body
+        .first()
+        .ok_or_else(|| anyhow::anyhow!("message info body empty"))?
+        .index
+        .as_ref();
+    let image = Image {
+        name: index0
+            .and_then(|t| t.info.as_ref())
+            .and_then(|t| t.file_name.clone())
+            .unwrap_or_default(),
+        file_uuid: index0.and_then(|t| t.file_uuid.clone()).unwrap_or_default(),
+        sub_type: local_image.sub_type,
+        summary: local_image.summary.unwrap_or_default(),
+        md5: local_image.md5,
+        sha1: local_image.sha1,
+        width: local_image.width,
+        height: local_image.height,
+        msg_info: msg_info.into(),
+        compact,
+    };
+    Ok(image)
 }

@@ -139,7 +139,7 @@ impl ServiceContext {
         if let Some(seq) = resp.sequence {
             Ok(seq)
         } else {
-            Err(anyhow::anyhow!("group message send failed"))
+            Err(anyhow::anyhow!("{}", resp.err_msg()))
         }
     }
 }

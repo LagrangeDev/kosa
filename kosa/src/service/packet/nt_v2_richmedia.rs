@@ -16,6 +16,7 @@ pub(crate) fn build_upload_request<M: RichMedia>(
     scene: Scene,
     file_info: FileInfo,
     ext_biz_info: ExtBizInfo,
+    compat_q_msg_scene_type: u32,
 ) -> anyhow::Result<Ntv2RichMediaReq> {
     let req = Ntv2RichMediaReq {
         req_head: Some(build_head::<M>(100, scene)),
@@ -27,7 +28,7 @@ pub(crate) fn build_upload_request<M: RichMedia>(
             try_fast_upload_completed: Some(true),
             srv_send_msg: Some(false),
             client_random_id: Some(rand::random()),
-            compat_q_msg_scene_type: Some(1),
+            compat_q_msg_scene_type: Some(compat_q_msg_scene_type),
             client_seq: Some(10),
             ext_biz_info: Some(ext_biz_info),
             no_need_compat_msg: Some(false),

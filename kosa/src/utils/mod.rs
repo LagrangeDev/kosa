@@ -5,6 +5,7 @@ pub mod crypto;
 pub mod image;
 pub mod io;
 pub mod marker;
+pub mod silk;
 
 use base64::{Engine, prelude::BASE64_STANDARD};
 

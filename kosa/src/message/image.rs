@@ -1,20 +1,23 @@
 use std::{collections::VecDeque, fmt::Display, path::Path};
 
 use bytes::Bytes;
+use digest::Digest;
 use imagesize::ImageSize;
 use kosa_proto::{
     message::v2::{CommonElem, CustomFace, Elem, NotOnlineImage, PbReserve1},
     service::highway::v2::{ExtBizInfo, FileInfo, FileType, MsgInfo, PicExtBizInfo},
 };
-use md5::{Digest, Md5};
+use md5::Md5;
 use prost::Message;
 use sha1::Sha1;
 use tokio::fs::File;
 
 use crate::{
     common::entity::Scene,
-    message::{MessageDecode, MessageDecodeCommonElem, MessageEncode, RichMedia},
-    stream_hash,
+    message::{
+        MessageDecode, MessageDecodeCommonElem, MessageEncode, RichMedia, utils::extract_info,
+    },
+    stream_hash, try_parse_hash,
     utils::{image, image::Format, io::AsyncStream},
 };
 
@@ -72,11 +75,21 @@ impl MessageDecode for Image {
         _elems: &mut VecDeque<Elem>,
         _scene: &Scene,
     ) -> anyhow::Result<Option<Self>> {
-        let ok = elem.custom_face.is_some();
-        if ok {
+        if let Some(custom_face) = elem.custom_face.as_ref() {
+            let pbres = custom_face.pb_reserve.clone().unwrap_or_default();
             Ok(Some(Self {
+                name: custom_face.file_path().to_string(),
+                file_uuid: "".to_string(),
+                sub_type: pbres.sub_type.unwrap_or_default() as u32,
+                summary: pbres.summary.unwrap_or_default(),
+                md5: hex::decode(custom_face.md5())?
+                    .try_into()
+                    .map_err(|e| anyhow::anyhow!("parse image md5 error,raw data {:?}", e))?,
+                sha1: Default::default(),
+                width: custom_face.width() as u32,
+                height: custom_face.height() as u32,
                 msg_info: Default::default(),
-                ..Default::default()
+                compact: Default::default(),
             }))
         } else {
             Ok(None)
@@ -94,15 +107,25 @@ impl MessageDecodeCommonElem for Image {
         _elems: &mut VecDeque<Elem>,
         _scene: &Scene,
     ) -> anyhow::Result<Option<Self>> {
-        let mut msg_info = MsgInfo::decode(pb_elem)?;
-        let index0 = msg_info.msg_info_body.pop().unwrap().index.unwrap();
+        let (
+            msg_info,
+            index_node,
+            FileInfo {
+                file_name,
+                file_hash,
+                file_sha1,
+                width,
+                height,
+                ..
+            },
+        ) = extract_info(pb_elem)?;
         let pic_ext_biz_info = msg_info
             .ext_biz_info
             .as_ref()
             .and_then(|info| info.pic.as_ref());
         Ok(Some(Self {
-            name: index0.info.unwrap().file_name().to_owned(),
-            file_uuid: index0.file_uuid.unwrap_or_default(),
+            name: file_name.unwrap_or_default(),
+            file_uuid: index_node.file_uuid().to_string(),
             sub_type: pic_ext_biz_info
                 .and_then(|t| t.biz_type)
                 .unwrap_or_default(),
@@ -110,11 +133,20 @@ impl MessageDecodeCommonElem for Image {
                 .and_then(|t| t.text_summary.as_ref())
                 .cloned()
                 .unwrap_or_default(),
+            md5: try_parse_hash!(file_hash.unwrap_or_default())?,
+            sha1: try_parse_hash!(file_sha1.unwrap_or_default())?,
+            width: width.unwrap_or_default(),
+            height: height.unwrap_or_default(),
             msg_info: msg_info.into(),
-            ..Default::default()
+
+            compact: Default::default(),
         }))
     }
 }
+
+/// 闪照
+#[derive(Debug, Clone)]
+pub struct EphemeralImage {}
 
 /// 本地图片，不能直接发送
 pub struct LocalImage {
@@ -136,7 +168,7 @@ impl RichMedia for LocalImage {
     fn build_file_info(&self) -> anyhow::Result<FileInfo> {
         let md5 = hex::encode(self.md5);
         let sha1 = hex::encode(self.sha1);
-        let file_name = format!("{}.{}", md5, "png");
+        let file_name = format!("{}.{}", md5, self.format);
         let info = FileInfo {
             file_size: Some(self.size as u32),
             file_hash: Some(md5),

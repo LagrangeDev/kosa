@@ -10,7 +10,7 @@ use crate::{
     event::{Broker, push_message::PushMessageEvent},
     message::{
         At, BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem,
-        QFace, SuperFace, Text,
+        QFace, SuperFace, Text, Voice,
     },
 };
 
@@ -122,6 +122,7 @@ macro_rules! decode_messages {
                     .as_ref()
                     .and_then(|common_elem| common_elem.pb_elem.clone())
                     .unwrap_or_default();
+                tracing::debug!(service_type = service_type, business_type = business_type, "decode message");
                 match (service_type, business_type % 10) {
                     $(
                         ($msg_type_common_elem::SERVICE_TYPE, $msg_type_common_elem::CATEGORY) => {
@@ -156,7 +157,7 @@ pub(crate) fn parse_elements(scene: &Scene, elems: Vec<Elem>) -> anyhow::Result<
         elems,
         chain,
         [At, Text, QFace, Image],
-        [QFace, SuperFace, Image]
+        [QFace, SuperFace, Image, Voice]
     );
 
     Ok(chain)

@@ -3,6 +3,7 @@ use kosa_macros::push_event;
 use kosa_proto::message::v2::{CommonMessage, MsgPush};
 use prost::Message;
 use strum::FromRepr;
+use tracing::trace;
 
 use crate::{
     common::{AppInfo, Session},
@@ -26,6 +27,7 @@ impl PushEvent for PushMessageEvent {
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<()> {
+        trace!("push message, data: {}", hex::encode(&data));
         let message = if let Some(common_message) = MsgPush::decode(data.clone())?.common_message {
             common_message
         } else {
@@ -41,7 +43,7 @@ impl PushEvent for PushMessageEvent {
                 PushEventType::GroupMessage => {
                     handle_group_message(event, broker)?;
                 }
-                PushEventType::PrivateMessage => {
+                PushEventType::PrivateMessage | PushEventType::Event0xD0 => {
                     handle_private_message(event, broker)?;
                 }
                 PushEventType::TempMessage => {}
@@ -67,6 +69,8 @@ pub enum PushEventType {
     GroupJoinNotification = 84,
     TempMessage = 141,
     PrivateMessage = 166,
+    /// 私聊语音
+    Event0xD0 = 208,
     Event0x20D = 525,
     Event0x210 = 528,
     Event0x2DC = 732,

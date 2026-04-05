@@ -5,7 +5,7 @@ use arc_swap::ArcSwap;
 use bytes::Bytes;
 use md5::{Digest, Md5};
 use rand::{
-    Rng,
+    RngExt,
     distr::{Distribution, StandardUniform},
 };
 use serde::{Deserialize, Serialize};
@@ -100,7 +100,7 @@ impl Session {
 }
 
 impl Distribution<Session> for StandardUniform {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Session {
+    fn sample<R: RngExt + ?Sized>(&self, rng: &mut R) -> Session {
         let android_id: [u8; 8] = rng.random();
         Session {
             guid: rng.random(),

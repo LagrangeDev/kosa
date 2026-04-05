@@ -2,9 +2,9 @@ use std::net::Ipv4Addr;
 
 use bytes::Bytes;
 use kosa_proto::service::highway::v2::{
-    C2cUserInfo, ClientMeta, CommonHead, ExtBizInfo, FileInfo, GroupInfo, MultiMediaReqHead,
-    NtHighwayDomain, NtHighwayHash, NtHighwayIPv4, NtHighwayNetwork, Ntv2RichMediaHighwayExt,
-    Ntv2RichMediaReq, SceneInfo, UploadInfo, UploadReq, UploadResp,
+    C2cUserInfo, ClientMeta, CommonHead, DownloadExt, DownloadReq, ExtBizInfo, FileInfo, GroupInfo,
+    IndexNode, MultiMediaReqHead, NtHighwayDomain, NtHighwayHash, NtHighwayIPv4, NtHighwayNetwork,
+    Ntv2RichMediaHighwayExt, Ntv2RichMediaReq, SceneInfo, UploadInfo, UploadReq, UploadResp,
 };
 
 use crate::{
@@ -35,6 +35,21 @@ pub(crate) fn build_upload_request<M: RichMedia>(
         ..Default::default()
     };
     Ok(req)
+}
+
+pub(crate) fn build_download_request<M: RichMedia>(
+    node: IndexNode,
+    ext: Option<DownloadExt>,
+    scene: Scene,
+) -> anyhow::Result<Ntv2RichMediaReq> {
+    Ok(Ntv2RichMediaReq {
+        req_head: build_head::<M>(200, scene).into(),
+        download: Some(DownloadReq {
+            node: Some(node),
+            download: ext,
+        }),
+        ..Default::default()
+    })
 }
 
 pub(crate) fn build_head<M: RichMedia>(cmd: u32, scene: Scene) -> MultiMediaReqHead {

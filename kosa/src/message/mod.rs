@@ -2,6 +2,8 @@ mod at;
 mod face;
 mod image;
 mod text;
+mod utils;
+mod voice;
 
 use std::{
     collections::VecDeque,
@@ -24,6 +26,7 @@ pub use crate::message::{
     face::{QFace, Roshambo, SuperFace},
     image::{Image, LocalImage},
     text::Text,
+    voice::{LocalVoice, Voice},
 };
 
 #[enum_dispatch]
@@ -68,6 +71,7 @@ pub enum Element {
     QFace,
     SuperFace,
     Image,
+    Voice,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -147,6 +151,11 @@ impl MessageChain {
 
     pub fn image(mut self, image: Image) -> Self {
         self.push(Element::Image(image));
+        self
+    }
+
+    pub fn voice(mut self, voice: Voice) -> Self {
+        self.push(Element::Voice(voice));
         self
     }
 

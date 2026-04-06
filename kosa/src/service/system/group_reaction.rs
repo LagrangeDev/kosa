@@ -24,18 +24,27 @@ pub(crate) struct GroupReactionReq {
 
 pub(crate) struct GroupReactionResp;
 
+/// 消息表态
+///
+/// FACE是qq自带的小表情，EMOJI就是系统的emoji
+///
+/// example
+/// ```
+/// Reaction::Face(35)
+/// Reaction::EMOJI('😰')
+/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Reaction {
     FACE(u32),
-    EMOJI(String),
+    EMOJI(char),
 }
 
 impl Reaction {
     pub fn code(self) -> String {
         match self {
             Reaction::FACE(face_id) => face_id.to_string(),
-            Reaction::EMOJI(emoji) => emoji,
+            Reaction::EMOJI(emoji) => (emoji as u32).to_string(),
         }
     }
 

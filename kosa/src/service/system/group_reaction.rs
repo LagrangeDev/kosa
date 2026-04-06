@@ -2,7 +2,6 @@ use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
 use kosa_proto::service::v2::SetGroupMessageReactionReq;
 use prost::Message;
-use tracing::info;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
@@ -20,17 +19,32 @@ pub(crate) struct GroupRemoveReactionService;
 pub(crate) struct GroupReactionReq {
     pub(crate) group_uin: i64,
     pub(crate) sequence: i32,
-    pub(crate) code: String,
-    pub(crate) r#type: ReactionType,
+    pub(crate) reaction: Reaction,
 }
 
 pub(crate) struct GroupReactionResp;
 
 #[repr(u32)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum ReactionType {
-    FACE = 1,
-    EMOJI = 2,
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Reaction {
+    FACE(u32),
+    EMOJI(String),
+}
+
+impl Reaction {
+    pub fn code(self) -> String {
+        match self {
+            Reaction::FACE(face_id) => face_id.to_string(),
+            Reaction::EMOJI(emoji) => emoji,
+        }
+    }
+
+    pub fn r#type(&self) -> u32 {
+        match self {
+            Reaction::FACE(_) => 1,
+            Reaction::EMOJI(_) => 2,
+        }
+    }
 }
 
 #[register_oidb_service]
@@ -46,19 +60,18 @@ impl OidbService<GroupReactionReq, GroupReactionResp> for GroupAddReactionServic
         let req = SetGroupMessageReactionReq {
             group_uin: Some(req.group_uin),
             sequence: Some(req.sequence as u32),
-            code: Some(req.code),
-            r#type: Some(req.r#type as u32),
+            r#type: Some(req.reaction.r#type()),
+            code: Some(req.reaction.code()),
         };
         Ok(req.encode_to_vec().into())
     }
 
     fn parse(
         _state: &Self,
-        data: Bytes,
+        _data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<GroupReactionResp> {
-        info!("resp: {}", hex::encode(&data));
         Ok(GroupReactionResp)
     }
 }
@@ -76,19 +89,18 @@ impl OidbService<GroupReactionReq, GroupReactionResp> for GroupRemoveReactionSer
         let req = SetGroupMessageReactionReq {
             group_uin: Some(req.group_uin),
             sequence: Some(req.sequence as u32),
-            code: Some(req.code),
-            r#type: Some(req.r#type as u32),
+            r#type: Some(req.reaction.r#type()),
+            code: Some(req.reaction.code()),
         };
         Ok(req.encode_to_vec().into())
     }
 
     fn parse(
         _state: &Self,
-        data: Bytes,
+        _data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<GroupReactionResp> {
-        info!("resp: {}", hex::encode(&data));
         Ok(GroupReactionResp)
     }
 }
@@ -98,16 +110,14 @@ impl ServiceContext {
         &self,
         group: i64,
         seq: i32,
-        face_id: i32,
-        r#type: ReactionType,
+        reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
             .send_request::<GroupAddReactionService, GroupReactionReq, GroupReactionResp>(
                 GroupReactionReq {
                     group_uin: group,
                     sequence: seq,
-                    code: face_id.to_string(),
-                    r#type,
+                    reaction,
                 },
             )
             .await?;
@@ -118,16 +128,14 @@ impl ServiceContext {
         &self,
         group: i64,
         seq: i32,
-        face_id: i32,
-        r#type: ReactionType,
+        reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
             .send_request::<GroupRemoveReactionService, GroupReactionReq, GroupReactionResp>(
                 GroupReactionReq {
                     group_uin: group,
                     sequence: seq,
-                    code: face_id.to_string(),
-                    r#type,
+                    reaction,
                 },
             )
             .await?;
@@ -141,12 +149,9 @@ impl Bot {
         &self,
         group: i64,
         seq: i32,
-        face_id: i32,
-        r#type: ReactionType,
+        reaction: Reaction,
     ) -> anyhow::Result<()> {
-        self.service
-            .add_group_reaction(group, seq, face_id, r#type)
-            .await
+        self.service.add_group_reaction(group, seq, reaction).await
     }
 
     /// 移除群消息回应
@@ -154,11 +159,10 @@ impl Bot {
         &self,
         group: i64,
         seq: i32,
-        face_id: i32,
-        r#type: ReactionType,
+        reaction: Reaction,
     ) -> anyhow::Result<()> {
         self.service
-            .remove_group_reaction(group, seq, face_id, r#type)
+            .remove_group_reaction(group, seq, reaction)
             .await
     }
 }

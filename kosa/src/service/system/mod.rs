@@ -5,4 +5,4 @@ mod group_reaction;
 mod highway_session;
 mod sso_heartbeat;
 
-pub use group_reaction::ReactionType;
+pub use group_reaction::Reaction;

@@ -50,7 +50,7 @@ impl OidbService<ImageUploadReq, ImageUploadResp> for PrivateImageUploadService 
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         Ok(
-            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info, 1)?
+            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info)?
                 .encode_to_vec()
                 .into(),
         )
@@ -85,7 +85,7 @@ impl OidbService<ImageUploadReq, ImageUploadResp> for GroupImageUploadService {
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         Ok(
-            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info, 2)?
+            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info)?
                 .encode_to_vec()
                 .into(),
         )

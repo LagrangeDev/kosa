@@ -43,7 +43,7 @@ impl OidbService<PrivateVoiceUploadReq, PrivateVoiceUploadResp> for PrivateVoice
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
         Ok(
-            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info, 1)?
+            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info)?
                 .encode_to_vec()
                 .into(),
         )

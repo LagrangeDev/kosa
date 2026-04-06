@@ -18,6 +18,7 @@ use crate::{
     utils::{io::AsyncStream, silk::get_silk_duration},
 };
 
+/// 语音消息
 #[derive(Debug, Clone)]
 pub struct Voice {
     pub summary: String,

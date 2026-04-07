@@ -9,10 +9,10 @@ ffmpeg = ["silk-codec/ffmpeg", "silk-codec/ffmpeg-tracing"]
 ffmpeg-static = ["silk-codec/ffmpeg-static", "silk-codec/ffmpeg-tracing"]
 
 [dependencies]
-actix = "0.13.5"
+actix = { workspace = true }
 aes = "0.8.4"
 aes-gcm = { version = "0.10.3", features = ["std"] }
-ahash = { version = "0.8.12", features = ["serde"] }
+ahash = { workspace = true, features = ["serde"] }
 anyhow = { workspace = true }
 arc-swap = { version = "1.8.0", features = ["serde"] }
 async-trait = { workspace = true }
@@ -29,7 +29,7 @@ digest = "0.11.0"
 enum_dispatch = "0.3.13"
 flate2 = "1.1.5"
 futures = { workspace = true }
-hex = "0.4.3"
+hex = { workspace = true }
 imagesize = "0.14.0"
 inventory = "0.3.21"
 kosa-macros = { workspace = true }
@@ -41,13 +41,12 @@ opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"], optional = tr
 p256 = { version = "0.14.0-rc.7", features = ["ecdh"] }
 prost = { workspace = true }
 rand = "0.10.0"
-reqwest = { version = "0.13.1", features = ["json"] }
+reqwest = { workspace = true, features = ["json"] }
 rmp-serde = "1.3.1"
 scopeguard = "1.2.0"
 serde = { workspace = true, features = ["derive"] }
 sha1 = "0.11.0"
 sha2 = "0.11.0"
-silk-codec = { git = "https://github.com/Redmomn/silk-codec.git", version = "0.1.0", features = ["ffmpeg", "ffmpeg-tracing"] }
 strum = { version = "0.28.0", features = ["derive"] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
@@ -57,6 +56,7 @@ tracing = { workspace = true }
 [dev-dependencies]
 opentelemetry-appender-tracing = "0.31.1"
 opentelemetry-otlp = "0.31.0"
+silk-codec = { git = "https://github.com/Redmomn/silk-codec.git", version = "0.1.0", features = ["ffmpeg", "ffmpeg-tracing"] }
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.22", features = ["local-time"] }
 

@@ -114,8 +114,10 @@ impl Bot {
             ],
         )
     }
+}
 
-    pub fn release(&self) {
+impl Drop for Bot {
+    fn drop(&mut self) {
         self.set_online(
             false,
             #[cfg(feature = "opentelemetry")]

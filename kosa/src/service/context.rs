@@ -27,7 +27,7 @@ pub(crate) struct ServiceContext {
 }
 
 impl ServiceContext {
-    pub(crate) async fn new(
+    pub(crate) fn new(
         seq: i32,
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
@@ -42,8 +42,7 @@ impl ServiceContext {
             services.insert(cmd, service);
         }
 
-        let packet_context =
-            PacketContext::new(app_info.clone(), session.clone(), event, sign).await?;
+        let packet_context = PacketContext::new(app_info.clone(), session.clone(), event, sign)?;
         let addr = packet_context.start();
 
         Ok(Self {

@@ -56,14 +56,14 @@ impl BotMetrics {
 }
 
 impl Bot {
-    pub async fn new(
+    pub fn new(
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
         let event = Rc::new(EventContext::new());
         let service =
-            ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign).await?;
+            ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign)?;
         let service = Arc::new(service);
         let highway = Arc::new(HighWayContext::new(
             service.clone(),

@@ -13,7 +13,7 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn new<S: Into<String>>(content: S) -> Self {
+    pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
         }

@@ -38,7 +38,7 @@ impl At {
         }
     }
 
-    pub fn display<S: Into<String>>(mut self, display: S) -> At {
+    pub fn display(mut self, display: impl Into<String>) -> At {
         self.display = Some(display.into());
         self
     }

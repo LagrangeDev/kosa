@@ -55,7 +55,7 @@ impl PacketMetrics {
 }
 
 impl PacketContext {
-    pub(crate) async fn new(
+    pub(crate) fn new(
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
         event: Rc<EventContext>,

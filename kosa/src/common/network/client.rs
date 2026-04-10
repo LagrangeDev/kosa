@@ -2,7 +2,7 @@ use std::{io, rc::Rc, time::Duration};
 
 use actix::{
     Actor, ActorContext, ActorFutureExt, AsyncContext, Context, ContextFutureSpawner, Handler,
-    Running, StreamHandler, WrapFuture,
+    Running, StreamHandler, Supervised, WrapFuture,
     io::{FramedWrite, WriteHandler},
 };
 #[cfg(feature = "opentelemetry")]
@@ -13,6 +13,7 @@ use tracing::{debug, error, info, trace};
 
 use crate::{
     common::network::codec::{LengthCodec, Packet},
+    event::{DisconnectEvent, EventContext, ReconnectEvent},
     utils::broker::Broker,
 };
 
@@ -51,6 +52,7 @@ pub(crate) struct TcpClient {
     peer_addr: Option<String>,
     disconnect_state: Option<DisconnectState>,
 
+    event: Rc<EventContext>,
     broker: Rc<Broker>,
 
     #[cfg(feature = "opentelemetry")]
@@ -58,12 +60,13 @@ pub(crate) struct TcpClient {
 }
 
 impl TcpClient {
-    pub(crate) fn new(address: String, broker: Rc<Broker>) -> Self {
+    pub(crate) fn new(address: String, broker: Rc<Broker>, event: Rc<EventContext>) -> Self {
         Self {
             address,
             framed: None,
             peer_addr: None,
             disconnect_state: None,
+            event,
             broker,
             #[cfg(feature = "opentelemetry")]
             metrics: TcpMetrics::new(),
@@ -104,9 +107,7 @@ impl TcpClient {
                 },
                 Err(e) => {
                     error!(err = %e, "tcp connect timeout");
-                    ctx.run_later(Duration::from_secs(5), |act, ctx| {
-                        act.connect(ctx);
-                    });
+                    ctx.stop()
                 }
             })
             .wait(ctx)
@@ -121,19 +122,30 @@ impl Actor for TcpClient {
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
-        let reason = self.disconnect_state.take();
+        let state = self.disconnect_state.take();
+        let reason = state
+            .as_ref()
+            .map(|state| state.reason)
+            .unwrap_or("unknown");
+        let detail = state
+            .as_ref()
+            .map(|state| state.detail.as_str())
+            .unwrap_or("missing disconnect context");
+        self.event.issue_async(DisconnectEvent {
+            reason: format!("{reason}: {detail}"),
+        });
         info!(
             peer_addr = self.peer_addr.as_deref().unwrap_or("unknown"),
-            reason = reason
-                .as_ref()
-                .map(|state| state.reason)
-                .unwrap_or("unknown"),
-            detail = reason
-                .as_ref()
-                .map(|state| state.detail.as_str())
-                .unwrap_or("missing disconnect context"),
+            reason = reason,
+            detail = detail,
             "tcp disconnected"
         );
+    }
+}
+
+impl Supervised for TcpClient {
+    fn restarting(&mut self, _: &mut Self::Context) {
+        self.event.issue_async(ReconnectEvent);
     }
 }
 

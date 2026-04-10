@@ -4,6 +4,7 @@ use bytes::Bytes;
 pub(crate) use context::EventContext;
 pub use login::SessionUpdated;
 pub use message::{GroupMessageEvent, PrivateMessageEvent};
+pub use network::{DisconnectEvent, ReconnectEvent};
 
 use crate::{
     common::{AppInfo, Session},
@@ -13,8 +14,11 @@ use crate::{
 mod context;
 mod login;
 mod message;
+mod network;
 mod push_message;
+
 use crate::utils::broker::Broker;
+
 pub(crate) type EventHandlerFn = fn(Bytes, &Broker, &AppInfo, &Session) -> anyhow::Result<()>;
 
 pub(crate) struct EventEntry {

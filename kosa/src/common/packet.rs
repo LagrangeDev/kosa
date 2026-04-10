@@ -1,6 +1,8 @@
 use std::{io, ops::Deref, rc::Rc, sync::Arc, time::Duration};
 
-use actix::{Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, WrapFuture};
+use actix::{
+    Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, Supervisor, WrapFuture,
+};
 use anyhow::Context;
 use dashmap::DashMap;
 use futures::channel::oneshot;
@@ -65,8 +67,9 @@ impl PacketContext {
         let tcp_client = TcpClient::new(
             format!("{}:{}", DEFAULT_SERVER, DEFAULT_PORT),
             broker.clone(),
+            event.clone(),
         );
-        let tcp_client_addr = tcp_client.start();
+        let tcp_client_addr = Supervisor::start(|_x| tcp_client);
 
         Ok(Self {
             app_info,

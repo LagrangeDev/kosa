@@ -1,4 +1,4 @@
-use std::{io, rc::Rc, time::Duration};
+use std::{io, sync::Arc, time::Duration};
 
 use actix::{
     Actor, ActorContext, ActorFutureExt, AsyncContext, Context, ContextFutureSpawner, Handler,
@@ -52,15 +52,15 @@ pub(crate) struct TcpClient {
     peer_addr: Option<String>,
     disconnect_state: Option<DisconnectState>,
 
-    event: Rc<EventContext>,
-    broker: Rc<Broker>,
+    event: Arc<EventContext>,
+    broker: Arc<Broker>,
 
     #[cfg(feature = "opentelemetry")]
     metrics: TcpMetrics,
 }
 
 impl TcpClient {
-    pub(crate) fn new(address: String, broker: Rc<Broker>, event: Rc<EventContext>) -> Self {
+    pub(crate) fn new(address: String, broker: Arc<Broker>, event: Arc<EventContext>) -> Self {
         Self {
             address,
             framed: None,

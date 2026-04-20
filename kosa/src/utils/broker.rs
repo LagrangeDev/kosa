@@ -1,21 +1,18 @@
-use std::{
-    any::{Any, TypeId},
-    cell::RefCell,
-    collections::HashMap,
-};
+use std::any::{Any, TypeId};
 
 use actix::{Actor, AsyncContext, Handler, Message, Recipient, dev::ToEnvelope};
+use dashmap::DashMap;
 use tracing::trace;
 
 #[derive(Debug)]
 pub(crate) struct Broker {
-    subscribers: RefCell<HashMap<TypeId, Vec<Box<dyn Any>>>>,
+    subscribers: DashMap<TypeId, Vec<Box<dyn Any + Send + Sync>>>,
 }
 
 impl Broker {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
-            subscribers: RefCell::new(HashMap::new()),
+            subscribers: DashMap::new(),
         }
     }
 }
@@ -35,7 +32,6 @@ impl Broker {
         let recipient = ctx.address().recipient();
 
         self.subscribers
-            .borrow_mut()
             .entry(type_id)
             .or_default()
             .push(Box::new(recipient));
@@ -49,9 +45,9 @@ impl Broker {
         M: Message<Result = ()> + Clone + Send + 'static,
     {
         let type_id = TypeId::of::<M>();
-        if let Some(subs) = self.subscribers.borrow().get(&type_id) {
-            for sub in subs {
-                if let Some(recipient) = sub.downcast_ref::<Recipient<M>>() {
+        if let Some(subs) = self.subscribers.get(&type_id) {
+            for sub in subs.iter() {
+                if let Some(recipient) = sub.as_ref().downcast_ref::<Recipient<M>>() {
                     recipient.do_send(msg.clone());
                 }
             }

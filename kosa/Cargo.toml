@@ -5,8 +5,6 @@ edition.workspace = true
 
 [features]
 opentelemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
-ffmpeg = ["silk-codec/ffmpeg", "silk-codec/ffmpeg-tracing"]
-ffmpeg-static = ["silk-codec/ffmpeg-static", "silk-codec/ffmpeg-tracing"]
 
 [dependencies]
 actix = { workspace = true }
@@ -24,6 +22,7 @@ bytes = { workspace = true, features = ["serde"] }
 cbc = { version = "0.1.2", features = ["std", "alloc", "block-padding"] }
 chrono.workspace = true
 dashmap = "6.1.0"
+delegate = "0.13.5"
 derive_more = { version = "2.1.1", features = ["display"] }
 digest = "0.11.0"
 enum_dispatch = "0.3.13"
@@ -56,10 +55,9 @@ tracing = { workspace = true }
 [dev-dependencies]
 opentelemetry-appender-tracing = "0.31.1"
 opentelemetry-otlp = "0.31.0"
-silk-codec = { git = "https://github.com/Redmomn/silk-codec.git", version = "0.1.0", features = ["ffmpeg", "ffmpeg-tracing"] }
+silk-codec = { version = "0.2.0", features = ["ffmpeg-static", "ffmpeg-tracing"] }
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.22", features = ["local-time"] }
 
 [[example]]
 name = "example_login"
-required-features = ["ffmpeg"]

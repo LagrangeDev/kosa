@@ -1,6 +1,5 @@
 use std::{
     ops::Deref,
-    rc::Rc,
     sync::{
         Arc,
         atomic::{AtomicI32, Ordering},
@@ -31,7 +30,7 @@ impl ServiceContext {
         seq: i32,
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
-        event: Rc<EventContext>,
+        event: Arc<EventContext>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
         let mut services = AHashMap::new();

@@ -1,4 +1,4 @@
-use std::{io, ops::Deref, rc::Rc, sync::Arc, time::Duration};
+use std::{io, ops::Deref, sync::Arc, time::Duration};
 
 use actix::{
     Actor, ActorFutureExt, Addr, Handler, Message, ResponseActFuture, Supervisor, WrapFuture,
@@ -26,12 +26,12 @@ use crate::{
 pub(crate) struct PacketContext {
     pub(crate) app_info: Arc<AppInfo>,
     pub(crate) session: Arc<Session>,
-    pub(crate) event: Rc<EventContext>,
+    pub(crate) event: Arc<EventContext>,
     pub(crate) network: Addr<TcpClient>,
 
     pub(crate) pending: Arc<DashMap<i32, oneshot::Sender<SsoPacket>>>,
     pub(crate) sign: Arc<dyn Sign>,
-    broker: Rc<Broker>,
+    broker: Arc<Broker>,
     #[cfg(feature = "opentelemetry")]
     metrics: Arc<PacketMetrics>,
 }
@@ -60,10 +60,10 @@ impl PacketContext {
     pub(crate) fn new(
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
-        event: Rc<EventContext>,
+        event: Arc<EventContext>,
         sign: Arc<dyn Sign>,
     ) -> Result<Self, io::Error> {
-        let broker = Rc::new(Broker::new());
+        let broker = Arc::new(Broker::new());
         let tcp_client = TcpClient::new(
             format!("{}:{}", DEFAULT_SERVER, DEFAULT_PORT),
             broker.clone(),

@@ -1,5 +1,4 @@
 use std::{
-    rc::Rc,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -7,7 +6,9 @@ use std::{
     time::Duration,
 };
 
+use actix::{Actor, AsyncContext, Handler, Message, dev::ToEnvelope};
 use dashmap::DashMap;
+use delegate::delegate;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Gauge};
 use tokio::{task::JoinHandle, time};
@@ -26,8 +27,8 @@ pub struct Bot {
     pub(crate) online: AtomicBool,
     pub(crate) session: Arc<Session>,
 
-    pub cache: Arc<Cache>,
-    pub event: Rc<EventContext>,
+    pub(crate) cache: Arc<Cache>,
+    pub(crate) event: Arc<EventContext>,
     pub(crate) service: Arc<ServiceContext>,
     pub(crate) highway: Arc<HighWayContext>,
     pub(crate) tasks: DashMap<String, JoinHandle<()>>,
@@ -61,7 +62,7 @@ impl Bot {
         session: Arc<Session>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
-        let event = Rc::new(EventContext::new());
+        let event = Arc::new(EventContext::new());
         let service =
             ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign)?;
         let service = Arc::new(service);
@@ -113,6 +114,32 @@ impl Bot {
                 KeyValue::new("reason", reason.unwrap_or_default()),
             ],
         )
+    }
+
+    delegate! {
+        to self.cache {
+            pub fn get_uid(&self, uin: i64) -> Option<String>;
+            pub async fn get_friend_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Friend>>;
+            pub async fn get_group_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Group>>;
+            pub async fn refresh_friends(&self) -> anyhow::Result<()>;
+            pub async fn refresh_groups(&self) -> anyhow::Result<()>;
+        }
+    }
+
+    pub fn subscribe_async<A, M>(&self, ctx: &mut A::Context)
+    where
+        A: Actor + Handler<M>,
+        A::Context: AsyncContext<A> + ToEnvelope<A, M>,
+        M: Message<Result = ()> + Send + 'static,
+    {
+        self.event.subscribe_async::<A, M>(ctx);
+    }
+
+    pub fn issue_async<M>(&self, msg: M)
+    where
+        M: Message<Result = ()> + Clone + Send + 'static,
+    {
+        self.event.issue_async::<M>(msg);
     }
 }
 

@@ -1,47 +1,42 @@
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{Error, GenericArgument, ItemImpl, PathArguments, Type, parse_macro_input};
+use syn::{Error, GenericArgument, ItemImpl, PathArguments, Type};
 
-pub fn register_service(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let impl_block = parse_macro_input!(item as ItemImpl);
+pub fn register_service(_attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream2> {
+    let impl_block: ItemImpl = syn::parse(item)?;
     let self_ty = &impl_block.self_ty;
 
     if impl_block.trait_.is_none() {
-        return Error::new_spanned(impl_block, "must be a trait implementation")
-            .to_compile_error()
-            .into();
+        return Err(Error::new_spanned(
+            &impl_block.self_ty,
+            "must be a trait implementation",
+        ));
     }
 
     let submit_code = expand_service_submit(self_ty);
 
-    let expanded = quote! {
+    Ok(quote! {
         #impl_block
         #submit_code
-    };
-
-    TokenStream::from(expanded)
+    })
 }
 
-pub fn register_oidb_service(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let impl_block = parse_macro_input!(item as ItemImpl);
+pub fn register_oidb_service(_attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream2> {
+    let impl_block: ItemImpl = syn::parse(item)?;
     let self_ty = &impl_block.self_ty;
 
     let trait_path = match &impl_block.trait_ {
         Some((_, path, _)) => path,
         None => {
-            return Error::new_spanned(
-                impl_block,
+            return Err(Error::new_spanned(
+                &impl_block.self_ty,
                 "must implement a trait like OidbService<Req, Resp>",
-            )
-            .to_compile_error()
-            .into();
+            ));
         }
     };
 
-    let (req_ty, resp_ty) = match extract_trait_type_args(trait_path) {
-        Ok(types) => types,
-        Err(e) => return e.to_compile_error().into(),
-    };
+    let (req_ty, resp_ty) = extract_trait_type_args(trait_path)?;
 
     let service_impl = quote! {
         impl crate::service::Service<#req_ty, #resp_ty> for #self_ty {
@@ -85,13 +80,11 @@ pub fn register_oidb_service(_attr: TokenStream, item: TokenStream) -> TokenStre
 
     let submit_code = expand_service_submit(self_ty);
 
-    let expanded = quote! {
+    Ok(quote! {
         #impl_block
         #service_impl
         #submit_code
-    };
-
-    TokenStream::from(expanded)
+    })
 }
 
 fn extract_trait_type_args(trait_path: &syn::Path) -> syn::Result<(&Type, &Type)> {
@@ -131,7 +124,7 @@ fn extract_trait_type_args(trait_path: &syn::Path) -> syn::Result<(&Type, &Type)
     }
 }
 
-fn expand_service_submit(self_ty: &syn::Type) -> proc_macro2::TokenStream {
+fn expand_service_submit(self_ty: &Type) -> TokenStream2 {
     quote! {
         inventory::submit! {
             crate::service::ServiceEntry {

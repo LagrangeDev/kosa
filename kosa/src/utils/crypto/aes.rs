@@ -1,11 +1,11 @@
-use aes::cipher::block_padding::{Pkcs7, UnpadError};
+use aes::cipher::block_padding::{Error, Pkcs7};
 use aes_gcm::{
     Aes128Gcm, Aes256Gcm, Nonce,
     aead::{Aead, KeyInit, OsRng},
 };
 use bytes::{Bytes, BytesMut};
 use cbc::cipher::{
-    BlockDecryptMut, BlockEncryptMut, InvalidLength as CipherInvalidLength, KeyIvInit,
+    BlockModeDecrypt, BlockModeEncrypt, InvalidLength as CipherInvalidLength, KeyIvInit,
 };
 use thiserror::Error;
 
@@ -27,7 +27,7 @@ pub enum AesError {
     CipherInvalidLength(#[from] CipherInvalidLength),
 
     #[error("cbc unpad error")]
-    CbcUnpad(#[from] UnpadError),
+    CbcUnpad(#[from] Error),
 }
 
 pub fn aes_gcm_encrypt(key: &[u8], plaintext: &[u8]) -> Result<Bytes, AesError> {
@@ -104,9 +104,9 @@ pub fn aes_cbc_encrypt(key: &[u8], iv: &[u8], plaintext: &[u8]) -> Result<Bytes,
 
 fn _aes_cbc_encrypt<C>(ciper: C, plaintext: &[u8]) -> Result<Bytes, AesError>
 where
-    C: BlockEncryptMut,
+    C: BlockModeEncrypt,
 {
-    let cipertext = ciper.encrypt_padded_vec_mut::<Pkcs7>(plaintext);
+    let cipertext = ciper.encrypt_padded_vec::<Pkcs7>(plaintext);
     Ok(Bytes::from(cipertext))
 }
 
@@ -124,9 +124,9 @@ pub fn aes_cbc_decrypt(key: &[u8], iv: &[u8], ciphertext: &[u8]) -> Result<Bytes
 
 fn _aes_cbc_decrypt<C>(ciper: C, cipertext: &[u8]) -> Result<Bytes, AesError>
 where
-    C: BlockDecryptMut,
+    C: BlockModeDecrypt,
 {
-    let plaintext = ciper.decrypt_padded_vec_mut::<Pkcs7>(cipertext)?;
+    let plaintext = ciper.decrypt_padded_vec::<Pkcs7>(cipertext)?;
     Ok(Bytes::from(plaintext))
 }
 

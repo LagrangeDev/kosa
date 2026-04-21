@@ -30,8 +30,10 @@ pub(crate) struct GroupReactionResp;
 ///
 /// example
 /// ```
-/// Reaction::Face(35)
-/// Reaction::EMOJI('😰')
+/// use kosa::service::system::Reaction;
+///
+/// Reaction::FACE(35);
+/// Reaction::EMOJI('😰');
 /// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Eq, PartialEq)]

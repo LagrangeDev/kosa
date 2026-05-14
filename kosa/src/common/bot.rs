@@ -121,8 +121,8 @@ impl Bot {
             pub fn get_uid(&self, uin: i64) -> Option<String>;
             pub async fn get_friend_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Friend>>;
             pub async fn get_group_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Group>>;
-            pub async fn refresh_friends(&self) -> anyhow::Result<()>;
-            pub async fn refresh_groups(&self) -> anyhow::Result<()>;
+            pub async fn refresh_friends(&self) -> anyhow::Result<(usize,usize)>;
+            pub async fn refresh_groups(&self) -> anyhow::Result<usize>;
         }
     }
 

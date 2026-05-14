@@ -10,3 +10,10 @@ use crate::common::Session;
 pub struct SessionUpdated {
     pub session: Arc<Session>,
 }
+
+/// session 过期
+#[derive(Debug, Clone, Message)]
+#[rtype(result = "()")]
+pub struct SessionExpired {
+    pub msg: String,
+}

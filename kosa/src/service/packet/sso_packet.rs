@@ -23,9 +23,9 @@ pub enum DecodeError {
     #[error("{0}")]
     ReaderError(#[from] ReaderError),
     #[error("unknown auth flag: {0}")]
-    UnkownAuthFlag(u8),
+    UnknownAuthFlag(u8),
     #[error("unknown data flag: {0}")]
-    UnkownDataFlag(u32),
+    UnknownDataFlag(u32),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,8 +33,8 @@ pub(crate) struct SsoPacket {
     pub(crate) command: String,
     pub(crate) data: Bytes,
     pub(crate) sequence: i32,
-    pub(crate) _ret_code: i32,
-    pub(crate) _extra: String,
+    pub(crate) ret_code: i32,
+    pub(crate) extra: String,
 }
 
 impl SsoPacket {
@@ -121,7 +121,6 @@ impl SsoPacket {
 
     pub(crate) fn decode(data: Bytes, session: &Session) -> Result<SsoPacket, DecodeError> {
         let mut reader = Reader::new(data);
-        let _length = reader.read_u32()?;
         let _protocol = reader.read_u32()?;
         let auth_flag = reader.read_u8()?;
         let _dummy = reader.read_u8()?;
@@ -134,7 +133,7 @@ impl SsoPacket {
             Some(EncryptType::Empty) => tea::decrypt(encrypted, &EMPTY_D2KEY),
             Some(EncryptType::D2) => tea::decrypt(encrypted, &session.wlogin_sigs.load().d2_key),
             None => {
-                return Err(DecodeError::UnkownAuthFlag(auth_flag));
+                return Err(DecodeError::UnknownAuthFlag(auth_flag));
             }
         };
 
@@ -144,8 +143,8 @@ impl SsoPacket {
 
         let mut head_reader = Reader::new(head);
         let sequence = head_reader.read_i32()?;
-        let _ret_code = head_reader.read_i32()?;
-        let _extra = head_reader.read_string_with_prefix(Prefix::U32, true)?;
+        let ret_code = head_reader.read_i32()?;
+        let extra = head_reader.read_string_with_prefix(Prefix::U32, true)?;
         let command = head_reader.read_string_with_prefix(Prefix::U32, true)?;
         let _msg_cookie = head_reader.read_bytes_with_prefix(Prefix::U32, true)?;
         let data_flag = head_reader.read_u32()?;
@@ -154,15 +153,15 @@ impl SsoPacket {
         let data = match data_flag {
             0 | 4 => body,
             1 => zlib_uncompress(body)?,
-            _ => return Err(DecodeError::UnkownDataFlag(data_flag)),
+            _ => return Err(DecodeError::UnknownDataFlag(data_flag)),
         };
 
         Ok(SsoPacket {
             command,
             data,
             sequence,
-            _ret_code,
-            _extra,
+            ret_code,
+            extra,
         })
     }
 

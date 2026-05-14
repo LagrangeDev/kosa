@@ -198,7 +198,10 @@ mod tests {
             Ok(_) => panic!("expected generic arity validation to fail"),
             Err(err) => err,
         };
-        assert!(err.to_string().contains("expected exactly 2 type arguments"));
+        assert!(
+            err.to_string()
+                .contains("expected exactly 2 type arguments")
+        );
     }
 
     #[test]
@@ -207,8 +210,14 @@ mod tests {
             impl crate::service::OidbService<Request, Response> for FetchService {}
         };
 
-        let expanded = expand_register_oidb_service(&impl_block).unwrap().to_string();
-        assert!(expanded.contains("impl crate :: service :: Service < Request , Response > for FetchService"));
+        let expanded = expand_register_oidb_service(&impl_block)
+            .unwrap()
+            .to_string();
+        assert!(
+            expanded.contains(
+                "impl crate :: service :: Service < Request , Response > for FetchService"
+            )
+        );
         assert!(expanded.contains("crate :: service :: OidbService < Request , Response >"));
         assert!(expanded.contains("crate :: service :: oidb :: encode"));
         assert!(expanded.contains("inventory :: submit !"));
@@ -224,7 +233,10 @@ mod tests {
             Ok(_) => panic!("expected missing trait impl to be rejected"),
             Err(err) => err,
         };
-        assert!(err.to_string().contains("must implement a trait like OidbService<Req, Resp>"));
+        assert!(
+            err.to_string()
+                .contains("must implement a trait like OidbService<Req, Resp>")
+        );
     }
 
     #[test]

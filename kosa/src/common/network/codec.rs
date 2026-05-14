@@ -1,8 +1,10 @@
 use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio::io;
 use tokio_util::codec::{Decoder, Encoder};
+
+const MAX_FRAME: usize = 64 * 1024 * 1024;
 
 #[derive(Debug, Clone, Message)]
 #[rtype(result = "()")]
@@ -39,7 +41,7 @@ impl Decoder for LengthCodec {
                 io::ErrorKind::InvalidData,
                 "too short frame length",
             ));
-        } else if length > 1024 * 1024 * 64 {
+        } else if length > MAX_FRAME {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "too big frame length",
@@ -49,7 +51,9 @@ impl Decoder for LengthCodec {
         if src.len() < length {
             return Ok(None);
         }
-        let data = src.split_to(length).freeze();
+
+        src.advance(4);
+        let data = src.split_to(length - 4).freeze();
         Ok(Some(Packet(data)))
     }
 }

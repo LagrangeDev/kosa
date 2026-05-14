@@ -9,7 +9,6 @@ pub(crate) fn expand_service_state(item: TokenStream) -> syn::Result<TokenStream
 }
 
 fn expand_service_state_impl(input: &DeriveInput) -> syn::Result<TokenStream2> {
-
     if !matches!(&input.data, Data::Struct(_)) {
         return Err(Error::new_spanned(
             &input.ident,

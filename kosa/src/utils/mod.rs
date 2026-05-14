@@ -13,12 +13,7 @@ pub fn random_hex_string(num_bytes: usize) -> String {
     let mut raw_bytes = vec![0u8; num_bytes];
     rand::fill(raw_bytes.as_mut_slice());
 
-    raw_bytes
-        .iter()
-        .fold(String::with_capacity(num_bytes * 2), |mut acc, b| {
-            acc.push_str(&format!("{:02x}", b));
-            acc
-        })
+    hex::encode(raw_bytes)
 }
 
 pub fn base64_encode(input: &[u8]) -> String {

@@ -1,5 +1,4 @@
 use anyhow::Context;
-use bytes::Bytes;
 use kosa_macros::push_event;
 use kosa_proto::message::v2::{CommonMessage, MsgPush};
 use prost::Message;
@@ -12,6 +11,7 @@ use crate::{
         PushEvent,
         message::{handle_group_message, handle_private_message},
     },
+    service::packet::sso_packet::SsoPacket,
     utils::broker::Broker,
 };
 
@@ -23,17 +23,18 @@ pub(crate) struct PushMessageEvent {
 
 impl PushEvent for PushMessageEvent {
     fn handle(
-        data: Bytes,
+        packet: &SsoPacket,
         broker: &Broker,
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<()> {
-        trace!("push message, data: {}", hex::encode(&data));
-        let message = if let Some(common_message) = MsgPush::decode(data.clone())?.common_message {
-            common_message
-        } else {
-            return Err(anyhow::anyhow!("push message empty"));
-        };
+        trace!("push message, data: {}", hex::encode(&packet.data));
+        let message =
+            if let Some(common_message) = MsgPush::decode(packet.data.clone())?.common_message {
+                common_message
+            } else {
+                return Err(anyhow::anyhow!("push message empty"));
+            };
         let content_head = &message.content_head.unwrap_or_default();
 
         let event = PushMessageEvent { message };

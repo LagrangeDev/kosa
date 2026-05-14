@@ -45,7 +45,10 @@ pub(crate) fn expand_oidb_command(
 ) -> syn::Result<TokenStream2> {
     let oidb_command_args: OidbCommandArgs = syn::parse(attr)?;
     let input_struct: ItemStruct = syn::parse(item)?;
-    Ok(expand_oidb_command_tokens(&input_struct, &oidb_command_args))
+    Ok(expand_oidb_command_tokens(
+        &input_struct,
+        &oidb_command_args,
+    ))
 }
 
 fn expand_oidb_command_tokens(
@@ -120,7 +123,7 @@ fn expand_command_impl(input_struct: &ItemStruct, cmd_lit: &LitStr) -> TokenStre
 #[cfg(test)]
 mod tests {
     use quote::quote;
-    use syn::{ItemStruct, LitStr, parse2, parse_quote};
+    use syn::{ItemStruct, LitStr, parse_quote, parse2};
 
     use super::{
         OidbCommandArgs, expand_command_impl, expand_command_tokens, expand_oidb_command_tokens,
@@ -140,7 +143,11 @@ mod tests {
         let cmd_lit: LitStr = parse_quote!("MessageSvc.PbGetMsg");
 
         let expanded = expand_command_impl(&input_struct, &cmd_lit).to_string();
-        assert!(expanded.contains("impl < T > crate :: utils :: marker :: CommandMarker for FetchEvent < T >"));
+        assert!(
+            expanded.contains(
+                "impl < T > crate :: utils :: marker :: CommandMarker for FetchEvent < T >"
+            )
+        );
         assert!(expanded.contains("where T : Clone"));
         assert!(expanded.contains("MessageSvc.PbGetMsg"));
     }
@@ -189,6 +196,8 @@ mod tests {
         let expanded = expand_push_event_tokens(&input_struct, &cmd_lit).to_string();
         assert!(expanded.contains("inventory :: submit !"));
         assert!(expanded.contains("crate :: event :: EventEntry"));
-        assert!(expanded.contains("< PushMessage < T > as crate :: event :: PushEvent > :: handle"));
+        assert!(
+            expanded.contains("< PushMessage < T > as crate :: event :: PushEvent > :: handle")
+        );
     }
 }

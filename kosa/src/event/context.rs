@@ -13,7 +13,6 @@ use crate::{
 #[derive(Debug)]
 pub struct EventContext {
     broker: Broker,
-    // todo 需要和service共享一个缓存，或者单独写一个cachecontext，需要主动获取值（事件也可能不用主动获取值？）
     pub(crate) events: AHashMap<&'static str, EventHandlerFn>,
 }
 
@@ -43,7 +42,7 @@ impl EventContext {
                 trace!("no event found for {}", packet.command);
                 Ok(())
             }
-            Some(decode_fn) => decode_fn(packet.data, &self.broker, app_info, session)
+            Some(decode_fn) => decode_fn(&packet, &self.broker, app_info, session)
                 .with_context(|| format!("push event decode error, cmd: {}", packet.command)),
         }
     }

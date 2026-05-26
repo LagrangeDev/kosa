@@ -47,8 +47,8 @@ impl TcpMetrics {
 }
 
 pub(crate) struct TcpClient {
-    pub(crate) address: String,
-    pub(crate) framed: Option<FramedWrite<Packet, WriteHalf<TcpStream>, LengthCodec>>,
+    address: String,
+    framed: Option<FramedWrite<Packet, WriteHalf<TcpStream>, LengthCodec>>,
     peer_addr: Option<String>,
     disconnect_state: Option<DisconnectState>,
 
@@ -77,34 +77,35 @@ impl TcpClient {
         self.disconnect_state = Some(DisconnectState { reason, detail });
     }
 
-    pub(crate) fn connect(&mut self, ctx: &mut Context<Self>) {
+    fn connect(&mut self, ctx: &mut Context<Self>) {
         let addr = self.address.clone();
         async move { time::timeout(Duration::from_secs(5), TcpStream::connect(addr)).await }
             .into_actor(self)
             .map(|res, act, ctx| match res {
-                Ok(stream_res) => match stream_res {
-                    Ok(stream) => {
-                        let _ = stream.set_nodelay(true);
-                        act.peer_addr = stream.peer_addr().ok().map(|addr| addr.to_string());
-                        act.disconnect_state = None;
-                        info!(
-                            peer_addr = act.peer_addr.as_deref().unwrap_or("unknown"),
-                            "tcp connected"
-                        );
-                        let (r, w) = tokio::io::split(stream);
-                        let reader = FramedRead::new(r, LengthCodec);
-                        act.framed = Some(FramedWrite::new(w, LengthCodec, ctx));
-                        ctx.add_stream(reader);
-                    }
-                    Err(e) => {
-                        error!(
-                            err = %e,
-                            err_kind = ?e.kind(),
-                            os_code = ?e.raw_os_error(),
-                            "tcp connect error"
-                        )
-                    }
-                },
+                // connected
+                Ok(Ok(stream)) => {
+                    let _ = stream.set_nodelay(true);
+                    act.peer_addr = stream.peer_addr().ok().map(|addr| addr.to_string());
+                    act.disconnect_state = None;
+                    info!(
+                        peer_addr = act.peer_addr.as_deref().unwrap_or("unknown"),
+                        "tcp connected"
+                    );
+                    let (r, w) = tokio::io::split(stream);
+                    let reader = FramedRead::new(r, LengthCodec);
+                    act.framed = Some(FramedWrite::new(w, LengthCodec, ctx));
+                    ctx.add_stream(reader);
+                }
+                // connect failed
+                Ok(Err(e)) => {
+                    error!(
+                        err = %e,
+                        err_kind = ?e.kind(),
+                        os_code = ?e.raw_os_error(),
+                        "tcp connect error"
+                    )
+                }
+                // connect timeout
                 Err(e) => {
                     error!(err = %e, "tcp connect timeout");
                     ctx.stop()

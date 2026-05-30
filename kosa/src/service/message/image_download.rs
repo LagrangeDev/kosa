@@ -15,7 +15,7 @@ use crate::{
 
 #[oidb_command(0x11c5, 200)]
 #[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateImageDonwloadService;
+pub(crate) struct PrivateImageDownloadService;
 
 pub(crate) struct PrivateImageDownloadReq {
     node: IndexNode,
@@ -29,7 +29,7 @@ pub(crate) struct PrivateImageDownloadResp {
 
 #[register_oidb_service]
 impl OidbService<PrivateImageDownloadReq, PrivateImageDownloadResp>
-    for PrivateImageDonwloadService
+    for PrivateImageDownloadService
 {
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
@@ -71,7 +71,7 @@ impl ServiceContext {
             ext: None,
             scene: Scene::Private(uin, uid),
         };
-        self.send_request::<PrivateImageDonwloadService,PrivateImageDownloadReq,PrivateImageDownloadResp>(req).await
+        self.send_request::<PrivateImageDownloadService,PrivateImageDownloadReq,PrivateImageDownloadResp>(req).await
     }
 }
 

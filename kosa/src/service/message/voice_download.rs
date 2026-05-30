@@ -15,7 +15,7 @@ use crate::{
 
 #[oidb_command(0x126d, 200)]
 #[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateVoiceDonwloadService;
+pub(crate) struct PrivateVoiceDownloadService;
 
 pub(crate) struct PrivateVoiceDownloadReq {
     node: IndexNode,
@@ -29,7 +29,7 @@ pub(crate) struct PrivateVoiceDownloadResp {
 
 #[register_oidb_service]
 impl OidbService<PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>
-    for PrivateVoiceDonwloadService
+    for PrivateVoiceDownloadService
 {
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
@@ -71,7 +71,7 @@ impl ServiceContext {
             ext: None,
             scene: Scene::Private(uin, uid),
         };
-        self.send_request::<PrivateVoiceDonwloadService, PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>(req).await
+        self.send_request::<PrivateVoiceDownloadService, PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>(req).await
     }
 }
 

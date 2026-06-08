@@ -1,5 +1,6 @@
 use std::vec;
 
+use arcstr::ArcStr;
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
 use kosa_proto::common::v2::{
@@ -84,7 +85,7 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
             .into_iter()
             .map(|category| FriendCategory {
                 id: category.category_id.unwrap_or_default(),
-                name: category.category_name.unwrap_or_default(),
+                name: ArcStr::from(category.category_name.unwrap_or_default()),
                 member_count: category.category_member_count.unwrap_or_default(),
                 sort_id: category.catogory_sort_id.unwrap_or_default(),
             })
@@ -105,7 +106,7 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
 
                 Some(Friend {
                     uin: friend.uin.unwrap_or_default(),
-                    uid: friend.uid.unwrap_or_default(),
+                    uid: ArcStr::from(friend.uid.unwrap_or_default()),
                     nick_name,
                     personal_sign,
                     remark,

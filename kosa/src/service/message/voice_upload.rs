@@ -178,7 +178,7 @@ impl Bot {
             .service
             .upload_private_voice(
                 uin,
-                self.cache.get_uid(uin).ok_or_else(|| anyhow::anyhow!(""))?,
+                self.friends().get_uid_required(uin)?.to_string(),
                 &voice,
             )
             .await?;

@@ -150,10 +150,7 @@ impl Bot {
         uin: i64,
         messages: MessageChain,
     ) -> anyhow::Result<i32> {
-        let uid = self
-            .cache
-            .get_uid(uin)
-            .ok_or_else(|| anyhow::anyhow!("not found uid for {}", uin))?;
+        let uid = self.friends().get_uid_required(uin)?.to_string();
         self.service.send_private_message(uin, uid, messages).await
     }
 

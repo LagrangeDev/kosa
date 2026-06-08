@@ -13,6 +13,7 @@ aes-gcm = { version = "0.10.3", features = ["std"] }
 ahash = { workspace = true, features = ["serde"] }
 anyhow = { workspace = true }
 arc-swap = { version = "1.8.0", features = ["serde"] }
+arcstr = { version = "1.2.0", features = ["serde"] }
 async-trait = { workspace = true }
 base64 = "0.22.1"
 bitflags = { version = "2.10.0", features = ["serde"] }

@@ -1,30 +1,10 @@
-use std::fmt::Debug;
+mod contact;
 
-use enum_dispatch::enum_dispatch;
+use std::fmt::Debug;
 
 pub use crate::common::entity::contact::{
     Friend, FriendCategory, Gender, Group, GroupMember, GroupPermission, Stranger,
 };
-
-mod contact;
-
-#[enum_dispatch]
-pub trait Identity: Debug {
-    fn uin(&self) -> i64;
-
-    fn uid(&self) -> String;
-
-    fn name(&self) -> String;
-}
-
-#[enum_dispatch(Identity)]
-#[derive(Debug, Clone)]
-pub enum Contact {
-    Stranger,
-    Friend,
-    Group,
-    GroupMember,
-}
 
 #[derive(Debug, Clone)]
 pub enum Scene {

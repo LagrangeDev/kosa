@@ -1,10 +1,9 @@
 use std::fmt::Debug;
 
+use arcstr::ArcStr;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use strum::FromRepr;
-
-use crate::common::entity::Identity;
 
 #[derive(Debug, Default, Clone, Copy, FromRepr, Serialize, Deserialize)]
 #[repr(i32)]
@@ -37,27 +36,13 @@ pub struct Group {
     pub announcement: String,
 }
 
-impl Identity for Group {
-    fn uin(&self) -> i64 {
-        self.uin
-    }
-
-    fn uid(&self) -> String {
-        unimplemented!()
-    }
-
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-}
-
 /// 好友
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Friend {
     /// QQ号
     pub uin: i64,
     /// uid
-    pub uid: String,
+    pub uid: ArcStr,
     /// 昵称
     pub nick_name: String,
     /// 备注
@@ -72,25 +57,11 @@ pub struct Friend {
     pub gender: Gender,
 }
 
-impl Identity for Friend {
-    fn uin(&self) -> i64 {
-        self.uin
-    }
-
-    fn uid(&self) -> String {
-        self.uid.clone()
-    }
-
-    fn name(&self) -> String {
-        self.nick_name.clone()
-    }
-}
-
 /// 好友分类
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FriendCategory {
     pub id: i32,
-    pub name: String,
+    pub name: ArcStr,
     pub member_count: i32,
     pub sort_id: i32,
 }
@@ -124,34 +95,17 @@ pub struct Stranger {
     pub school: Option<String>,
 }
 
-impl Identity for Stranger {
-    fn uin(&self) -> i64 {
-        self.uin
-    }
-
-    fn uid(&self) -> String {
-        self.uid.clone()
-    }
-
-    fn name(&self) -> String {
-        self.nick_name.clone()
-    }
-}
-
 /// 群成员
 #[derive(Debug, Clone)]
 pub struct GroupMember {
-    pub group: Group,
     pub uin: i64,
-    pub uid: String,
+    pub uid: ArcStr,
     /// 昵称
-    pub nick_name: String,
+    pub nick_name: ArcStr,
     /// 群名片
     pub member_card: String,
     /// 特殊头衔
     pub special_title: String,
-    pub age: i32,
-    pub gender: Gender,
     /// 群内等级
     pub level: i32,
     /// 权限
@@ -164,26 +118,21 @@ pub struct GroupMember {
     pub shutup_time: DateTime<Utc>,
 }
 
-impl Identity for GroupMember {
-    fn uin(&self) -> i64 {
-        self.uin
-    }
-
-    fn uid(&self) -> String {
-        self.uid.clone()
-    }
-
-    fn name(&self) -> String {
-        // 群成员一般取群卡片作为昵称
-        self.member_card.clone()
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, FromRepr)]
 #[repr(i32)]
 pub enum GroupPermission {
     #[default]
     Member = 0,
     Owner = 1,
     Admin = 2,
+}
+
+impl From<i32> for GroupPermission {
+    fn from(val: i32) -> Self {
+        match val {
+            1 => GroupPermission::Owner,
+            2 => GroupPermission::Admin,
+            _ => GroupPermission::default(),
+        }
+    }
 }

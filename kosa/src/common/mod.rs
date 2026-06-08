@@ -10,6 +10,7 @@ mod sign;
 
 pub use appinfo::{AppInfo, Protocol, Sig, WtLoginSdkInfo};
 pub use bot::Bot;
+pub use cache::{FriendCache, GroupCache};
 pub(crate) use packet::{PacketContext, SsoRequest};
 pub use session::Session;
 pub use sign::{DEFAULT_PC_CMD_LIST, Sign, SsoSecureInfo};

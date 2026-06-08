@@ -1,4 +1,5 @@
 use std::{
+    fmt::{Debug, Formatter},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -22,7 +23,6 @@ use crate::{
     service::ServiceContext,
 };
 
-#[derive(Debug)]
 pub struct Bot {
     pub(crate) online: AtomicBool,
     pub(crate) session: Arc<Session>,
@@ -35,6 +35,17 @@ pub struct Bot {
 
     #[cfg(feature = "opentelemetry")]
     metrics: BotMetrics,
+}
+
+impl Debug for Bot {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "bot: {}, online: {}",
+            self.session.uin(),
+            self.online.load(Ordering::SeqCst)
+        )
+    }
 }
 
 #[cfg(feature = "opentelemetry")]
@@ -118,11 +129,11 @@ impl Bot {
 
     delegate! {
         to self.cache {
-            pub fn get_uid(&self, uin: i64) -> Option<String>;
-            pub async fn get_friend_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Friend>>;
-            pub async fn get_group_info(&self, uin: i64, refresh: bool) -> anyhow::Result<Option<crate::common::entity::Group>>;
+            pub fn friends(&self) -> Arc<crate::common::FriendCache>;
+            pub fn groups(&self) -> Arc<crate::common::GroupCache>;
             pub async fn refresh_friends(&self) -> anyhow::Result<(usize,usize)>;
-            pub async fn refresh_groups(&self) -> anyhow::Result<usize>;
+            pub async fn refresh_group_info(&self) -> anyhow::Result<usize>;
+            pub async fn refresh_members(&self, group: i64) -> anyhow::Result<usize>;
         }
     }
 

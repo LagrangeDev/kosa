@@ -86,7 +86,7 @@ impl Bot {
             .service
             .get_private_voice_download_url(
                 uin,
-                self.cache.get_uid(uin).ok_or_else(|| anyhow::anyhow!(""))?,
+                self.friends().get_uid_required(uin)?.to_string(),
                 voice,
             )
             .await?;

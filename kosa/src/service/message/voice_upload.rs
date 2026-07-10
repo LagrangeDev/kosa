@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
-use kosa_proto::service::highway::v2::{
+use kosa_proto::service::v2::{
     ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp, PicExtBizInfo,
     PttExtBizInfo,
 };

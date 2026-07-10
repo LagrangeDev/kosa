@@ -1,8 +1,8 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
 use kosa_proto::{
-    message::v2::PbReserve1,
-    service::highway::v2::{
+    message::v2::CustomFacePbReserve1,
+    service::v2::{
         ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp, PicExtBizInfo,
     },
 };
@@ -116,7 +116,7 @@ impl ServiceContext {
         uid: String,
         image: &LocalImage,
     ) -> anyhow::Result<ImageUploadResp> {
-        let reserve = PbReserve1 {
+        let reserve = CustomFacePbReserve1 {
             sub_type: Some(image.sub_type as i32),
             summary: image.summary.clone(),
             ..Default::default()
@@ -150,7 +150,7 @@ impl ServiceContext {
         group: i64,
         image: &LocalImage,
     ) -> anyhow::Result<ImageUploadResp> {
-        let reserve = PbReserve1 {
+        let reserve = CustomFacePbReserve1 {
             sub_type: Some(image.sub_type as i32),
             summary: image.summary.clone(),
             ..Default::default()

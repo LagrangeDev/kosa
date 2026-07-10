@@ -10,9 +10,7 @@ pub struct Elem {
     #[prost(message, optional, tag="4")]
     pub not_online_image: ::core::option::Option<NotOnlineImage>,
     #[prost(message, optional, tag="5")]
-    pub trans_elem: ::core::option::Option<TransElem>,
-    #[prost(message, optional, tag="6")]
-    pub market_face: ::core::option::Option<MarketFace>,
+    pub trans_elem_info: ::core::option::Option<TransElem>,
     #[prost(message, optional, tag="8")]
     pub custom_face: ::core::option::Option<CustomFace>,
     #[prost(message, optional, tag="12")]
@@ -117,40 +115,10 @@ pub struct NotOnlineImage {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransElem {
-    #[prost(int32, optional, tag="1")]
-    pub elem_type: ::core::option::Option<i32>,
+    #[prost(uint32, optional, tag="1")]
+    pub elem_type: ::core::option::Option<u32>,
     #[prost(bytes="bytes", optional, tag="2")]
     pub elem_value: ::core::option::Option<::prost::bytes::Bytes>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MarketFace {
-    #[prost(bytes="bytes", optional, tag="1")]
-    pub face_name: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(int32, optional, tag="2")]
-    pub item_type: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="3")]
-    pub face_info: ::core::option::Option<i32>,
-    #[prost(bytes="bytes", optional, tag="4")]
-    pub face_id: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(int32, optional, tag="5")]
-    pub tab_id: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="6")]
-    pub sub_type: ::core::option::Option<i32>,
-    #[prost(bytes="bytes", optional, tag="7")]
-    pub key: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(bytes="bytes", optional, tag="8")]
-    pub param: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(int32, optional, tag="9")]
-    pub media_type: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="10")]
-    pub image_width: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="11")]
-    pub image_height: ::core::option::Option<i32>,
-    #[prost(bytes="bytes", optional, tag="12")]
-    pub mobileparam: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(bytes="bytes", optional, tag="13")]
-    pub pb_reserve: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -222,7 +190,7 @@ pub struct CustomFace {
     #[prost(int32, optional, tag="33")]
     pub x400_height: ::core::option::Option<i32>,
     #[prost(message, optional, tag="34")]
-    pub pb_reserve: ::core::option::Option<PbReserve1>,
+    pub pb_reserve: ::core::option::Option<CustomFacePbReserve1>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -295,8 +263,8 @@ pub struct VideoFile {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SourceMsg {
-    #[prost(uint32, repeated, packed="false", tag="1")]
-    pub orig_seqs: ::prost::alloc::vec::Vec<u32>,
+    #[prost(uint64, repeated, packed="false", tag="1")]
+    pub orig_seqs: ::prost::alloc::vec::Vec<u64>,
     #[prost(uint64, optional, tag="2")]
     pub sender_uin: ::core::option::Option<u64>,
     #[prost(uint32, optional, tag="3")]
@@ -387,6 +355,42 @@ pub struct SourceMsgResvAttr {
     pub sender_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag="7")]
     pub receiver_uid: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFileExtra {
+    #[prost(uint32, optional, tag="1")]
+    pub field1: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="2")]
+    pub file_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="3")]
+    pub display: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag="7")]
+    pub inner: ::core::option::Option<GroupFileExtraInner>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFileExtraInner {
+    #[prost(message, optional, tag="2")]
+    pub info: ::core::option::Option<GroupFileExtraInfo>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupFileExtraInfo {
+    #[prost(uint32, optional, tag="1")]
+    pub bus_id: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="2")]
+    pub file_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int64, optional, tag="3")]
+    pub file_size: ::core::option::Option<i64>,
+    #[prost(string, optional, tag="4")]
+    pub file_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag="5")]
+    pub field5: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="7")]
+    pub field7: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="8")]
+    pub file_md5: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -636,11 +640,11 @@ pub struct ContentHead {
     #[prost(int32, optional, tag="2")]
     pub sub_type: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="3")]
-    pub c2c_command: ::core::option::Option<i32>,
+    pub c2_c_command: ::core::option::Option<i32>,
     #[prost(uint32, optional, tag="4")]
     pub random: ::core::option::Option<u32>,
-    #[prost(int32, optional, tag="5")]
-    pub sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="5")]
+    pub sequence: ::core::option::Option<u64>,
     #[prost(int64, optional, tag="6")]
     pub time: ::core::option::Option<i64>,
     #[prost(int32, optional, tag="7")]
@@ -651,8 +655,8 @@ pub struct ContentHead {
     pub div_seq: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="10")]
     pub auto_reply: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="11")]
-    pub client_sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="11")]
+    pub client_sequence: ::core::option::Option<u64>,
     #[prost(uint64, optional, tag="12")]
     pub msg_uid: ::core::option::Option<u64>,
 }
@@ -672,7 +676,7 @@ pub struct RoutingHead {
     #[prost(string, optional, tag="6")]
     pub to_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="7")]
-    pub common_c2c: ::core::option::Option<CommonC2c>,
+    pub common_c2_c: ::core::option::Option<CommonC2c>,
     #[prost(message, optional, tag="8")]
     pub group: ::core::option::Option<CommonGroup>,
 }
@@ -680,7 +684,7 @@ pub struct RoutingHead {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CommonC2c {
     #[prost(int32, optional, tag="1")]
-    pub c2c_type: ::core::option::Option<i32>,
+    pub c2_c_type: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="2")]
     pub service_type: ::core::option::Option<i32>,
     #[prost(bytes="bytes", optional, tag="3")]
@@ -894,7 +898,7 @@ pub struct Trans211TmpMsg {
     #[prost(bytes="bytes", optional, tag="1")]
     pub msg_body: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="2")]
-    pub c2c_cmd: ::core::option::Option<u32>,
+    pub c2_c_cmd: ::core::option::Option<u32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -913,8 +917,8 @@ pub struct PbSendMsgReq {
     pub content_head: ::core::option::Option<SendContentHead>,
     #[prost(message, optional, tag="3")]
     pub message_body: ::core::option::Option<MessageBody>,
-    #[prost(int32, optional, tag="4")]
-    pub client_sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="4")]
+    pub client_sequence: ::core::option::Option<u64>,
     #[prost(uint32, optional, tag="5")]
     pub random: ::core::option::Option<u32>,
 }
@@ -929,10 +933,10 @@ pub struct PbSendMsgResp {
     pub send_time: ::core::option::Option<i64>,
     #[prost(uint32, optional, tag="10")]
     pub msg_info_flag: ::core::option::Option<u32>,
-    #[prost(int32, optional, tag="11")]
-    pub sequence: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="14")]
-    pub client_sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="11")]
+    pub sequence: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="14")]
+    pub client_sequence: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
@@ -950,7 +954,7 @@ pub struct SendContentHead {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SendRoutingHead {
     #[prost(message, optional, tag="1")]
-    pub c2c: ::core::option::Option<C2c>,
+    pub c2_c: ::core::option::Option<C2c>,
     #[prost(message, optional, tag="2")]
     pub group: ::core::option::Option<Grp>,
     #[prost(message, optional, tag="15")]
@@ -982,15 +986,53 @@ pub struct Trans0X211 {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SsoC2cRecallMsgReq {
+    #[prost(uint32, optional, tag="1")]
+    pub r#type: ::core::option::Option<u32>,
+    #[prost(string, optional, tag="3")]
+    pub target_uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag="4")]
+    pub info: ::core::option::Option<SsoC2cRecallMsgReqInfo>,
+    #[prost(message, optional, tag="5")]
+    pub settings: ::core::option::Option<SsoC2cRecallMsgReqSettings>,
+    #[prost(bool, optional, tag="6")]
+    pub field6: ::core::option::Option<bool>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SsoC2cRecallMsgReqInfo {
+    #[prost(uint64, optional, tag="1")]
+    pub sequence: ::core::option::Option<u64>,
+    #[prost(uint32, optional, tag="2")]
+    pub random: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="3")]
+    pub message_id: ::core::option::Option<u64>,
+    #[prost(uint32, optional, tag="4")]
+    pub timestamp: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="5")]
+    pub field5: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="6")]
+    pub client_sequence: ::core::option::Option<u64>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SsoC2cRecallMsgReqSettings {
+    #[prost(bool, optional, tag="1")]
+    pub field1: ::core::option::Option<bool>,
+    #[prost(bool, optional, tag="2")]
+    pub field2: ::core::option::Option<bool>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SsoGetC2cMsgReq {
     #[prost(int64, optional, tag="1")]
     pub peer_uin: ::core::option::Option<i64>,
     #[prost(string, optional, tag="2")]
     pub peer_uid: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(int32, optional, tag="3")]
-    pub start_sequence: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="4")]
-    pub end_sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="3")]
+    pub start_sequence: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="4")]
+    pub end_sequence: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -999,10 +1041,10 @@ pub struct SsoGetC2cMsgRsp {
     pub retcode: ::core::option::Option<u32>,
     #[prost(string, optional, tag="2")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(uint32, optional, tag="3")]
-    pub start_sequence: ::core::option::Option<u32>,
-    #[prost(uint32, optional, tag="4")]
-    pub end_sequence: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="3")]
+    pub start_sequence: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="4")]
+    pub end_sequence: ::core::option::Option<u64>,
     #[prost(message, repeated, tag="7")]
     pub messages: ::prost::alloc::vec::Vec<CommonMessage>,
 }
@@ -1019,10 +1061,10 @@ pub struct SsoGetGroupMsg {
 pub struct SsoGetGroupMsgInfo {
     #[prost(int64, optional, tag="1")]
     pub group_uin: ::core::option::Option<i64>,
-    #[prost(int32, optional, tag="2")]
-    pub start_sequence: ::core::option::Option<i32>,
-    #[prost(int32, optional, tag="3")]
-    pub end_sequence: ::core::option::Option<i32>,
+    #[prost(uint64, optional, tag="2")]
+    pub start_sequence: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="3")]
+    pub end_sequence: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1043,10 +1085,10 @@ pub struct SsoGetGroupMsgRspBody {
     pub message: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(uint32, optional, tag="3")]
     pub group_uin: ::core::option::Option<u32>,
-    #[prost(uint32, optional, tag="4")]
-    pub start_sequence: ::core::option::Option<u32>,
-    #[prost(uint32, optional, tag="5")]
-    pub end_sequence: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="4")]
+    pub start_sequence: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="5")]
+    pub end_sequence: ::core::option::Option<u64>,
     #[prost(message, repeated, tag="6")]
     pub messages: ::prost::alloc::vec::Vec<CommonMessage>,
 }
@@ -1079,8 +1121,36 @@ pub struct SsoGetRoamMsgRsp {
     pub messages: ::prost::alloc::vec::Vec<CommonMessage>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SsoGroupRecallMsgReq {
+    #[prost(uint32, optional, tag="1")]
+    pub r#type: ::core::option::Option<u32>,
+    #[prost(int64, optional, tag="2")]
+    pub group_uin: ::core::option::Option<i64>,
+    #[prost(message, optional, tag="3")]
+    pub field3: ::core::option::Option<SsoGroupRecallMsgReqField3>,
+    #[prost(message, optional, tag="4")]
+    pub field4: ::core::option::Option<SsoGroupRecallMsgReqField4>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SsoGroupRecallMsgReqField3 {
+    #[prost(uint64, optional, tag="1")]
+    pub sequence: ::core::option::Option<u64>,
+    #[prost(uint32, optional, tag="2")]
+    pub random: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="3")]
+    pub field3: ::core::option::Option<u32>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct SsoGroupRecallMsgReqField4 {
+    #[prost(uint32, optional, tag="1")]
+    pub field1: ::core::option::Option<u32>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PbReserve1 {
+pub struct CustomFacePbReserve1 {
     #[prost(int32, optional, tag="1")]
     pub sub_type: ::core::option::Option<i32>,
     #[prost(int32, optional, tag="3")]
@@ -1092,13 +1162,13 @@ pub struct PbReserve1 {
     #[prost(int32, optional, tag="10")]
     pub field10: ::core::option::Option<i32>,
     #[prost(message, optional, tag="21")]
-    pub field21: ::core::option::Option<PbReserve2>,
+    pub field21: ::core::option::Option<CustomFacePbReserve2>,
     #[prost(string, optional, tag="31")]
     pub field31: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PbReserve2 {
+pub struct CustomFacePbReserve2 {
     #[prost(int32, optional, tag="1")]
     pub field1: ::core::option::Option<i32>,
     #[prost(string, optional, tag="2")]

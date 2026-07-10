@@ -16,7 +16,7 @@ use anyhow::Context;
 use bytes::Bytes;
 use derive_more::Display;
 use enum_dispatch::enum_dispatch;
-use kosa_proto::{message::v2::Elem, service::highway::v2::FileInfo};
+use kosa_proto::{message::v2::Elem, service::v2::FileInfo};
 
 use crate::common::entity::Scene;
 pub use crate::message::{
@@ -195,8 +195,8 @@ impl MessageChain {
 #[derive(Debug, Clone)]
 pub struct BotMessage {
     pub random: u32,
-    pub sequence: i32,
-    pub client_sequence: i32,
+    pub sequence: u64,
+    pub client_sequence: u64,
     pub message_id: u64,
     pub scene: Scene,
     pub messages: MessageChain,

@@ -19,8 +19,7 @@ pub(crate) struct SendMessageService;
 pub(crate) struct SendMessageReq {
     pub(crate) scene: Scene,
     pub(crate) messages: MessageChain,
-
-    pub(crate) client_sequence: i32,
+    pub(crate) client_sequence: u64,
     pub(crate) random: u32,
 }
 
@@ -52,7 +51,7 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
 
         let routing_head = match req.scene {
             Scene::Private(uin, uid) => SendRoutingHead {
-                c2c: Some(C2c {
+                c2_c: Some(C2c {
                     peer_uin: Some(uin),
                     peer_uid: Some(uid),
                 }),
@@ -102,7 +101,7 @@ impl ServiceContext {
         uin: i64,
         uid: String,
         messages: MessageChain,
-    ) -> anyhow::Result<i32> {
+    ) -> anyhow::Result<u64> {
         let req = SendMessageReq {
             scene: Scene::Private(uin, uid),
             messages,
@@ -125,7 +124,7 @@ impl ServiceContext {
         &self,
         group: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<i32> {
+    ) -> anyhow::Result<u64> {
         let req = SendMessageReq {
             scene: Scene::Group(group),
             messages,
@@ -149,7 +148,7 @@ impl Bot {
         &self,
         uin: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<i32> {
+    ) -> anyhow::Result<u64> {
         let uid = self.friends().get_uid_required(uin)?.to_string();
         self.service.send_private_message(uin, uid, messages).await
     }
@@ -158,7 +157,7 @@ impl Bot {
         &self,
         group: i64,
         messages: MessageChain,
-    ) -> anyhow::Result<i32> {
+    ) -> anyhow::Result<u64> {
         self.service.send_group_message(group, messages).await
     }
 }

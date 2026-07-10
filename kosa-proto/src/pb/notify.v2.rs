@@ -10,6 +10,30 @@ pub struct Event0x20D {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendRecall {
+    #[prost(message, optional, tag="1")]
+    pub info: ::core::option::Option<FriendRecallInfo>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendRecallInfo {
+    #[prost(string, optional, tag="1")]
+    pub from_uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(string, optional, tag="2")]
+    pub to_uid: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag="13")]
+    pub tip_info: ::core::option::Option<FriendRecallTipInfo>,
+    #[prost(int64, optional, tag="20")]
+    pub sequence: ::core::option::Option<i64>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FriendRecallTipInfo {
+    #[prost(string, optional, tag="2")]
+    pub tip: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FriendRequest {
     #[prost(message, optional, tag="1")]
     pub info: ::core::option::Option<FriendRequestInfo>,
@@ -38,11 +62,11 @@ pub struct GroupChange {
     #[prost(string, optional, tag="3")]
     pub member_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(uint32, optional, tag="4")]
-    pub decrease_type: ::core::option::Option<u32>,
+    pub r#type: ::core::option::Option<u32>,
     #[prost(bytes="bytes", optional, tag="5")]
     pub operator: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="6")]
-    pub increase_type: ::core::option::Option<u32>,
+    pub field6: ::core::option::Option<u32>,
     #[prost(bytes="bytes", optional, tag="7")]
     pub field7: ::core::option::Option<::prost::bytes::Bytes>,
 }
@@ -71,8 +95,8 @@ pub struct OperatorField1 {
 pub struct EssenceMessage {
     #[prost(int64, optional, tag="1")]
     pub group_uin: ::core::option::Option<i64>,
-    #[prost(int64, optional, tag="2")]
-    pub msg_sequence: ::core::option::Option<i64>,
+    #[prost(uint64, optional, tag="2")]
+    pub msg_sequence: ::core::option::Option<u64>,
     #[prost(uint32, optional, tag="3")]
     pub random: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="4")]
@@ -83,8 +107,8 @@ pub struct EssenceMessage {
     pub operator_uin: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="7")]
     pub time_stamp: ::core::option::Option<u32>,
-    #[prost(uint32, optional, tag="8")]
-    pub msg_sequence2: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="8")]
+    pub msg_sequence2: ::core::option::Option<u64>,
     #[prost(string, optional, tag="9")]
     pub operator_nick_name: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag="10")]
@@ -143,8 +167,8 @@ pub struct GroupReactionData2 {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct GroupReactionTarget {
-    #[prost(int64, optional, tag="1")]
-    pub sequence: ::core::option::Option<i64>,
+    #[prost(uint64, optional, tag="1")]
+    pub sequence: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -152,7 +176,7 @@ pub struct GroupReactionData3 {
     #[prost(string, optional, tag="1")]
     pub code: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(uint32, optional, tag="3")]
-    pub count: ::core::option::Option<u32>,
+    pub current_count: ::core::option::Option<u32>,
     #[prost(string, optional, tag="4")]
     pub operator_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(uint32, optional, tag="5")]
@@ -177,8 +201,8 @@ pub struct GroupRecall {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RecallMessage {
-    #[prost(uint32, optional, tag="1")]
-    pub sequence: ::core::option::Option<u32>,
+    #[prost(uint64, optional, tag="1")]
+    pub sequence: ::core::option::Option<u64>,
     #[prost(uint32, optional, tag="2")]
     pub time: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="3")]
@@ -212,7 +236,7 @@ pub struct GroupRecallNudge {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NotifyMessageBody {
     #[prost(uint32, optional, tag="1")]
-    pub r#type: ::core::option::Option<u32>,
+    pub notify_type: ::core::option::Option<u32>,
     #[prost(int64, optional, tag="4")]
     pub group_uin: ::core::option::Option<i64>,
     #[prost(bytes="bytes", optional, tag="5")]
@@ -220,13 +244,13 @@ pub struct NotifyMessageBody {
     #[prost(message, optional, tag="11")]
     pub recall: ::core::option::Option<GroupRecall>,
     #[prost(uint32, optional, tag="13")]
-    pub field13: ::core::option::Option<u32>,
+    pub sub_type: ::core::option::Option<u32>,
     #[prost(string, optional, tag="21")]
     pub operator_uid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, optional, tag="26")]
     pub general_gray_tip: ::core::option::Option<GeneralGrayTipInfo>,
-    #[prost(int64, optional, tag="37")]
-    pub msg_sequence: ::core::option::Option<i64>,
+    #[prost(uint64, optional, tag="37")]
+    pub msg_sequence: ::core::option::Option<u64>,
     #[prost(uint32, optional, tag="39")]
     pub field39: ::core::option::Option<u32>,
     #[prost(message, optional, tag="40")]
@@ -248,7 +272,7 @@ pub struct GeneralGrayTipInfo {
     #[prost(uint32, optional, tag="3")]
     pub ctrl_flag: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="4")]
-    pub c2c_type: ::core::option::Option<u32>,
+    pub c2_c_type: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag="5")]
     pub service_type: ::core::option::Option<u32>,
     #[prost(uint64, optional, tag="6")]

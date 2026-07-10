@@ -4,7 +4,7 @@ use bytes::Bytes;
 use digest::Digest;
 use kosa_proto::{
     message::v2::{CommonElem, Elem},
-    service::highway::v2::{FileInfo, FileType, MsgInfo},
+    service::v2::{FileInfo, FileType, MsgInfo},
 };
 use md5::Md5;
 use prost::Message;

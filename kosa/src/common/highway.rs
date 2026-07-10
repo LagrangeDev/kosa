@@ -9,7 +9,7 @@ use std::{
 use arc_swap::ArcSwap;
 use bytes::{BufMut, Bytes, BytesMut};
 use chrono::{DateTime, Duration, Utc};
-use kosa_proto::service::highway::v2::{
+use kosa_proto::service::v2::{
     DataHighwayHead, LoginSigHead, ReqDataHighwayHead, RespDataHighwayHead, SegHead,
 };
 use md5::{Digest, Md5};

@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 
 use bytes::Bytes;
-use kosa_proto::service::highway::v2::{
+use kosa_proto::service::v2::{
     C2cUserInfo, ClientMeta, CommonHead, DownloadExt, DownloadReq, ExtBizInfo, FileInfo, GroupInfo,
     IndexNode, MultiMediaReqHead, NtHighwayDomain, NtHighwayHash, NtHighwayIPv4, NtHighwayNetwork,
     Ntv2RichMediaHighwayExt, Ntv2RichMediaReq, SceneInfo, UploadInfo, UploadReq, UploadResp,
@@ -75,7 +75,7 @@ pub(crate) fn build_scene_info(scene: Scene, request_type: u32, business_type: u
     match scene {
         Scene::Private(_uin, uid) => {
             scene_info.scene_type = Some(1);
-            scene_info.c2c = Some(C2cUserInfo {
+            scene_info.c2_c = Some(C2cUserInfo {
                 target_uid: Some(uid),
                 account_type: Some(2),
             });
@@ -108,8 +108,8 @@ pub(crate) fn gen_ext(upload_resp: UploadResp) -> Option<Ntv2RichMediaHighwayExt
                 file_uuid: index?.file_uuid.clone(),
                 u_key: Some(ukey),
                 network: Some(NtHighwayNetwork {
-                    ipv4s: upload_resp
-                        .ipv4s
+                    i_pv4s: upload_resp
+                        .i_pv4s
                         .iter()
                         .map(|x| NtHighwayIPv4 {
                             domain: Some(NtHighwayDomain {

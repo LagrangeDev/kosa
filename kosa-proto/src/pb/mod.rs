@@ -28,13 +28,6 @@ pub mod notify {
     }
 }
 pub mod service {
-    pub mod highway {
-        // @@protoc_insertion_point(attribute:service.highway.v2)
-        pub mod v2 {
-            include!("service.highway.v2.rs");
-            // @@protoc_insertion_point(service.highway.v2)
-        }
-    }
     // @@protoc_insertion_point(attribute:service.v2)
     pub mod v2 {
         include!("service.v2.rs");

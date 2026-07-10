@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_proto::service::highway::v2::{FileInfo, IndexNode, MsgInfo};
+use kosa_proto::service::v2::{FileInfo, IndexNode, MsgInfo};
 use prost::Message;
 
 pub fn extract_info(pb: Bytes) -> anyhow::Result<(MsgInfo, IndexNode, FileInfo)> {

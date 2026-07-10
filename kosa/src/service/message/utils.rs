@@ -1,4 +1,4 @@
-use kosa_proto::service::highway::v2::Ntv2RichMediaResp;
+use kosa_proto::service::v2::Ntv2RichMediaResp;
 
 pub(crate) fn parse_download_url(download_resp: Ntv2RichMediaResp) -> anyhow::Result<String> {
     let download = download_resp

@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
-use kosa_proto::service::highway::v2::{DownloadExt, IndexNode, Ntv2RichMediaResp};
+use kosa_proto::service::v2::{DownloadExt, IndexNode, Ntv2RichMediaResp};
 use prost::Message;
 
 use crate::{

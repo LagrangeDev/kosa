@@ -3,7 +3,7 @@ use std::vec;
 use arcstr::ArcStr;
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
-use kosa_proto::common::v2::{
+use kosa_proto::service::v2::{
     IncPullRequest, IncPullRequestBiz, IncPullRequestBizBusi, IncPullResponse,
 };
 use prost::Message;

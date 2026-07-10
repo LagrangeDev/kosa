@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
-use kosa_proto::service::v2::SetGroupMessageReactionReq;
+use kosa_proto::service::v2::SetGroupReactionRequest;
 use prost::Message;
 
 use crate::{
@@ -18,7 +18,7 @@ pub(crate) struct GroupRemoveReactionService;
 
 pub(crate) struct GroupReactionReq {
     pub(crate) group_uin: i64,
-    pub(crate) sequence: i32,
+    pub(crate) sequence: u64,
     pub(crate) reaction: Reaction,
 }
 
@@ -50,7 +50,7 @@ impl Reaction {
         }
     }
 
-    pub fn r#type(&self) -> u32 {
+    pub fn r#type(&self) -> u64 {
         match self {
             Reaction::FACE(_) => 1,
             Reaction::EMOJI(_) => 2,
@@ -68,9 +68,9 @@ impl OidbService<GroupReactionReq, GroupReactionResp> for GroupAddReactionServic
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
-        let req = SetGroupMessageReactionReq {
+        let req = SetGroupReactionRequest {
             group_uin: Some(req.group_uin),
-            sequence: Some(req.sequence as u32),
+            sequence: Some(req.sequence),
             r#type: Some(req.reaction.r#type()),
             code: Some(req.reaction.code()),
         };
@@ -97,9 +97,9 @@ impl OidbService<GroupReactionReq, GroupReactionResp> for GroupRemoveReactionSer
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<Bytes> {
-        let req = SetGroupMessageReactionReq {
+        let req = SetGroupReactionRequest {
             group_uin: Some(req.group_uin),
-            sequence: Some(req.sequence as u32),
+            sequence: Some(req.sequence),
             r#type: Some(req.reaction.r#type()),
             code: Some(req.reaction.code()),
         };
@@ -120,7 +120,7 @@ impl ServiceContext {
     pub async fn add_group_reaction(
         &self,
         group: i64,
-        seq: i32,
+        seq: u64,
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
@@ -138,7 +138,7 @@ impl ServiceContext {
     pub async fn remove_group_reaction(
         &self,
         group: i64,
-        seq: i32,
+        seq: u64,
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
@@ -159,7 +159,7 @@ impl Bot {
     pub async fn add_group_reaction(
         &self,
         group: i64,
-        seq: i32,
+        seq: u64,
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         self.service.add_group_reaction(group, seq, reaction).await
@@ -169,7 +169,7 @@ impl Bot {
     pub async fn remove_group_reaction(
         &self,
         group: i64,
-        seq: i32,
+        seq: u64,
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         self.service

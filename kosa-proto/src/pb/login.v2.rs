@@ -51,6 +51,8 @@ pub struct NtLoginForwardRequest {
     pub buffer: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(uint32, optional, tag="4")]
     pub r#type: ::core::option::Option<u32>,
+    #[prost(bytes="bytes", optional, tag="5")]
+    pub sec_buffer: ::core::option::Option<::prost::bytes::Bytes>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -465,7 +467,7 @@ pub struct NtLoginTgtExchangeFastLoginReqBody {
     pub tgt: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(bytes="bytes", optional, tag="2")]
     pub sec_extra: ::core::option::Option<::prost::bytes::Bytes>,
-    #[prost(int32, optional, tag="3")]
+    #[prost(enumeration="NtLoginCodeType", optional, tag="3")]
     pub code_type: ::core::option::Option<i32>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -515,6 +517,22 @@ pub struct NtLoginCommon {
     pub head: ::core::option::Option<NtLoginHead>,
     #[prost(bytes="bytes", optional, tag="2")]
     pub body: ::core::option::Option<::prost::bytes::Bytes>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NtLoginAndroidExt {
+    #[prost(int32, optional, tag="1")]
+    pub field1: ::core::option::Option<i32>,
+    #[prost(string, optional, tag="2")]
+    pub uin: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NtLoginAndroidCommon {
+    #[prost(message, optional, tag="2")]
+    pub common: ::core::option::Option<NtLoginCommon>,
+    #[prost(message, optional, tag="3")]
+    pub ext: ::core::option::Option<NtLoginAndroidExt>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -656,6 +674,38 @@ pub struct DeviceReport {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
+pub enum NtLoginCodeType {
+    Authcode = 0,
+    Tgt = 1,
+    A2 = 2,
+    Tgtgt = 3,
+}
+impl NtLoginCodeType {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            NtLoginCodeType::Authcode => "NT_LOGIN_CODE_TYPE_AUTHCODE",
+            NtLoginCodeType::Tgt => "NT_LOGIN_CODE_TYPE_TGT",
+            NtLoginCodeType::A2 => "NT_LOGIN_CODE_TYPE_A2",
+            NtLoginCodeType::Tgtgt => "NT_LOGIN_CODE_TYPE_TGTGT",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "NT_LOGIN_CODE_TYPE_AUTHCODE" => Some(Self::Authcode),
+            "NT_LOGIN_CODE_TYPE_TGT" => Some(Self::Tgt),
+            "NT_LOGIN_CODE_TYPE_A2" => Some(Self::A2),
+            "NT_LOGIN_CODE_TYPE_TGTGT" => Some(Self::Tgtgt),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
 pub enum NtLoginPlatform {
     Unknown = 0,
     Ios = 1,
@@ -697,38 +747,6 @@ impl NtLoginPlatform {
             "NT_LOGIN_PLATFORM_IPAD" => Some(Self::Ipad),
             "NT_LOGIN_PLATFORM_LINUX" => Some(Self::Linux),
             "NT_LOGIN_PLATFORM_HARMONY" => Some(Self::Harmony),
-            _ => None,
-        }
-    }
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum NtLoginCodeType {
-    Authcode = 0,
-    Tgt = 1,
-    A2 = 2,
-    Tgtgt = 3,
-}
-impl NtLoginCodeType {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            NtLoginCodeType::Authcode => "NT_LOGIN_CODE_TYPE_AUTHCODE",
-            NtLoginCodeType::Tgt => "NT_LOGIN_CODE_TYPE_TGT",
-            NtLoginCodeType::A2 => "NT_LOGIN_CODE_TYPE_A2",
-            NtLoginCodeType::Tgtgt => "NT_LOGIN_CODE_TYPE_TGTGT",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "NT_LOGIN_CODE_TYPE_AUTHCODE" => Some(Self::Authcode),
-            "NT_LOGIN_CODE_TYPE_TGT" => Some(Self::Tgt),
-            "NT_LOGIN_CODE_TYPE_A2" => Some(Self::A2),
-            "NT_LOGIN_CODE_TYPE_TGTGT" => Some(Self::Tgtgt),
             _ => None,
         }
     }

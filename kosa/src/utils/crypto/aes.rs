@@ -1,7 +1,7 @@
-use aes::cipher::block_padding::{Error, Pkcs7};
+use aes::cipher::block_padding::Pkcs7;
 use aes_gcm::{
     Aes128Gcm, Aes256Gcm, Nonce,
-    aead::{Aead, KeyInit, OsRng},
+    aead::{Aead, Generate, KeyInit},
 };
 use bytes::{Bytes, BytesMut};
 use cbc::cipher::{
@@ -27,7 +27,7 @@ pub enum AesError {
     CipherInvalidLength(#[from] CipherInvalidLength),
 
     #[error("cbc unpad error")]
-    CbcUnpad(#[from] Error),
+    CbcUnpad(#[from] aes::cipher::block_padding::Error),
 }
 
 pub fn aes_gcm_encrypt(key: &[u8], plaintext: &[u8]) -> Result<Bytes, AesError> {
@@ -48,7 +48,7 @@ fn _aes_gcm_encrypt<C>(ciper: C, plaintext: &[u8]) -> Result<Bytes, AesError>
 where
     C: Aead,
 {
-    let nonce = C::generate_nonce(&mut OsRng);
+    let nonce = Nonce::<C::NonceSize>::generate();
     let ciphertext = ciper.encrypt(&nonce, plaintext)?;
     let mut result = BytesMut::with_capacity(nonce.len() + ciphertext.len());
     result.extend_from_slice(&nonce);
@@ -77,10 +77,10 @@ where
     if ciphertext.len() < 12 + 16 {
         return Err(AesError::CiphertextTooShort(ciphertext.len()));
     };
-
-    let nonce = Nonce::<C::NonceSize>::from_slice(&ciphertext[..12]);
+    let nonce = Nonce::<C::NonceSize>::try_from(&ciphertext[..12])
+        .map_err(|_| AesError::WrongIvSize(12))?;
     let ciphertext = &ciphertext[12..];
-    let plaintext = ciper.decrypt(nonce, ciphertext)?;
+    let plaintext = ciper.decrypt(&nonce, ciphertext)?;
     Ok(Bytes::from(plaintext))
 }
 

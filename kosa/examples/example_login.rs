@@ -300,14 +300,11 @@ async fn main() -> anyhow::Result<()> {
         sess
     };
 
-    let bot = Arc::new(
-        Bot::new(
-            Arc::new(app_info),
-            Arc::new(session),
-            Arc::new(LinuxSign::new()),
-        )
-        .await?,
-    );
+    let bot = Arc::new(Bot::new(
+        Arc::new(app_info),
+        Arc::new(session),
+        Arc::new(GenericSign::new(std::env::var("KOSA_SIGN_URL")?)),
+    )?);
 
     let event_subscriber = EventSubscriber { bot: bot.clone() };
     event_subscriber.start();
@@ -347,75 +344,4 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "opentelemetry")]
     metrics_provider.force_flush()?;
     Ok(())
-}
-
-#[derive(Debug)]
-struct LinuxSign {
-    client: reqwest::Client,
-    list: AHashSet<&'static str>,
-}
-
-impl LinuxSign {
-    fn new() -> Self {
-        Self {
-            client: reqwest::Client::default(),
-            list: AHashSet::from_iter(DEFAULT_PC_CMD_LIST),
-        }
-    }
-}
-
-#[async_trait]
-impl Sign for LinuxSign {
-    async fn get_sec_sign(
-        &self,
-        _uin: i64,
-        command: &str,
-        seq: i32,
-        body: Bytes,
-    ) -> anyhow::Result<Option<SsoSecureInfo>> {
-        if !self.list.contains(&command) {
-            return Ok(None);
-        };
-        let payload = SignReq {
-            cmd: command.to_owned(),
-            seq,
-            src: hex::encode_upper(body),
-        };
-        let resp: SignResp = self
-            .client
-            .post("http://127.0.0.1:8080/sign")
-            .json(&payload)
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(Some(SsoSecureInfo {
-            sec_sign: Some(hex::decode(resp.sign.as_str())?.into()),
-            sec_token: Some(hex::decode(resp.token.as_str())?.into()),
-            sec_extra: Some(hex::decode(resp.extra.as_str())?.into()),
-        }))
-    }
-
-    async fn get_energy(&self, _uin: i64, _data: &str) -> anyhow::Result<Bytes> {
-        unimplemented!()
-    }
-
-    async fn get_debug_xwid(&self, _uin: i64, _data: &str) -> anyhow::Result<Bytes> {
-        unimplemented!()
-    }
-}
-
-#[derive(Serialize)]
-struct SignReq {
-    cmd: String,
-    seq: i32,
-    src: String,
-}
-
-#[derive(Deserialize)]
-struct SignResp {
-    sign: String,
-    token: String,
-    extra: String,
 }

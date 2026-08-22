@@ -149,7 +149,6 @@ impl Handler<SsoRequest> for PacketContext {
     type Result = ResponseActFuture<Self, anyhow::Result<SsoPacket>>;
 
     fn handle(&mut self, sso_request: SsoRequest, _ctx: &mut Self::Context) -> Self::Result {
-        let uin = self.session.uin();
         let app_info = self.app_info.clone();
         let session = self.session.clone();
         let tcp_cleint = self.network.clone();
@@ -172,10 +171,11 @@ impl Handler<SsoRequest> for PacketContext {
 
             let secure_info = sign
                 .get_sec_sign(
-                    uin,
                     sso_packet.command.as_str(),
                     sso_packet.sequence,
                     sso_packet.data.clone(),
+                    session.deref(),
+                    app_info.deref(),
                 )
                 .await?;
             let data = sso_packet.encode(metadata, app_info.deref(), session.deref(), secure_info);

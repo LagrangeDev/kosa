@@ -23,10 +23,10 @@ pub struct Session {
     pub(crate) bot_info: Arc<ArcSwap<BotInfo>>,
     pub(crate) wlogin_sigs: Arc<ArcSwap<WLoginSigs>>,
 
-    pub(crate) guid: [u8; 16],
-    pub(crate) android_id: String,
-    pub(crate) qimei: String,
-    pub(crate) device_name: String,
+    pub guid: [u8; 16],
+    pub android_id: String,
+    pub qimei: String,
+    pub device_name: String,
 }
 
 impl Session {

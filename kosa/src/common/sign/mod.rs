@@ -1,20 +1,30 @@
+mod generic;
+
 use std::fmt::Debug;
 
 use async_trait::async_trait;
 use bytes::Bytes;
+pub use generic::GenericSign;
 pub use kosa_proto::common::v2::SsoSecureInfo;
+
+use crate::common::{AppInfo, Session};
 
 #[async_trait]
 pub trait Sign: Debug + Send + Sync {
     async fn get_sec_sign(
         &self,
-        uin: i64,
         command: &str,
         seq: i32,
         body: Bytes,
+        session: &Session,
+        app_info: &AppInfo,
     ) -> anyhow::Result<Option<SsoSecureInfo>>;
-    async fn get_energy(&self, uin: i64, data: &str) -> anyhow::Result<Bytes>;
-    async fn get_debug_xwid(&self, uin: i64, data: &str) -> anyhow::Result<Bytes>;
+    async fn get_energy(&self, _uin: i64, _data: &str) -> anyhow::Result<Bytes> {
+        unimplemented!()
+    }
+    async fn get_debug_xwid(&self, _uin: i64, _data: &str) -> anyhow::Result<Bytes> {
+        unimplemented!()
+    }
 }
 
 pub const DEFAULT_PC_CMD_LIST: [&str; 94] = [

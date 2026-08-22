@@ -15,6 +15,7 @@ pub struct AppInfo {
     pub sdk_info: WtLoginSdkInfo,
     pub app_id: i32,
     pub sub_app_id: i32,
+    pub qua: String,
     pub app_client_version: u16,
     pub protocol: Protocol,
 }

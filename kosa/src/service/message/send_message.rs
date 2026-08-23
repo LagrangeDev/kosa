@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, command, register_service};
+use kosa_macros::command;
 use kosa_proto::message::v2::{
     C2c, Grp, MessageBody, PbSendMsgReq, PbSendMsgResp, RichText, SendContentHead, SendRoutingHead,
 };
@@ -8,13 +8,10 @@ use prost::Message;
 use crate::{
     common::{AppInfo, Bot, Protocol, Session, entity::Scene},
     message::MessageChain,
-    service::{EncryptType, Metadata, RequestType, Service, ServiceContext},
+    service::{EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest},
 };
 
 #[command("MessageSvc.PbSendMsg")]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct SendMessageService;
-
 #[derive(Debug)]
 pub(crate) struct SendMessageReq {
     pub(crate) scene: Scene,
@@ -26,20 +23,15 @@ pub(crate) struct SendMessageReq {
 #[derive(Debug)]
 pub(crate) struct SendMessageResp(pub PbSendMsgResp);
 
-#[register_service]
-impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
+impl ServiceRequest for SendMessageReq {
+    type Response = SendMessageResp;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::D2,
         request_type: RequestType::D2Auth,
         support_protocols: Protocol::all(),
     };
 
-    fn build(
-        _state: &Self,
-        req: SendMessageReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
         let elems = req.messages.encode(&req.scene)?;
         let msg_body = MessageBody {
             rich_text: Some(RichText {
@@ -83,12 +75,11 @@ impl Service<SendMessageReq, SendMessageResp> for SendMessageService {
         .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<SendMessageResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = PbSendMsgResp::decode(data)?;
         Ok(SendMessageResp(resp))
     }
@@ -108,10 +99,7 @@ impl ServiceContext {
             client_sequence: rand::random(),
             random: rand::random(),
         };
-        let resp = self
-            .send_request::<SendMessageService, SendMessageReq, SendMessageResp>(req)
-            .await?
-            .0;
+        let resp = self.send_request(req).await?.0;
         if resp.client_sequence() == 0 {
             Err(anyhow::anyhow!("private message send failed"))
         } else {
@@ -131,10 +119,7 @@ impl ServiceContext {
             client_sequence: rand::random(),
             random: rand::random(),
         };
-        let resp = self
-            .send_request::<SendMessageService, SendMessageReq, SendMessageResp>(req)
-            .await?
-            .0;
+        let resp = self.send_request(req).await?.0;
         if let Some(seq) = resp.sequence {
             Ok(seq)
         } else {

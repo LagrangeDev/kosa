@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{DownloadExt, IndexNode, Ntv2RichMediaResp};
 use prost::Message;
 
@@ -8,15 +8,12 @@ use crate::{
     extract_index_node,
     message::{Image, LocalImage},
     service::{
-        OidbService, ServiceContext, message::utils::parse_download_url,
+        OidbServiceRequest, ServiceContext, message::utils::parse_download_url,
         packet::nt_v2_richmedia::build_download_request,
     },
 };
 
 #[oidb_command(0x11c5, 200)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateImageDownloadService;
-
 pub(crate) struct PrivateImageDownloadReq {
     node: IndexNode,
     ext: Option<DownloadExt>,
@@ -27,18 +24,11 @@ pub(crate) struct PrivateImageDownloadResp {
     url: String,
 }
 
-#[register_oidb_service]
-impl OidbService<PrivateImageDownloadReq, PrivateImageDownloadResp>
-    for PrivateImageDownloadService
-{
+impl OidbServiceRequest for PrivateImageDownloadReq {
+    type Response = PrivateImageDownloadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: PrivateImageDownloadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
         Ok(
             build_download_request::<LocalImage>(req.node, req.ext, req.scene)?
                 .encode_to_vec()
@@ -46,12 +36,11 @@ impl OidbService<PrivateImageDownloadReq, PrivateImageDownloadResp>
         )
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<PrivateImageDownloadResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = Ntv2RichMediaResp::decode(data)?;
         Ok(PrivateImageDownloadResp {
             url: parse_download_url(resp)?,
@@ -71,7 +60,7 @@ impl ServiceContext {
             ext: None,
             scene: Scene::Private(uin, uid),
         };
-        self.send_request::<PrivateImageDownloadService,PrivateImageDownloadReq,PrivateImageDownloadResp>(req).await
+        self.send_request(req).await
     }
 }
 

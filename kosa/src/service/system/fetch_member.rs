@@ -1,7 +1,7 @@
 use arcstr::ArcStr;
 use bytes::Bytes;
 use chrono::DateTime;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
     FetchGroupMembersRequest, FetchGroupMembersRequestBody, FetchGroupMembersResponse,
 };
@@ -12,13 +12,10 @@ use crate::{
         AppInfo, Bot, Protocol, Session,
         entity::{GroupMember, GroupPermission},
     },
-    service::{OidbService, ServiceContext},
+    service::{OidbServiceRequest, ServiceContext},
 };
 
 #[oidb_command(0xfe7, 3)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct FetchMemberService;
-
 pub(crate) struct FetchMemberReq {
     pub(crate) group: i64,
     pub(crate) cookie: Bytes,
@@ -29,16 +26,11 @@ pub(crate) struct FetchMemberResp {
     pub(crate) cookie: Bytes,
 }
 
-#[register_oidb_service]
-impl OidbService<FetchMemberReq, FetchMemberResp> for FetchMemberService {
+impl OidbServiceRequest for FetchMemberReq {
+    type Response = FetchMemberResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: FetchMemberReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
         let req = FetchGroupMembersRequest {
             group_uin: Some(req.group),
             field2: Some(5),
@@ -59,12 +51,11 @@ impl OidbService<FetchMemberReq, FetchMemberResp> for FetchMemberService {
         Ok(req.encode_to_vec().into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<FetchMemberResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = FetchGroupMembersResponse::decode(data)?;
 
         let members = resp
@@ -107,12 +98,10 @@ impl ServiceContext {
         let mut cookie: Bytes = Bytes::default();
         loop {
             let resp = self
-                .send_request::<FetchMemberService, FetchMemberReq, FetchMemberResp>(
-                    FetchMemberReq {
-                        group,
-                        cookie: cookie.clone(),
-                    },
-                )
+                .send_request(FetchMemberReq {
+                    group,
+                    cookie: cookie.clone(),
+                })
                 .await?;
             cookie = resp.cookie;
             members.extend(resp.members);

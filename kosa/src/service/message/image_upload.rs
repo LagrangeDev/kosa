@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::{
     message::v2::CustomFacePbReserve1,
     service::v2::{
@@ -12,24 +12,24 @@ use crate::{
     common::{AppInfo, Bot, Protocol, Session, entity::Scene},
     message::{Image, LocalImage, RichMedia},
     service::{
-        OidbService, ServiceContext,
+        OidbServiceRequest, ServiceContext,
         packet::nt_v2_richmedia::{build_upload_request, gen_ext},
     },
 };
 
 #[oidb_command(0x11c5, 100)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateImageUploadService;
-
-#[oidb_command(0x11c4, 100)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct GroupImageUploadService;
-
-#[derive(Debug)]
-pub(crate) struct ImageUploadReq {
+pub(crate) struct PrivateImageUploadReq {
+    uin: i64,
+    uid: String,
     file_info: FileInfo,
     ext_biz_info: ExtBizInfo,
-    scene: Scene,
+}
+
+#[oidb_command(0x11c4, 100)]
+pub(crate) struct GroupImageUploadReq {
+    group: i64,
+    file_info: FileInfo,
+    ext_biz_info: ExtBizInfo,
 }
 
 #[derive(Debug)]
@@ -39,74 +39,62 @@ pub(crate) struct ImageUploadResp {
     ext: Option<Ntv2RichMediaHighwayExt>,
 }
 
-#[register_oidb_service]
-impl OidbService<ImageUploadReq, ImageUploadResp> for PrivateImageUploadService {
+impl OidbServiceRequest for PrivateImageUploadReq {
+    type Response = ImageUploadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: ImageUploadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(
-            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info)?
-                .encode_to_vec()
-                .into(),
-        )
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_upload_request::<LocalImage>(
+            Scene::Private(req.uin, req.uid),
+            req.file_info,
+            req.ext_biz_info,
+        )?
+        .encode_to_vec()
+        .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<ImageUploadResp> {
-        let resp = Ntv2RichMediaResp::decode(data)?;
-        let upload = resp
-            .upload
-            .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
-        Ok(ImageUploadResp {
-            ext: gen_ext(upload.clone()),
-            msg_info: upload.msg_info.unwrap_or_default(),
-            compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
-        })
+    ) -> anyhow::Result<Self::Response> {
+        decode_image_upload_resp(data)
     }
 }
 
-#[register_oidb_service]
-impl OidbService<ImageUploadReq, ImageUploadResp> for GroupImageUploadService {
+impl OidbServiceRequest for GroupImageUploadReq {
+    type Response = ImageUploadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: ImageUploadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(
-            build_upload_request::<LocalImage>(req.scene, req.file_info, req.ext_biz_info)?
-                .encode_to_vec()
-                .into(),
-        )
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_upload_request::<LocalImage>(
+            Scene::Group(req.group),
+            req.file_info,
+            req.ext_biz_info,
+        )?
+        .encode_to_vec()
+        .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<ImageUploadResp> {
-        let resp = Ntv2RichMediaResp::decode(data)?;
-        let upload = resp
-            .upload
-            .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
-        Ok(ImageUploadResp {
-            ext: gen_ext(upload.clone()),
-            msg_info: upload.msg_info.unwrap_or_default(),
-            compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
-        })
+    ) -> anyhow::Result<Self::Response> {
+        decode_image_upload_resp(data)
     }
+}
+
+fn decode_image_upload_resp(data: Bytes) -> anyhow::Result<ImageUploadResp> {
+    let resp = Ntv2RichMediaResp::decode(data)?;
+    let upload = resp
+        .upload
+        .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
+    Ok(ImageUploadResp {
+        ext: gen_ext(upload.clone()),
+        msg_info: upload.msg_info.unwrap_or_default(),
+        compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
+    })
 }
 
 impl ServiceContext {
@@ -135,13 +123,12 @@ impl ServiceContext {
             }),
             ..Default::default()
         };
-        self.send_request::<PrivateImageUploadService, ImageUploadReq, ImageUploadResp>(
-            ImageUploadReq {
-                scene: Scene::Private(uin, uid),
-                file_info: image.build_file_info()?,
-                ext_biz_info: ext,
-            },
-        )
+        self.send_request(PrivateImageUploadReq {
+            uin,
+            uid,
+            file_info: image.build_file_info()?,
+            ext_biz_info: ext,
+        })
         .await
     }
 
@@ -169,13 +156,11 @@ impl ServiceContext {
             }),
             ..Default::default()
         };
-        self.send_request::<GroupImageUploadService, ImageUploadReq, ImageUploadResp>(
-            ImageUploadReq {
-                scene: Scene::Group(group),
-                file_info: image.build_file_info()?,
-                ext_biz_info: ext,
-            },
-        )
+        self.send_request(GroupImageUploadReq {
+            group,
+            file_info: image.build_file_info()?,
+            ext_biz_info: ext,
+        })
         .await
     }
 }

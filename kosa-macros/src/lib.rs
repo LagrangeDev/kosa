@@ -1,6 +1,4 @@
 mod command;
-mod service;
-mod state;
 mod tlv;
 
 use proc_macro::TokenStream;
@@ -31,29 +29,6 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn oidb_command(attr: TokenStream, item: TokenStream) -> TokenStream {
     command::expand_oidb_command(attr, item)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
-}
-
-#[proc_macro_derive(ServiceState)]
-pub fn service_state_derive(item: TokenStream) -> TokenStream {
-    state::expand_service_state(item)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
-}
-
-/// 注册service到对应的command
-#[proc_macro_attribute]
-pub fn register_service(attr: TokenStream, item: TokenStream) -> TokenStream {
-    service::register_service(attr, item)
-        .unwrap_or_else(Error::into_compile_error)
-        .into()
-}
-
-/// 注册service到对应的oidb command
-#[proc_macro_attribute]
-pub fn register_oidb_service(attr: TokenStream, item: TokenStream) -> TokenStream {
-    service::register_oidb_service(attr, item)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

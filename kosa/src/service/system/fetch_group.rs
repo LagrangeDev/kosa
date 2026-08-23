@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
     FetchGroupsRequest, FetchGroupsRequestConfig, FetchGroupsRequestConfig1,
     FetchGroupsRequestConfig2, FetchGroupsRequestConfig3, FetchGroupsResponse,
@@ -8,29 +8,21 @@ use prost::Message;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session, entity::Group},
-    service::{OidbService, ServiceContext},
+    service::{OidbServiceRequest, ServiceContext},
 };
 
 #[oidb_command(0xfe5, 2)]
-#[derive(Debug, Default, ServiceState)]
-struct FetchGroupService;
-
 struct FetchGroupReq;
 
 struct FetchGroupResp {
     groups: Vec<Group>,
 }
 
-#[register_oidb_service]
-impl OidbService<FetchGroupReq, FetchGroupResp> for FetchGroupService {
+impl OidbServiceRequest for FetchGroupReq {
+    type Response = FetchGroupResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        _req: FetchGroupReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(_req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
         let req = FetchGroupsRequest {
             config: Some(FetchGroupsRequestConfig {
                 config1: Some(FetchGroupsRequestConfig1 {
@@ -86,12 +78,11 @@ impl OidbService<FetchGroupReq, FetchGroupResp> for FetchGroupService {
         Ok(req.encode_to_vec().into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<FetchGroupResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = FetchGroupsResponse::decode(data)?;
 
         let groups: Vec<Group> = resp
@@ -117,9 +108,7 @@ impl OidbService<FetchGroupReq, FetchGroupResp> for FetchGroupService {
 
 impl ServiceContext {
     pub async fn fetch_groups(&self) -> anyhow::Result<Vec<Group>> {
-        let resp = self
-            .send_request::<FetchGroupService, FetchGroupReq, FetchGroupResp>(FetchGroupReq)
-            .await?;
+        let resp = self.send_request(FetchGroupReq).await?;
         Ok(resp.groups)
     }
 }

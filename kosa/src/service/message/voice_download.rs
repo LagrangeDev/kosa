@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{DownloadExt, IndexNode, Ntv2RichMediaResp};
 use prost::Message;
 
@@ -8,50 +8,42 @@ use crate::{
     extract_index_node,
     message::{LocalVoice, Voice},
     service::{
-        OidbService, ServiceContext, message::utils::parse_download_url,
+        OidbServiceRequest, ServiceContext, message::utils::parse_download_url,
         packet::nt_v2_richmedia::build_download_request,
     },
 };
 
 #[oidb_command(0x126d, 200)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateVoiceDownloadService;
-
 pub(crate) struct PrivateVoiceDownloadReq {
+    uin: i64,
+    uid: String,
     node: IndexNode,
     ext: Option<DownloadExt>,
-    scene: Scene,
 }
 
 pub(crate) struct PrivateVoiceDownloadResp {
     url: String,
 }
 
-#[register_oidb_service]
-impl OidbService<PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>
-    for PrivateVoiceDownloadService
-{
+impl OidbServiceRequest for PrivateVoiceDownloadReq {
+    type Response = PrivateVoiceDownloadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: PrivateVoiceDownloadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(
-            build_download_request::<LocalVoice>(req.node, req.ext, req.scene)?
-                .encode_to_vec()
-                .into(),
-        )
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_download_request::<LocalVoice>(
+            req.node,
+            req.ext,
+            Scene::Private(req.uin, req.uid),
+        )?
+        .encode_to_vec()
+        .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<PrivateVoiceDownloadResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = Ntv2RichMediaResp::decode(data)?;
         Ok(PrivateVoiceDownloadResp {
             url: parse_download_url(resp)?,
@@ -67,11 +59,12 @@ impl ServiceContext {
         voice: &Voice,
     ) -> anyhow::Result<PrivateVoiceDownloadResp> {
         let req = PrivateVoiceDownloadReq {
+            uin,
+            uid,
             node: extract_index_node!(voice),
             ext: None,
-            scene: Scene::Private(uin, uid),
         };
-        self.send_request::<PrivateVoiceDownloadService, PrivateVoiceDownloadReq, PrivateVoiceDownloadResp>(req).await
+        self.send_request(req).await
     }
 }
 

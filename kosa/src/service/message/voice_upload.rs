@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
     ExtBizInfo, FileInfo, MsgInfo, Ntv2RichMediaHighwayExt, Ntv2RichMediaResp, PicExtBizInfo,
     PttExtBizInfo,
@@ -10,97 +10,87 @@ use crate::{
     common::{AppInfo, Bot, Protocol, Session, entity::Scene},
     message::{LocalVoice, RichMedia, Voice},
     service::{
-        OidbService, ServiceContext,
+        OidbServiceRequest, ServiceContext,
         packet::nt_v2_richmedia::{build_upload_request, gen_ext},
     },
 };
 
 #[oidb_command(0x126d, 100)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct PrivateVoiceUploadService;
-
-#[oidb_command(0x126e, 100)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct GroupVoiceUploadService;
-
-#[derive(Debug)]
-pub(crate) struct VoiceUploadReq {
+pub(crate) struct PrivateVoiceUploadReq {
+    uin: i64,
+    uid: String,
     file_info: FileInfo,
     ext_biz_info: ExtBizInfo,
-    scene: Scene,
+}
+
+#[oidb_command(0x126e, 100)]
+pub(crate) struct GroupVoiceUploadReq {
+    group: i64,
+    file_info: FileInfo,
+    ext_biz_info: ExtBizInfo,
 }
 
 #[derive(Debug)]
-pub(crate) struct GroupVoiceUploadResp {
+pub(crate) struct VoiceUploadResp {
     msg_info: MsgInfo,
     ext: Option<Ntv2RichMediaHighwayExt>,
 }
 
-#[register_oidb_service]
-impl OidbService<VoiceUploadReq, GroupVoiceUploadResp> for PrivateVoiceUploadService {
+impl OidbServiceRequest for PrivateVoiceUploadReq {
+    type Response = VoiceUploadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: VoiceUploadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(
-            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info)?
-                .encode_to_vec()
-                .into(),
-        )
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_upload_request::<LocalVoice>(
+            Scene::Private(req.uin, req.uid),
+            req.file_info,
+            req.ext_biz_info,
+        )?
+        .encode_to_vec()
+        .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<GroupVoiceUploadResp> {
-        let resp = Ntv2RichMediaResp::decode(data)?;
-        let upload = resp
-            .upload
-            .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
-        Ok(GroupVoiceUploadResp {
-            ext: gen_ext(upload.clone()),
-            msg_info: upload.msg_info.unwrap_or_default(),
-        })
+    ) -> anyhow::Result<Self::Response> {
+        decode_voice_upload_resp(data)
     }
 }
-#[register_oidb_service]
-impl OidbService<VoiceUploadReq, GroupVoiceUploadResp> for GroupVoiceUploadService {
+
+impl OidbServiceRequest for GroupVoiceUploadReq {
+    type Response = VoiceUploadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: VoiceUploadReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(
-            build_upload_request::<LocalVoice>(req.scene, req.file_info, req.ext_biz_info)?
-                .encode_to_vec()
-                .into(),
-        )
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_upload_request::<LocalVoice>(
+            Scene::Group(req.group),
+            req.file_info,
+            req.ext_biz_info,
+        )?
+        .encode_to_vec()
+        .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<GroupVoiceUploadResp> {
-        let resp = Ntv2RichMediaResp::decode(data)?;
-        let upload = resp
-            .upload
-            .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
-        Ok(GroupVoiceUploadResp {
-            ext: gen_ext(upload.clone()),
-            msg_info: upload.msg_info.unwrap_or_default(),
-        })
+    ) -> anyhow::Result<Self::Response> {
+        decode_voice_upload_resp(data)
     }
+}
+
+fn decode_voice_upload_resp(data: Bytes) -> anyhow::Result<VoiceUploadResp> {
+    let resp = Ntv2RichMediaResp::decode(data)?;
+    let upload = resp
+        .upload
+        .ok_or_else(|| anyhow::anyhow!("empty upload response"))?;
+    Ok(VoiceUploadResp {
+        ext: gen_ext(upload.clone()),
+        msg_info: upload.msg_info.unwrap_or_default(),
+    })
 }
 
 impl ServiceContext {
@@ -109,7 +99,7 @@ impl ServiceContext {
         uin: i64,
         uid: String,
         voice: &LocalVoice,
-    ) -> anyhow::Result<GroupVoiceUploadResp> {
+    ) -> anyhow::Result<VoiceUploadResp> {
         let ext = ExtBizInfo {
             pic: Some(PicExtBizInfo {
                 text_summary: voice.summary.clone(),
@@ -126,13 +116,12 @@ impl ServiceContext {
             }),
             ..Default::default()
         };
-        self.send_request::<PrivateVoiceUploadService, VoiceUploadReq, GroupVoiceUploadResp>(
-            VoiceUploadReq {
-                scene: Scene::Private(uin, uid),
-                file_info: voice.build_file_info()?,
-                ext_biz_info: ext,
-            },
-        )
+        self.send_request(PrivateVoiceUploadReq {
+            uin,
+            uid,
+            file_info: voice.build_file_info()?,
+            ext_biz_info: ext,
+        })
         .await
     }
 
@@ -140,7 +129,7 @@ impl ServiceContext {
         &self,
         group: i64,
         voice: &LocalVoice,
-    ) -> anyhow::Result<GroupVoiceUploadResp> {
+    ) -> anyhow::Result<VoiceUploadResp> {
         let ext = ExtBizInfo {
             pic: Some(PicExtBizInfo {
                 text_summary: voice.summary.clone(),
@@ -156,13 +145,11 @@ impl ServiceContext {
             }),
             ..Default::default()
         };
-        self.send_request::<GroupVoiceUploadService, VoiceUploadReq, GroupVoiceUploadResp>(
-            VoiceUploadReq {
-                scene: Scene::Group(group),
-                file_info: voice.build_file_info()?,
-                ext_biz_info: ext,
-            },
-        )
+        self.send_request(GroupVoiceUploadReq {
+            group,
+            file_info: voice.build_file_info()?,
+            ext_biz_info: ext,
+        })
         .await
     }
 }
@@ -199,14 +186,7 @@ impl Bot {
                 .await?;
         };
 
-        let voice = Voice {
-            summary: voice.summary.unwrap_or_default(),
-            md5: voice.md5,
-            sha1: voice.sha1,
-            duration: voice.duration.round() as u32,
-            msg_info: upload_resp.msg_info.into(),
-        };
-        Ok(voice)
+        Ok(build_voice(voice, upload_resp.msg_info))
     }
 
     /// 上传群聊语音
@@ -233,13 +213,16 @@ impl Bot {
                 .await?;
         };
 
-        let voice = Voice {
-            summary: voice.summary.unwrap_or_default(),
-            md5: voice.md5,
-            sha1: voice.sha1,
-            duration: voice.duration.round() as u32,
-            msg_info: upload_resp.msg_info.into(),
-        };
-        Ok(voice)
+        Ok(build_voice(voice, upload_resp.msg_info))
+    }
+}
+
+fn build_voice(voice: LocalVoice, msg_info: MsgInfo) -> Voice {
+    Voice {
+        summary: voice.summary.unwrap_or_default(),
+        md5: voice.md5,
+        sha1: voice.sha1,
+        duration: voice.duration.round() as u32,
+        msg_info: msg_info.into(),
     }
 }

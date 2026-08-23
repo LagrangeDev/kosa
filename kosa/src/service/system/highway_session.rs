@@ -2,20 +2,17 @@ use std::net::Ipv4Addr;
 
 use ahash::AHashMap;
 use bytes::Bytes;
-use kosa_macros::{ServiceState, command, register_service};
+use kosa_macros::command;
 use kosa_proto::service::v2::{C501ReqBody, C501RspBody, SubCmd0x501ReqBody};
 use prost::Message;
 use reqwest::Url;
 
 use crate::{
     common::{AppInfo, Protocol, Session},
-    service::{EncryptType, Metadata, RequestType, Service, ServiceContext},
+    service::{EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest},
 };
 
 #[command("HttpConn.0x6ff_501")]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct HighwaySessionService;
-
 pub(crate) struct HighwaySessionReq;
 
 pub(crate) struct HighwaySessionResp {
@@ -23,20 +20,15 @@ pub(crate) struct HighwaySessionResp {
     pub(crate) sig_session: Bytes,
 }
 
-#[register_service]
-impl Service<HighwaySessionReq, HighwaySessionResp> for HighwaySessionService {
+impl ServiceRequest for HighwaySessionReq {
+    type Response = HighwaySessionResp;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::D2,
         request_type: RequestType::D2Auth,
         support_protocols: Protocol::all(),
     };
 
-    fn build(
-        _state: &Self,
-        _req: HighwaySessionReq,
-        _app_info: &AppInfo,
-        session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(_req: Self, _app_info: &AppInfo, session: &Session) -> anyhow::Result<Bytes> {
         Ok(C501ReqBody {
             req_body: Some(SubCmd0x501ReqBody {
                 uin: Some(0),
@@ -57,12 +49,11 @@ impl Service<HighwaySessionReq, HighwaySessionResp> for HighwaySessionService {
         .into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         session: &Session,
-    ) -> anyhow::Result<HighwaySessionResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = C501RspBody::decode(data)?;
         if let Some(body) = resp.rsp_body {
             let mut servers: AHashMap<u32, Vec<Url>> = AHashMap::with_capacity(body.addrs.len());
@@ -94,9 +85,6 @@ impl Service<HighwaySessionReq, HighwaySessionResp> for HighwaySessionService {
 
 impl ServiceContext {
     pub(crate) async fn get_highway_ticket(&self) -> anyhow::Result<HighwaySessionResp> {
-        self.send_request::<HighwaySessionService, HighwaySessionReq, HighwaySessionResp>(
-            HighwaySessionReq,
-        )
-        .await
+        self.send_request(HighwaySessionReq).await
     }
 }

@@ -1,6 +1,6 @@
 use ahash::AHashMap;
 use bytes::Bytes;
-use kosa_macros::{ServiceState, command, register_service};
+use kosa_macros::command;
 use kosa_proto::system::v2::ThirdPartyLoginResponse;
 use prost::Message;
 use strum::FromRepr;
@@ -9,7 +9,7 @@ use crate::{
     common::{AppInfo, Bot, Protocol, Session},
     event::SessionUpdated,
     service::{
-        EncryptType, Metadata, RequestType, Service, ServiceContext,
+        EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest,
         packet::{tlv::decode_tlv, wt_login},
     },
     utils::{
@@ -39,11 +39,8 @@ pub enum LoginState {
     Unknown = 240,
 }
 
-#[command("wtlogin.login")]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct LoginService;
-
 #[allow(dead_code)]
+#[command("wtlogin.login")]
 #[derive(Debug, Clone)]
 pub(crate) enum LoginReq {
     Qrcode,
@@ -61,20 +58,15 @@ pub(crate) struct LoginResp {
     pub(crate) tlvs: AHashMap<u16, Bytes>,
 }
 
-#[register_service]
-impl Service<LoginReq, LoginResp> for LoginService {
+impl ServiceRequest for LoginReq {
+    type Response = LoginResp;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::Empty,
         request_type: RequestType::D2Auth,
         support_protocols: Protocol::all(),
     };
 
-    fn build(
-        _state: &Self,
-        req: LoginReq,
-        app_info: &AppInfo,
-        session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, app_info: &AppInfo, session: &Session) -> anyhow::Result<Bytes> {
         let data = match (req, app_info.protocol) {
             (LoginReq::Qrcode, protocol) if Protocol::PC.contains(protocol) => {
                 wt_login::build_oicq_09(app_info, session)
@@ -90,12 +82,11 @@ impl Service<LoginReq, LoginResp> for LoginService {
         Ok(data)
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         session: &Session,
-    ) -> anyhow::Result<LoginResp> {
+    ) -> anyhow::Result<Self::Response> {
         let (cmd, data) = wt_login::parse(data, session)?;
         if cmd != 0x810 {
             anyhow::bail!("unexpected command in login response")
@@ -141,8 +132,7 @@ impl Service<LoginReq, LoginResp> for LoginService {
 
 impl ServiceContext {
     pub(crate) async fn qrcode_login(&self) -> anyhow::Result<LoginResp> {
-        self.send_request::<LoginService, LoginReq, LoginResp>(LoginReq::Qrcode)
-            .await
+        self.send_request(LoginReq::Qrcode).await
     }
 }
 

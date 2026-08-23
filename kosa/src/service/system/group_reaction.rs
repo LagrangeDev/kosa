@@ -1,25 +1,34 @@
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::SetGroupReactionRequest;
 use prost::Message;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
-    service::{OidbService, ServiceContext},
+    service::{OidbServiceRequest, ServiceContext},
 };
 
 #[oidb_command(0x9082, 1)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct GroupAddReactionService;
+pub(crate) struct GroupAddReactionReq(GroupReactionReq);
 
 #[oidb_command(0x9082, 2)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct GroupRemoveReactionService;
+pub(crate) struct GroupRemoveReactionReq(GroupReactionReq);
 
 pub(crate) struct GroupReactionReq {
     pub(crate) group_uin: i64,
     pub(crate) sequence: u64,
     pub(crate) reaction: Reaction,
+}
+
+impl GroupReactionReq {
+    fn build(self) -> SetGroupReactionRequest {
+        SetGroupReactionRequest {
+            group_uin: Some(self.group_uin),
+            sequence: Some(self.sequence),
+            r#type: Some(self.reaction.r#type()),
+            code: Some(self.reaction.code()),
+        }
+    }
 }
 
 pub(crate) struct GroupReactionResp;
@@ -58,60 +67,36 @@ impl Reaction {
     }
 }
 
-#[register_oidb_service]
-impl OidbService<GroupReactionReq, GroupReactionResp> for GroupAddReactionService {
+impl OidbServiceRequest for GroupAddReactionReq {
+    type Response = GroupReactionResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: GroupReactionReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        let req = SetGroupReactionRequest {
-            group_uin: Some(req.group_uin),
-            sequence: Some(req.sequence),
-            r#type: Some(req.reaction.r#type()),
-            code: Some(req.reaction.code()),
-        };
-        Ok(req.encode_to_vec().into())
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(req.0.build().encode_to_vec().into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         _data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<GroupReactionResp> {
+    ) -> anyhow::Result<Self::Response> {
         Ok(GroupReactionResp)
     }
 }
 
-#[register_oidb_service]
-impl OidbService<GroupReactionReq, GroupReactionResp> for GroupRemoveReactionService {
+impl OidbServiceRequest for GroupRemoveReactionReq {
+    type Response = GroupReactionResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: GroupReactionReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        let req = SetGroupReactionRequest {
-            group_uin: Some(req.group_uin),
-            sequence: Some(req.sequence),
-            r#type: Some(req.reaction.r#type()),
-            code: Some(req.reaction.code()),
-        };
-        Ok(req.encode_to_vec().into())
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(req.0.build().encode_to_vec().into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         _data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<GroupReactionResp> {
+    ) -> anyhow::Result<Self::Response> {
         Ok(GroupReactionResp)
     }
 }
@@ -124,13 +109,11 @@ impl ServiceContext {
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
-            .send_request::<GroupAddReactionService, GroupReactionReq, GroupReactionResp>(
-                GroupReactionReq {
-                    group_uin: group,
-                    sequence: seq,
-                    reaction,
-                },
-            )
+            .send_request(GroupAddReactionReq(GroupReactionReq {
+                group_uin: group,
+                sequence: seq,
+                reaction,
+            }))
             .await?;
         Ok(())
     }
@@ -142,13 +125,11 @@ impl ServiceContext {
         reaction: Reaction,
     ) -> anyhow::Result<()> {
         let _resp = self
-            .send_request::<GroupRemoveReactionService, GroupReactionReq, GroupReactionResp>(
-                GroupReactionReq {
-                    group_uin: group,
-                    sequence: seq,
-                    reaction,
-                },
-            )
+            .send_request(GroupRemoveReactionReq(GroupReactionReq {
+                group_uin: group,
+                sequence: seq,
+                reaction,
+            }))
             .await?;
         Ok(())
     }

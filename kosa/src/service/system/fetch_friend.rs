@@ -2,7 +2,7 @@ use std::vec;
 
 use arcstr::ArcStr;
 use bytes::Bytes;
-use kosa_macros::{ServiceState, oidb_command, register_oidb_service};
+use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
     IncPullRequest, IncPullRequestBiz, IncPullRequestBizBusi, IncPullResponse,
 };
@@ -13,13 +13,10 @@ use crate::{
         AppInfo, Bot, Protocol, Session,
         entity::{Friend, FriendCategory, Gender},
     },
-    service::{OidbService, ServiceContext},
+    service::{OidbServiceRequest, ServiceContext},
 };
 
 #[oidb_command(0xfd4, 1)]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct FetchFriendService;
-
 pub(crate) struct FetchFriendReq {
     pub(crate) cookie: Bytes,
 }
@@ -30,16 +27,11 @@ pub(crate) struct FetchFriendResp {
     pub(crate) cookie: Bytes,
 }
 
-#[register_oidb_service]
-impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
+impl OidbServiceRequest for FetchFriendReq {
+    type Response = FetchFriendResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
-    fn build(
-        _state: &Self,
-        req: FetchFriendReq,
-        _app_info: &AppInfo,
-        _session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
         let req = IncPullRequest {
             req_count: Some(300),
             local_seq: Some(13),
@@ -72,12 +64,11 @@ impl OidbService<FetchFriendReq, FetchFriendResp> for FetchFriendService {
         Ok(req.encode_to_vec().into())
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<FetchFriendResp> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = IncPullResponse::decode(data.as_ref())?;
 
         let categories: Vec<FriendCategory> = resp
@@ -132,11 +123,9 @@ impl ServiceContext {
         let mut cookie: Bytes = Bytes::default();
         loop {
             let resp = self
-                .send_request::<FetchFriendService, FetchFriendReq, FetchFriendResp>(
-                    FetchFriendReq {
-                        cookie: cookie.clone(),
-                    },
-                )
+                .send_request(FetchFriendReq {
+                    cookie: cookie.clone(),
+                })
                 .await?;
             cookie = resp.cookie;
             friends.extend(resp.friends);

@@ -7,13 +7,11 @@ use std::{
 };
 
 use actix::{Actor, Addr};
-use ahash::AHashMap;
-use tracing::trace;
 
 use crate::{
     common::{AppInfo, PacketContext, Session, Sign, SsoRequest},
     event::EventContext,
-    service::{Metadata, Service, ServiceEntry, ServiceState, packet::sso_packet::SsoPacket},
+    service::{Metadata, ServiceRequest, packet::sso_packet::SsoPacket},
 };
 
 #[derive(Debug)]
@@ -21,7 +19,6 @@ pub(crate) struct ServiceContext {
     pub(crate) app_info: Arc<AppInfo>,
     pub(crate) session: Arc<Session>,
     pub(crate) sequence: AtomicI32,
-    pub(crate) services: AHashMap<&'static str, Box<dyn ServiceState>>,
     pub(crate) packet: Addr<PacketContext>,
 }
 
@@ -33,14 +30,6 @@ impl ServiceContext {
         event: Arc<EventContext>,
         sign: Arc<dyn Sign>,
     ) -> anyhow::Result<Self> {
-        let mut services = AHashMap::new();
-
-        for entry in inventory::iter::<ServiceEntry> {
-            let (cmd, service) = (entry.creator)();
-            trace!(service = cmd, "register service");
-            services.insert(cmd, service);
-        }
-
         let packet_context = PacketContext::new(app_info.clone(), session.clone(), event, sign)?;
         let addr = packet_context.start();
 
@@ -48,7 +37,6 @@ impl ServiceContext {
             app_info,
             session,
             sequence: AtomicI32::new(seq),
-            services,
             packet: addr,
         })
     }
@@ -57,36 +45,19 @@ impl ServiceContext {
         self.sequence.fetch_add(1, Ordering::SeqCst)
     }
 
-    fn encode<S, Req, Resp>(
+    fn encode<S>(
         &self,
-        req: Req,
+        req: S,
         app_info: &AppInfo,
         session: &Session,
     ) -> anyhow::Result<(SsoPacket, &'static Metadata)>
     where
-        S: Service<Req, Resp>,
-        Req: Send + Sync + 'static,
-        Resp: Send + Sync + 'static,
+        S: ServiceRequest,
     {
-        let cmd = S::COMMAND;
-        if !S::METADATA.support_protocols.contains(app_info.protocol) {
-            anyhow::bail!("service {} not support", cmd);
-        }
-        let state = self
-            .services
-            .get(cmd)
-            .ok_or_else(|| anyhow::anyhow!("service {} not found", cmd))?;
-
-        let data = S::build(
-            state.as_any().downcast_ref::<S>().unwrap(),
-            req,
-            app_info,
-            session,
-        )?;
-
+        let data = S::encode(req, app_info, session)?;
         Ok((
             SsoPacket {
-                command: cmd.to_owned(),
+                command: S::COMMAND.to_string(),
                 data,
                 sequence: self.new_sequence(),
                 ..Default::default()
@@ -95,40 +66,25 @@ impl ServiceContext {
         ))
     }
 
-    fn decode<S, Req, Resp>(
+    fn decode<S>(
         &self,
         packet: SsoPacket,
         app_info: &AppInfo,
         session: &Session,
-    ) -> anyhow::Result<Resp>
+    ) -> anyhow::Result<S::Response>
     where
-        S: Service<Req, Resp>,
-        Req: Send + Sync + 'static,
-        Resp: Send + Sync + 'static,
+        S: ServiceRequest,
     {
-        let state = match self.services.get(packet.command.as_str()) {
-            Some(svc) => svc.deref(),
-            None => {
-                return Err(anyhow::anyhow!("service not found: {}", packet.command));
-            }
-        };
-        let resp = S::parse(
-            state.as_any().downcast_ref::<S>().unwrap(),
-            packet.data,
-            app_info,
-            session,
-        )?;
+        let resp = S::decode(packet.data, app_info, session)?;
         Ok(resp)
     }
 
-    pub(crate) async fn send_request<S, Req, Resp>(&self, req: Req) -> anyhow::Result<Resp>
+    pub(crate) async fn send_request<S>(&self, req: S) -> anyhow::Result<S::Response>
     where
-        S: Service<Req, Resp>,
-        Req: Send + Sync + 'static,
-        Resp: Send + Sync + 'static,
+        S: ServiceRequest,
     {
         let (sso_packet, metadata) =
-            self.encode::<S, Req, Resp>(req, self.app_info.deref(), self.session.deref())?;
+            self.encode(req, self.app_info.deref(), self.session.deref())?;
         let resp_sso_packet = self
             .packet
             .send(SsoRequest {
@@ -136,6 +92,6 @@ impl ServiceContext {
                 metadata,
             })
             .await??;
-        self.decode::<S, Req, Resp>(resp_sso_packet, self.app_info.deref(), self.session.deref())
+        self.decode::<S>(resp_sso_packet, self.app_info.deref(), self.session.deref())
     }
 }

@@ -1,8 +1,5 @@
-use std::sync::Arc;
-
-use arc_swap::ArcSwap;
 use bytes::Bytes;
-use kosa_macros::{ServiceState, command, register_service};
+use kosa_macros::command;
 use kosa_proto::login::v2::QrExtInfo;
 use prost::Message;
 use strum::FromRepr;
@@ -10,7 +7,7 @@ use strum::FromRepr;
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
     service::{
-        EncryptType, Metadata, RequestType, Service, ServiceContext,
+        EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest,
         packet::{
             tlv::decode_tlv,
             wt_login::{build_trans_emp_12, build_trans_emp_31, parse, parse_code2d_packet},
@@ -31,13 +28,9 @@ pub enum QrcodeState {
 }
 
 #[command("wtlogin.trans_emp")]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct TransEmpService {
-    pub(crate) qr_sig: ArcSwap<Option<Bytes>>,
+pub(crate) struct TransEmpReq12 {
+    qr_sig: Bytes,
 }
-
-#[derive(Debug, Clone, Default)]
-pub(crate) struct TransEmpReq12;
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct TransEmpResp12 {
@@ -48,8 +41,8 @@ pub(crate) struct TransEmpResp12 {
     pub(crate) temp_passwd: Bytes,
 }
 
-#[register_service]
-impl Service<TransEmpReq12, TransEmpResp12> for TransEmpService {
+impl ServiceRequest for TransEmpReq12 {
+    type Response = TransEmpResp12;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::Empty,
         request_type: RequestType::D2Auth,
@@ -58,30 +51,15 @@ impl Service<TransEmpReq12, TransEmpResp12> for TransEmpService {
         ),
     };
 
-    fn build(
-        state: &Self,
-        _req: TransEmpReq12,
-        app_info: &AppInfo,
-        session: &Session,
-    ) -> anyhow::Result<Bytes> {
-        Ok(build_trans_emp_12(
-            state
-                .qr_sig
-                .load()
-                .as_ref()
-                .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("no qr_sig, please fetch qrcode"))?,
-            app_info,
-            session,
-        ))
+    fn encode(req: Self, app_info: &AppInfo, session: &Session) -> anyhow::Result<Bytes> {
+        Ok(build_trans_emp_12(req.qr_sig.as_ref(), app_info, session))
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         session: &Session,
-    ) -> anyhow::Result<TransEmpResp12> {
+    ) -> anyhow::Result<Self::Response> {
         let (_, wtlogin_data) = parse(data, session)?;
         let (command, trans_emp_data) = parse_code2d_packet(wtlogin_data, session)?;
 
@@ -118,6 +96,7 @@ impl Service<TransEmpReq12, TransEmpResp12> for TransEmpService {
     }
 }
 
+#[command("wtlogin.trans_emp")]
 #[derive(Debug, Clone, Default)]
 pub(crate) struct TransEmpReq31 {
     pub(crate) qrcode_size: u32,
@@ -126,11 +105,13 @@ pub(crate) struct TransEmpReq31 {
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct TransEmpResp31 {
+    pub(crate) qr_sig: Bytes,
     pub(crate) url: String,
     pub(crate) image: Bytes,
 }
 
-impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
+impl ServiceRequest for TransEmpReq31 {
+    type Response = TransEmpResp31;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::Empty,
         request_type: RequestType::D2Auth,
@@ -139,12 +120,7 @@ impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
         ),
     };
 
-    fn build(
-        _state: &Self,
-        req: TransEmpReq31,
-        app_info: &AppInfo,
-        session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(req: Self, app_info: &AppInfo, session: &Session) -> anyhow::Result<Bytes> {
         Ok(build_trans_emp_31(
             req.unusual_sig.as_ref(),
             req.qrcode_size,
@@ -153,12 +129,11 @@ impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
         ))
     }
 
-    fn parse(
-        state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         session: &Session,
-    ) -> anyhow::Result<TransEmpResp31> {
+    ) -> anyhow::Result<Self::Response> {
         let (_, wtlogin_data) = parse(data, session)?;
         let (command, trans_emp_data) = parse_code2d_packet(wtlogin_data, session)?;
 
@@ -172,7 +147,6 @@ impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
         };
 
         let qr_sig = reader.read_bytes_with_prefix(Prefix::U16, false)?;
-        state.qr_sig.store(Arc::new(Some(qr_sig)));
         let mut tlvs = decode_tlv(&mut reader)?;
         let url = QrExtInfo::decode(tlvs.remove(&0xD1).unwrap_or_default())?
             .qr_url
@@ -180,27 +154,26 @@ impl Service<TransEmpReq31, TransEmpResp31> for TransEmpService {
 
         let image = tlvs.remove(&0x17).unwrap_or_default();
 
-        Ok(TransEmpResp31 { url, image })
+        Ok(TransEmpResp31 { qr_sig, url, image })
     }
 }
 
 impl ServiceContext {
-    pub(crate) async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<(String, Bytes)> {
+    pub(crate) async fn fetch_qrcode(
+        &self,
+        qrcode_size: u32,
+    ) -> anyhow::Result<(Bytes, String, Bytes)> {
         let req = TransEmpReq31 {
             qrcode_size,
             unusual_sig: Bytes::default(),
         };
-        let resp = self
-            .send_request::<TransEmpService, TransEmpReq31, TransEmpResp31>(req)
-            .await?;
-        Ok((resp.url, resp.image))
+        let resp = self.send_request(req).await?;
+        Ok((resp.qr_sig, resp.url, resp.image))
     }
 
-    pub async fn get_qrcode_result(&self) -> anyhow::Result<QrcodeState> {
-        let req = TransEmpReq12;
-        let resp = self
-            .send_request::<TransEmpService, TransEmpReq12, TransEmpResp12>(req)
-            .await?;
+    pub async fn get_qrcode_result(&self, qr_sig: Bytes) -> anyhow::Result<QrcodeState> {
+        let req = TransEmpReq12 { qr_sig };
+        let resp = self.send_request(req).await?;
 
         let state = QrcodeState::from_repr(resp.state)
             .ok_or_else(|| anyhow::anyhow!("unknown state code {}", resp.state))?;
@@ -221,11 +194,11 @@ impl ServiceContext {
 }
 
 impl Bot {
-    pub async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<(String, Bytes)> {
+    pub async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<(Bytes, String, Bytes)> {
         self.service.fetch_qrcode(qrcode_size).await
     }
 
-    pub async fn get_qrcode_result(&self) -> anyhow::Result<QrcodeState> {
-        self.service.get_qrcode_result().await
+    pub async fn get_qrcode_result(&self, qr_sig: Bytes) -> anyhow::Result<QrcodeState> {
+        self.service.get_qrcode_result(qr_sig).await
     }
 }

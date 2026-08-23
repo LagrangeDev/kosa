@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use bytes::Bytes;
-use kosa_macros::{ServiceState, command, register_service};
+use kosa_macros::command;
 use kosa_proto::system::v2::{
     CurAppState, DeviceInfo, NormalConfig, OnlineBusinessInfo, RegisterInfo, SsoC2cMsgCookie,
     SsoC2cSyncInfo, SsoInfoSyncRequest, SsoSyncInfoResponse,
@@ -12,33 +12,25 @@ use tracing::error;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
-    service::{EncryptType, Metadata, RequestType, Service, ServiceContext},
+    service::{EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest},
 };
 
 #[command("trpc.msg.register_proxy.RegisterProxy.SsoInfoSync")]
-#[derive(Debug, Default, ServiceState)]
-pub(crate) struct InfoSyncService;
-
 pub(crate) struct InfoSyncReq;
 
 pub(crate) struct InfoSyncResponse {
     pub(crate) message: String,
 }
 
-#[register_service]
-impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
+impl ServiceRequest for InfoSyncReq {
+    type Response = InfoSyncResponse;
     const METADATA: Metadata = Metadata {
         encrypt_type: EncryptType::D2,
         request_type: RequestType::D2Auth,
         support_protocols: Protocol::all(),
     };
 
-    fn build(
-        _state: &Self,
-        _req: InfoSyncReq,
-        app_info: &AppInfo,
-        session: &Session,
-    ) -> anyhow::Result<Bytes> {
+    fn encode(_req: Self, app_info: &AppInfo, session: &Session) -> anyhow::Result<Bytes> {
         // todo support android
         let pkt = SsoInfoSyncRequest {
             sync_flag: Some(735),
@@ -90,12 +82,11 @@ impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
         Ok(Bytes::from(pkt.encode_to_vec()))
     }
 
-    fn parse(
-        _state: &Self,
+    fn decode(
         data: Bytes,
         _app_info: &AppInfo,
         _session: &Session,
-    ) -> anyhow::Result<InfoSyncResponse> {
+    ) -> anyhow::Result<Self::Response> {
         let resp = SsoSyncInfoResponse::decode(data)?;
         let msg = resp
             .register_response
@@ -108,9 +99,7 @@ impl Service<InfoSyncReq, InfoSyncResponse> for InfoSyncService {
 
 impl ServiceContext {
     pub(crate) async fn register(&self) -> anyhow::Result<InfoSyncResponse> {
-        let resp = self
-            .send_request::<InfoSyncService, InfoSyncReq, InfoSyncResponse>(InfoSyncReq)
-            .await?;
+        let resp = self.send_request(InfoSyncReq).await?;
         Ok(resp)
     }
 }

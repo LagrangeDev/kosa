@@ -1,16 +1,13 @@
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use actix::prelude::*;
-use ahash::AHashSet;
-use async_trait::async_trait;
 use bytes::Bytes;
 use kosa::{
-    common::{AppInfo, Bot, DEFAULT_PC_CMD_LIST, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
+    common::{AppInfo, Bot, GenericSign, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
     event::{GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
     message::{Element, LocalImage, LocalVoice, MessageChain},
-    service::{login::QrcodeState, system::ReactionType},
+    service::{login::QrcodeState, system::Reaction},
 };
-use kosa_proto::common::v2::SsoSecureInfo;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{KeyValue, global};
 #[cfg(feature = "opentelemetry")]
@@ -22,7 +19,6 @@ use opentelemetry_sdk::{
     Resource,
     metrics::{PeriodicReader, SdkMeterProvider},
 };
-use serde::{Deserialize, Serialize};
 use silk_codec::{convert_audio_to_pcm, encode_silk};
 use tokio::{fs, time};
 use tracing::{Level, debug, error, info, warn};
@@ -43,13 +39,9 @@ impl Actor for EventSubscriber {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self.bot.event.subscribe_async::<Self, SessionUpdated>(ctx);
-        self.bot
-            .event
-            .subscribe_async::<Self, GroupMessageEvent>(ctx);
-        self.bot
-            .event
-            .subscribe_async::<Self, PrivateMessageEvent>(ctx);
+        self.bot.subscribe_async::<Self, SessionUpdated>(ctx);
+        self.bot.subscribe_async::<Self, GroupMessageEvent>(ctx);
+        self.bot.subscribe_async::<Self, PrivateMessageEvent>(ctx);
     }
 }
 
@@ -95,13 +87,15 @@ impl Handler<GroupMessageEvent> for EventSubscriber {
         }
         let bot = self.bot.clone();
         let future = async move {
-            let _ = bot
-                .add_group_reaction(msg.group_uin, msg.message.sequence, 32, ReactionType::FACE)
-                .await;
-            time::sleep(Duration::from_secs(3)).await;
-            let _ = bot
-                .remove_group_reaction(msg.group_uin, msg.message.sequence, 32, ReactionType::FACE)
-                .await;
+            if msg.message.to_string() == "react" {
+                let _ = bot
+                    .add_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
+                    .await;
+                time::sleep(Duration::from_secs(3)).await;
+                let _ = bot
+                    .remove_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
+                    .await;
+            }
             if msg.message.to_string() == "114514" {
                 if let Err(e) = bot
                     .send_group_message(msg.group_uin, MessageChain::new().text("1919810"))
@@ -205,12 +199,12 @@ async fn main() -> anyhow::Result<()> {
         .with_max_level(Level::TRACE)
         .init();
     let app_info = AppInfo {
-        os: "Mac".to_string(),
-        vendor_os: "Darwin".to_string(),
-        kernel: "mac".to_string(),
-        current_version: "6.9.87-44204".to_string(),
+        os: "Linux".to_string(),
+        vendor_os: "Linux".to_string(),
+        kernel: "linux".to_string(),
+        current_version: "3.2.32-51802".to_string(),
         pt_version: "2.0.0".to_string(),
-        sso_version: 23,
+        sso_version: 19,
         package_name: "com.tencent.qq".to_string(),
         apk_signature_md5: Bytes::from_static("com.tencent.qq".as_bytes()),
         sdk_info: WtLoginSdkInfo {
@@ -229,10 +223,11 @@ async fn main() -> anyhow::Result<()> {
                 | Sig::WLOGIN_DA2
                 | Sig::WLOGIN_PT4_TOKEN,
         },
-        app_id: 1600001602,
-        sub_app_id: 537336475,
-        app_client_version: 13172,
-        protocol: Protocol::MACOS,
+        app_id: 1600001615,
+        sub_app_id: 537376854,
+        qua: "V1_LNX_NQ_3.2.32_51802_GW_B".to_string(),
+        app_client_version: 51802,
+        protocol: Protocol::LINUX,
     };
 
     #[cfg(feature = "opentelemetry")]
@@ -311,12 +306,12 @@ async fn main() -> anyhow::Result<()> {
 
     if !bot.can_fast_login() {
         info!("login");
-        let image = bot.fetch_qrcode(2).await?;
-        fs::write("./qrcode.png", image.1).await?;
+        let (qr_sig, _, image) = bot.fetch_qrcode(2).await?;
+        fs::write("./qrcode.png", image).await?;
 
         loop {
             time::sleep(Duration::from_secs(1)).await;
-            let state = bot.get_qrcode_result().await?;
+            let state = bot.get_qrcode_result(qr_sig.clone()).await?;
             info!("QR code result: {:?}", state);
             if state == QrcodeState::Confirmed {
                 break;
@@ -337,10 +332,9 @@ async fn main() -> anyhow::Result<()> {
         anyhow::bail!("{}", err);
     }
 
-    bot.cache.refresh_friends().await?;
+    bot.refresh_friends().await?;
 
     tokio::signal::ctrl_c().await?;
-    bot.release();
     #[cfg(feature = "opentelemetry")]
     metrics_provider.force_flush()?;
     Ok(())

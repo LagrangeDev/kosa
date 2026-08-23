@@ -52,10 +52,14 @@ impl Sign for GenericSign {
             .send()
             .await
             .context("sign request failed")?
+            .error_for_status()?
             .json()
             .await
             .context("deserialize sign failed")?;
 
+        if resp.code != 0 {
+            return Err(anyhow::anyhow!("sign request failed: {}", resp.message));
+        }
         let resp = resp.value;
 
         Ok(Some(SsoSecureInfo {

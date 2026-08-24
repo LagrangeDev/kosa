@@ -11,14 +11,16 @@ use crate::common::{AppInfo, Session};
 #[derive(Debug)]
 pub struct GenericSign {
     base_url: String,
+    token: String,
     client: reqwest::Client,
     list: AHashSet<&'static str>,
 }
 
 impl GenericSign {
-    pub fn new<S: Into<String>>(url: S) -> Self {
+    pub fn new(url: impl Into<String>, token: impl Into<String>) -> Self {
         Self {
             base_url: url.into(),
+            token: token.into(),
             client: reqwest::Client::default(),
             list: AHashSet::from_iter(DEFAULT_PC_CMD_LIST),
         }
@@ -41,6 +43,7 @@ impl Sign for GenericSign {
         let payload = SignReq {
             command: command.to_owned(),
             seq,
+            uin: session.uin(),
             guid: hex::encode(session.guid),
             body: hex::encode_upper(body),
             qua: app_info.qua.clone(),
@@ -48,6 +51,7 @@ impl Sign for GenericSign {
         let resp: SignResp = self
             .client
             .post(self.base_url.as_str())
+            .bearer_auth(&self.token)
             .json(&payload)
             .send()
             .await
@@ -75,6 +79,7 @@ struct SignReq {
     command: String,
     seq: i32,
     body: String,
+    uin: i64,
     guid: String,
     qua: String,
 }

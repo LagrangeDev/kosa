@@ -298,7 +298,7 @@ async fn main() -> anyhow::Result<()> {
     let bot = Arc::new(Bot::new(
         Arc::new(app_info),
         Arc::new(session),
-        Arc::new(GenericSign::new(std::env::var("KOSA_SIGN_URL")?)),
+        Arc::new(GenericSign::new(std::env::var("KOSA_SIGN_URL")?, "")),
     )?);
 
     let event_subscriber = EventSubscriber { bot: bot.clone() };

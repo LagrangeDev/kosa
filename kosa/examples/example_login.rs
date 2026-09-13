@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc, time::Duration};
 use actix::prelude::*;
 use bytes::Bytes;
 use kosa::{
-    common::{AppInfo, Bot, GenericSign, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
+    common::{AppInfo, Bot, BotBuilder, GenericSign, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
     event::{GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
     message::{Element, LocalImage, LocalVoice, MessageChain},
     service::{login::QrcodeState, system::Reaction},
@@ -295,11 +295,14 @@ async fn main() -> anyhow::Result<()> {
         sess
     };
 
-    let bot = Arc::new(Bot::new(
-        Arc::new(app_info),
-        Arc::new(session),
-        Arc::new(GenericSign::new(std::env::var("KOSA_SIGN_URL")?, "")),
-    )?);
+    let builder = Bot::builder(app_info)
+        .session(session)
+        .sign_provider(Box::new(GenericSign::new(
+            std::env::var("KOSA_SIGN_URL")?,
+            "",
+        )));
+
+    let bot = Arc::new(builder.run().await?);
 
     let event_subscriber = EventSubscriber { bot: bot.clone() };
     event_subscriber.start();

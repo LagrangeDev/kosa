@@ -1,4 +1,3 @@
-use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use tokio::io;
@@ -6,8 +5,7 @@ use tokio_util::codec::{Decoder, Encoder};
 
 const MAX_FRAME: usize = 64 * 1024 * 1024;
 
-#[derive(Debug, Clone, Message)]
-#[rtype(result = "()")]
+#[derive(Debug, Clone)]
 pub(crate) struct Packet(pub(crate) Bytes);
 
 #[derive(Debug)]

@@ -9,8 +9,8 @@ mod session;
 mod sign;
 
 pub use appinfo::{AppInfo, Protocol, Sig, WtLoginSdkInfo};
-pub use bot::Bot;
+pub use bot::{Bot, BotBuilder};
 pub use cache::{FriendCache, GroupCache};
-pub(crate) use packet::{PacketContext, SsoRequest};
+pub(crate) use packet::PacketContext;
 pub use session::Session;
 pub use sign::{DEFAULT_PC_CMD_LIST, GenericSign, Sign, SsoSecureInfo};

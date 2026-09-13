@@ -17,11 +17,89 @@ use tracing::error;
 
 use crate::{
     common::{
-        appinfo::AppInfo, cache::Cache, highway::HighWayContext, session::Session, sign::Sign,
+        PacketContext, appinfo::AppInfo, cache::Cache, highway::HighWayContext, session::Session,
+        sign::Sign,
     },
     event::EventContext,
     service::ServiceContext,
 };
+
+pub struct BotBuilder {
+    app_info: AppInfo,
+    session: Session,
+    sign_provider: Option<Box<dyn Sign>>,
+}
+
+impl BotBuilder {
+    fn new(app_info: AppInfo) -> Self {
+        Self {
+            app_info,
+            session: rand::random(),
+            sign_provider: None,
+        }
+    }
+
+    pub fn session(mut self, session: Session) -> Self {
+        self.session = session;
+        self
+    }
+
+    pub fn sign_provider(mut self, sign: Box<dyn Sign>) -> Self {
+        self.sign_provider.replace(sign);
+        self
+    }
+
+    pub async fn run(self) -> anyhow::Result<Bot> {
+        let app_info = Arc::new(self.app_info);
+        let session = Arc::new(self.session);
+        let sign_provider = self
+            .sign_provider
+            .ok_or_else(|| anyhow::anyhow!("sign provider not configured"))?;
+        let event = Arc::new(EventContext::new());
+
+        let packet = PacketContext::connect_with(
+            app_info.clone(),
+            session.clone(),
+            event.clone(),
+            sign_provider,
+        )
+        .await?;
+        let service = ServiceContext::new(1, app_info.clone(), session.clone(), packet);
+        let service = Arc::new(service);
+        let highway = Arc::new(HighWayContext::new(
+            service.clone(),
+            app_info.clone(),
+            session.clone(),
+        ));
+        let cache = Arc::new(Cache::new(service.clone()));
+        let tasks = DashMap::new();
+
+        let service_clone = service.clone();
+        let handle = tokio::spawn(async move {
+            let mut interval = time::interval(Duration::from_secs(10));
+            interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
+            loop {
+                interval.tick().await;
+                if let Err(e) = service_clone.heart_beat().await {
+                    error!("heartbeat failed: {}", e);
+                };
+            }
+        });
+        tasks.insert("heartbeat".to_string(), handle);
+
+        Ok(Bot {
+            online: AtomicBool::new(false),
+            session,
+            cache,
+            event,
+            service,
+            highway,
+            tasks,
+            #[cfg(feature = "opentelemetry")]
+            metrics: BotMetrics::new(),
+        })
+    }
+}
 
 pub struct Bot {
     pub(crate) online: AtomicBool,
@@ -68,47 +146,8 @@ impl BotMetrics {
 }
 
 impl Bot {
-    pub fn new(
-        app_info: Arc<AppInfo>,
-        session: Arc<Session>,
-        sign: Arc<dyn Sign>,
-    ) -> anyhow::Result<Self> {
-        let event = Arc::new(EventContext::new());
-        let service =
-            ServiceContext::new(1, app_info.clone(), session.clone(), event.clone(), sign)?;
-        let service = Arc::new(service);
-        let highway = Arc::new(HighWayContext::new(
-            service.clone(),
-            app_info.clone(),
-            session.clone(),
-        ));
-        let cache = Arc::new(Cache::new(service.clone()));
-        let tasks = DashMap::new();
-
-        let service_clone = service.clone();
-        let handle = tokio::spawn(async move {
-            let mut interval = time::interval(Duration::from_secs(10));
-            interval.set_missed_tick_behavior(time::MissedTickBehavior::Delay);
-            loop {
-                interval.tick().await;
-                if let Err(e) = service_clone.heart_beat().await {
-                    error!("heartbeat failed: {}", e);
-                };
-            }
-        });
-        tasks.insert("heartbeat".to_string(), handle);
-
-        Ok(Self {
-            online: AtomicBool::new(false),
-            session,
-            cache,
-            event,
-            service,
-            highway,
-            tasks,
-            #[cfg(feature = "opentelemetry")]
-            metrics: BotMetrics::new(),
-        })
+    pub fn builder(app_info: AppInfo) -> BotBuilder {
+        BotBuilder::new(app_info)
     }
 
     pub fn set_online(

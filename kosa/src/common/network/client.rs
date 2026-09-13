@@ -1,238 +1,138 @@
-use std::{io, sync::Arc, time::Duration};
+use std::{io, io::Error, time::Duration};
 
-use actix::{
-    Actor, ActorContext, ActorFutureExt, AsyncContext, Context, ContextFutureSpawner, Handler,
-    Running, StreamHandler, Supervised, WrapFuture,
-    io::{FramedWrite, WriteHandler},
-};
-#[cfg(feature = "opentelemetry")]
-use opentelemetry::{InstrumentationScope, global, metrics::Counter};
-use tokio::{io::WriteHalf, net::TcpStream, time};
-use tokio_util::codec::FramedRead;
-use tracing::{debug, error, info, trace};
+use futures::{SinkExt, StreamExt, stream::SplitSink};
+use tokio::{net::TcpStream, sync::Mutex, task::JoinHandle, time};
+use tokio_util::{codec::Framed, sync::CancellationToken};
+use tracing::{error, info};
 
-use crate::{
-    common::network::codec::{LengthCodec, Packet},
-    event::{DisconnectEvent, EventContext, ReconnectEvent},
-    utils::broker::Broker,
-};
+use crate::common::network::codec::{LengthCodec, Packet};
 
-pub const DEFAULT_SERVER: &str = "msfwifi.3g.qq.com";
-pub const DEFAULT_PORT: u16 = 8080;
+const DEFAULT_SERVER: &str = "msfwifi.3g.qq.com";
+const DEFAULT_PORT: u16 = 14000;
 
-#[cfg(feature = "opentelemetry")]
-#[derive(Debug)]
-struct TcpMetrics {
-    tx_bytes: Counter<u64>,
-    rx_bytes: Counter<u64>,
+pub(crate) struct TcpConnector {
+    addr: String,
+    timeout: Duration,
 }
 
-#[derive(Debug)]
-struct DisconnectState {
-    reason: &'static str,
-    detail: String,
-}
-
-#[cfg(feature = "opentelemetry")]
-impl TcpMetrics {
-    fn new() -> Self {
-        let scope = InstrumentationScope::builder(env!("CARGO_PKG_NAME"))
-            .with_version(env!("CARGO_PKG_VERSION"))
-            .build();
-        let meter = global::meter_with_scope(scope);
-        let tx_bytes = meter.u64_counter("tx_bytes").build();
-        let rx_bytes = meter.u64_counter("rx_bytes").build();
-        Self { tx_bytes, rx_bytes }
-    }
-}
-
-pub(crate) struct TcpClient {
-    address: String,
-    framed: Option<FramedWrite<Packet, WriteHalf<TcpStream>, LengthCodec>>,
-    peer_addr: Option<String>,
-    disconnect_state: Option<DisconnectState>,
-
-    event: Arc<EventContext>,
-    broker: Arc<Broker>,
-
-    #[cfg(feature = "opentelemetry")]
-    metrics: TcpMetrics,
-}
-
-impl TcpClient {
-    pub(crate) fn new(address: String, broker: Arc<Broker>, event: Arc<EventContext>) -> Self {
-        Self {
-            address,
-            framed: None,
-            peer_addr: None,
-            disconnect_state: None,
-            event,
-            broker,
-            #[cfg(feature = "opentelemetry")]
-            metrics: TcpMetrics::new(),
+impl Default for TcpConnector {
+    fn default() -> Self {
+        TcpConnector {
+            addr: format!("{}:{}", DEFAULT_SERVER, DEFAULT_PORT),
+            timeout: Duration::from_secs(5),
         }
     }
-
-    fn set_disconnect_state(&mut self, reason: &'static str, detail: String) {
-        self.disconnect_state = Some(DisconnectState { reason, detail });
-    }
-
-    fn connect(&mut self, ctx: &mut Context<Self>) {
-        let addr = self.address.clone();
-        async move { time::timeout(Duration::from_secs(5), TcpStream::connect(addr)).await }
-            .into_actor(self)
-            .map(|res, act, ctx| match res {
-                // connected
-                Ok(Ok(stream)) => {
-                    let _ = stream.set_nodelay(true);
-                    act.peer_addr = stream.peer_addr().ok().map(|addr| addr.to_string());
-                    act.disconnect_state = None;
-                    info!(
-                        peer_addr = act.peer_addr.as_deref().unwrap_or("unknown"),
-                        "tcp connected"
-                    );
-                    let (r, w) = tokio::io::split(stream);
-                    let reader = FramedRead::new(r, LengthCodec);
-                    act.framed = Some(FramedWrite::new(w, LengthCodec, ctx));
-                    ctx.add_stream(reader);
-                }
-                // connect failed
-                Ok(Err(e)) => {
-                    error!(
-                        err = %e,
-                        err_kind = ?e.kind(),
-                        os_code = ?e.raw_os_error(),
-                        "tcp connect error"
-                    )
-                }
-                // connect timeout
-                Err(e) => {
-                    error!(err = %e, "tcp connect timeout");
-                    ctx.stop()
-                }
-            })
-            .wait(ctx)
-    }
 }
 
-impl Actor for TcpClient {
-    type Context = Context<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.connect(ctx)
+impl TcpConnector {
+    #[allow(unused)]
+    pub(crate) fn addr(&mut self, addr: impl Into<String>) -> &mut Self {
+        self.addr = addr.into();
+        self
     }
 
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        let state = self.disconnect_state.take();
-        let reason = state
-            .as_ref()
-            .map(|state| state.reason)
-            .unwrap_or("unknown");
-        let detail = state
-            .as_ref()
-            .map(|state| state.detail.as_str())
-            .unwrap_or("missing disconnect context");
-        self.event.issue_async(DisconnectEvent {
-            reason: format!("{reason}: {detail}"),
-        });
-        info!(
-            peer_addr = self.peer_addr.as_deref().unwrap_or("unknown"),
-            reason = reason,
-            detail = detail,
-            "tcp disconnected"
-        );
+    #[allow(unused)]
+    pub(crate) fn timeout(&mut self, timeout: Duration) -> &mut Self {
+        self.timeout = timeout;
+        self
     }
-}
 
-impl Supervised for TcpClient {
-    fn restarting(&mut self, _: &mut Self::Context) {
-        self.event.issue_async(ReconnectEvent);
-    }
-}
-
-impl StreamHandler<Result<Packet, io::Error>> for TcpClient {
-    /// 收包
-    fn handle(&mut self, item: Result<Packet, io::Error>, ctx: &mut Self::Context) {
-        match item {
-            Ok(packet) => {
-                trace!("received a packet");
-                #[cfg(feature = "opentelemetry")]
-                self.metrics.rx_bytes.add((packet.0.len() + 4) as u64, &[]);
-                self.broker.issue_async(packet)
-            }
-            Err(e) => {
-                let detail = format!(
-                    "kind={:?}, os_code={:?}, err={}",
-                    e.kind(),
-                    e.raw_os_error(),
-                    e
-                );
-                self.set_disconnect_state("read_error", detail);
+    pub async fn connect(
+        &self,
+        callback: impl Fn(Packet) + Send + 'static,
+    ) -> Result<TcpClient, Error> {
+        let stream = match time::timeout(self.timeout, TcpStream::connect(self.addr.clone())).await
+        {
+            // connected
+            Ok(Ok(stream)) => stream,
+            // failed
+            Ok(Err(e)) => {
                 error!(
-                    peer_addr = self.peer_addr.as_deref().unwrap_or("unknown"),
                     err = %e,
                     err_kind = ?e.kind(),
                     os_code = ?e.raw_os_error(),
-                    "tcp read error"
+                    "tcp connect error"
                 );
-                ctx.stop();
-            }
-        }
-    }
 
-    fn finished(&mut self, ctx: &mut Self::Context) {
-        self.set_disconnect_state(
-            "remote_closed",
-            "read stream finished (peer likely closed the connection)".to_string(),
-        );
+                return Err(e);
+            }
+            // timeout
+            Err(e) => {
+                error!(err = %e, "tcp connect timeout");
+                return Err(e.into());
+            }
+        };
+        let _ = stream.set_nodelay(true);
+        let peer_addr = stream.peer_addr().ok().map(|addr| addr.to_string());
         info!(
-            peer_addr = self.peer_addr.as_deref().unwrap_or("unknown"),
-            "tcp read stream finished"
+            peer_addr = peer_addr.as_deref().unwrap_or("unknown"),
+            "tcp connected"
         );
-        ctx.stop();
+        Ok(TcpClient::new(stream, callback))
     }
 }
 
-impl Handler<Packet> for TcpClient {
-    type Result = ();
+#[derive(Debug)]
+pub(crate) struct TcpClient {
+    sink: Mutex<SplitSink<Framed<TcpStream, LengthCodec>, Packet>>,
+    recv_task: JoinHandle<anyhow::Result<()>>,
+    cancel: CancellationToken,
+}
 
-    /// 发包
-    fn handle(&mut self, packet: Packet, _ctx: &mut Self::Context) -> Self::Result {
-        match self.framed {
-            None => {
-                debug!("no active connection, dropped message")
-            }
-            Some(ref mut framed) => {
-                #[cfg(feature = "opentelemetry")]
-                let packet_len = packet.0.len();
-                framed.write(packet);
-                #[cfg(feature = "opentelemetry")]
-                {
-                    self.metrics.tx_bytes.add((packet_len + 4) as u64, &[])
+impl Drop for TcpClient {
+    fn drop(&mut self) {
+        self.recv_task.abort();
+    }
+}
+
+impl TcpClient {
+    pub(crate) fn connector() -> TcpConnector {
+        TcpConnector::default()
+    }
+
+    fn new(stream: TcpStream, callback: impl Fn(Packet) + Send + 'static) -> Self {
+        let framed = Framed::new(stream, LengthCodec);
+        let (sink, mut stream) = framed.split();
+        let canceller = CancellationToken::new();
+        let canceller_clone = canceller.clone();
+        let recv_task = async move {
+            loop {
+                tokio::select! {
+                    packet = stream.next() => {
+                        match packet {
+                            Some(Ok(packet)) => {
+                                callback(packet);
+                            }
+                            Some(Err(e)) => {
+                                error!(err = %e, "tcp receive error");
+                                break;
+                            }
+                            None => {
+                                info!("tcp disconnected");
+                                break;
+                            }
+                        }
+                    }
+
+                    _ = canceller_clone.cancelled() => break,
                 }
             }
+            Ok::<(), anyhow::Error>(())
+        };
+        let recv_task = tokio::spawn(recv_task);
+        TcpClient {
+            sink: Mutex::new(sink),
+            recv_task,
+            cancel: canceller,
         }
     }
-}
 
-impl WriteHandler<io::Error> for TcpClient {
-    fn error(&mut self, err: io::Error, ctx: &mut Self::Context) -> Running {
-        let detail = format!(
-            "kind={:?}, os_code={:?}, err={}",
-            err.kind(),
-            err.raw_os_error(),
-            err
-        );
-        self.set_disconnect_state("write_error", detail);
-        error!(
-            address = %self.address,
-            peer_addr = self.peer_addr.as_deref().unwrap_or("unknown"),
-            err = %err,
-            err_kind = ?err.kind(),
-            os_code = ?err.raw_os_error(),
-            "tcp write error"
-        );
-        ctx.stop();
-        Running::Stop
+    pub(crate) async fn send(&self, packet: Packet) -> Result<(), io::Error> {
+        self.sink.lock().await.send(packet).await
+    }
+
+    pub(crate) async fn disconnect(self) {
+        self.cancel.cancel();
+        let _ = self.sink.lock().await.close().await;
     }
 }

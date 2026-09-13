@@ -6,11 +6,8 @@ use std::{
     },
 };
 
-use actix::{Actor, Addr};
-
 use crate::{
-    common::{AppInfo, PacketContext, Session, Sign, SsoRequest},
-    event::EventContext,
+    common::{AppInfo, PacketContext, Session},
     service::{Metadata, ServiceRequest, packet::sso_packet::SsoPacket},
 };
 
@@ -19,7 +16,7 @@ pub(crate) struct ServiceContext {
     pub(crate) app_info: Arc<AppInfo>,
     pub(crate) session: Arc<Session>,
     pub(crate) sequence: AtomicI32,
-    pub(crate) packet: Addr<PacketContext>,
+    pub(crate) packet: PacketContext,
 }
 
 impl ServiceContext {
@@ -27,18 +24,14 @@ impl ServiceContext {
         seq: i32,
         app_info: Arc<AppInfo>,
         session: Arc<Session>,
-        event: Arc<EventContext>,
-        sign: Arc<dyn Sign>,
-    ) -> anyhow::Result<Self> {
-        let packet_context = PacketContext::new(app_info.clone(), session.clone(), event, sign)?;
-        let addr = packet_context.start();
-
-        Ok(Self {
+        packet_context: PacketContext,
+    ) -> Self {
+        Self {
             app_info,
             session,
             sequence: AtomicI32::new(seq),
-            packet: addr,
-        })
+            packet: packet_context,
+        }
     }
 
     fn new_sequence(&self) -> i32 {
@@ -85,13 +78,7 @@ impl ServiceContext {
     {
         let (sso_packet, metadata) =
             self.encode(req, self.app_info.deref(), self.session.deref())?;
-        let resp_sso_packet = self
-            .packet
-            .send(SsoRequest {
-                sso_packet,
-                metadata,
-            })
-            .await??;
+        let resp_sso_packet = self.packet.send_sso_request(sso_packet, metadata).await?;
         self.decode::<S>(resp_sso_packet, self.app_info.deref(), self.session.deref())
     }
 }

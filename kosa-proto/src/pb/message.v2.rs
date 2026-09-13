@@ -713,8 +713,8 @@ pub struct CommonGroup {
     pub group_level: ::core::option::Option<i32>,
     #[prost(string, optional, tag="7")]
     pub group_name: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag="8")]
-    pub ext_group_key_info: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bytes="bytes", optional, tag="8")]
+    pub ext_group_key_info: ::core::option::Option<::prost::bytes::Bytes>,
     #[prost(int32, optional, tag="9")]
     pub msg_flag: ::core::option::Option<i32>,
 }

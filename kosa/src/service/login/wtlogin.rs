@@ -199,7 +199,7 @@ impl Bot {
             Ok(())
         })?;
 
-        self.event.issue_async(SessionUpdated {
+        self.event.emit(SessionUpdated {
             session: self.session.clone(),
         });
         Ok(())

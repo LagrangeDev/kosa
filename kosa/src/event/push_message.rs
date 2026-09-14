@@ -8,11 +8,10 @@ use tracing::trace;
 use crate::{
     common::{AppInfo, Session},
     event::{
-        PushEvent,
+        EventContext, PushEvent,
         message::{handle_group_message, handle_private_message},
     },
     service::packet::sso_packet::SsoPacket,
-    utils::broker::Broker,
 };
 
 #[derive(Debug, Clone)]
@@ -24,7 +23,7 @@ pub(crate) struct PushMessageEvent {
 impl PushEvent for PushMessageEvent {
     fn handle(
         packet: &SsoPacket,
-        broker: &Broker,
+        ctx: &EventContext,
         _app_info: &AppInfo,
         _session: &Session,
     ) -> anyhow::Result<()> {
@@ -43,11 +42,10 @@ impl PushEvent for PushMessageEvent {
         {
             match event_type {
                 PushEventType::GroupMessage => {
-                    handle_group_message(event, broker)
-                        .context("failed to handle group message")?;
+                    handle_group_message(event, ctx).context("failed to handle group message")?;
                 }
                 PushEventType::PrivateMessage | PushEventType::Event0xD0 => {
-                    handle_private_message(event, broker)
+                    handle_private_message(event, ctx)
                         .context("failed to handle private message")?;
                 }
                 PushEventType::TempMessage => {}

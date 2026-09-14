@@ -1,5 +1,4 @@
 pub mod binary;
-pub mod broker;
 pub mod compress;
 pub mod crypto;
 pub mod image;

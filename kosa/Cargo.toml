@@ -7,7 +7,6 @@ edition.workspace = true
 opentelemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
 
 [dependencies]
-actix = { workspace = true }
 aes = "0.9.0"
 aes-gcm = { version = "0.11.0" }
 ahash = { workspace = true, features = ["serde"] }

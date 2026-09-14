@@ -1,10 +1,9 @@
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{path::PathBuf, time::Duration};
 
-use actix::prelude::*;
 use bytes::Bytes;
 use kosa::{
-    common::{AppInfo, Bot, BotBuilder, GenericSign, Protocol, Session, Sig, Sign, WtLoginSdkInfo},
-    event::{GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
+    common::{AppInfo, Bot, GenericSign, Protocol, Session, Sig, WtLoginSdkInfo},
+    event::{App, Context, GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
     message::{Element, LocalImage, LocalVoice, MessageChain},
     service::{login::QrcodeState, system::Reaction},
 };
@@ -31,167 +30,130 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
 };
 
-struct EventSubscriber {
-    bot: Arc<Bot>,
+async fn on_session_updated(_ctx: Context, msg: SessionUpdated) -> anyhow::Result<()> {
+    let _ = msg.session.save("./session.bin").await;
+    println!("on_session_updated: uin: {}", msg.session.uin());
+    Ok(())
 }
 
-impl Actor for EventSubscriber {
-    type Context = Context<Self>;
+async fn on_group_message(ctx: Context, msg: GroupMessageEvent) -> anyhow::Result<()> {
+    info!("on_group_message:{}: msg: {}", msg.member_uin, msg.message);
 
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.bot.subscribe_async::<Self, SessionUpdated>(ctx);
-        self.bot.subscribe_async::<Self, GroupMessageEvent>(ctx);
-        self.bot.subscribe_async::<Self, PrivateMessageEvent>(ctx);
+    for message in &msg.message.messages {
+        match message {
+            Element::Image(img) => {
+                info!("image subtype:{}", img.sub_type)
+            }
+            Element::SuperFace(face) => {
+                info!("SuperFace:{:?}", face)
+            }
+            Element::QFace(face) => {
+                info!("QFace:{:?}", face)
+            }
+            Element::At(at) => {
+                info!("At:{:?}", at)
+            }
+            _ => {}
+        }
     }
-}
 
-impl Handler<SessionUpdated> for EventSubscriber {
-    type Result = ();
-    fn handle(&mut self, msg: SessionUpdated, ctx: &mut Self::Context) {
-        let future = async move {
-            let _ = msg.session.save("./session.bin").await;
-            println!("Handler<SessionUpdated>: uin: {}", msg.session.uin());
-        };
-        ctx.spawn(fut::wrap_future(future));
+    if msg.member_uin == ctx.bot().uin() {
+        return Ok(());
     }
-}
-
-impl Handler<GroupMessageEvent> for EventSubscriber {
-    type Result = ();
-    fn handle(&mut self, msg: GroupMessageEvent, ctx: &mut Self::Context) {
-        info!(
-            "Handler<BotMessageEvent>:{}: msg: {}",
-            msg.member_uin, msg.message
-        );
-
-        for message in &msg.message.messages {
-            match message {
-                Element::Image(img) => {
-                    info!("image subtype:{}", img.sub_type)
-                }
-                Element::SuperFace(face) => {
-                    info!("SuperFace:{:?}", face)
-                }
-                Element::QFace(face) => {
-                    info!("QFace:{:?}", face)
-                }
-                Element::At(at) => {
-                    info!("At:{:?}", at)
-                }
-                _ => {}
+    let bot = ctx.bot();
+    if msg.message.to_string() == "react" {
+        let _ = bot
+            .add_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
+            .await;
+        time::sleep(Duration::from_secs(3)).await;
+        let _ = bot
+            .remove_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
+            .await;
+    }
+    if msg.message.to_string() == "114514" {
+        if let Err(e) = bot
+            .send_group_message(msg.group_uin, MessageChain::new().text("1919810"))
+            .await
+        {
+            error!("send_group_message error: {:?}", e)
+        }
+        let groups = bot.fetch_groups().await.unwrap();
+        println!("groups: {:?}", groups);
+    }
+    if msg.message.to_string() == "voice" {
+        let wav_path = PathBuf::from("test.wav");
+        let pcm_path = wav_path.with_extension("pcm");
+        convert_audio_to_pcm(&wav_path, &pcm_path).unwrap();
+        let pcm_data = fs::read(&pcm_path).await.unwrap();
+        let silk_data = encode_silk(pcm_data, 24000, 24000, true).unwrap();
+        let local_voice = LocalVoice::from_bytes(silk_data.into()).await.unwrap();
+        if let Ok(voice) = bot
+            .upload_private_voice(msg.member_uin, local_voice)
+            .await
+            .inspect_err(|err| error!("upload_private_voice error: {:?}", err))
+        {
+            debug!("upload_private_voice response: {:?}", voice);
+            if let Err(e) = bot
+                .send_private_message(msg.member_uin, MessageChain::new().voice(voice))
+                .await
+            {
+                error!("send_private_message error: {:?}", e)
             }
         }
+    }
 
-        if msg.member_uin == self.bot.uin() {
-            return;
+    if msg.message.to_string() == "img" {
+        let image = LocalImage::from_path("./test.jpg").await.unwrap();
+        if let Ok(img) = bot
+            .upload_private_image(msg.member_uin, image)
+            .await
+            .inspect_err(|e| error!("upload_private_image error: {:?}", e))
+        {
+            debug!("uploaded image: {:?}", img);
+            if let Err(e) = bot
+                .send_private_message(msg.member_uin, MessageChain::new().image(img))
+                .await
+            {
+                error!("send_group_message error: {:?}", e)
+            }
+        } else {
+            warn!("upload failed")
         }
-        let bot = self.bot.clone();
-        let future = async move {
-            if msg.message.to_string() == "react" {
-                let _ = bot
-                    .add_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
-                    .await;
-                time::sleep(Duration::from_secs(3)).await;
-                let _ = bot
-                    .remove_group_reaction(msg.group_uin, msg.message.sequence, Reaction::FACE(32))
-                    .await;
-            }
-            if msg.message.to_string() == "114514" {
-                if let Err(e) = bot
-                    .send_group_message(msg.group_uin, MessageChain::new().text("1919810"))
-                    .await
-                {
-                    error!("send_group_message error: {:?}", e)
-                }
-                let groups = bot.fetch_groups().await.unwrap();
-                println!("groups: {:?}", groups);
-            }
-            if msg.message.to_string() == "voice" {
-                let wav_path = PathBuf::from("test.wav");
-                let pcm_path = wav_path.with_extension("pcm");
-                convert_audio_to_pcm(&wav_path, &pcm_path).unwrap();
-                let pcm_data = fs::read(&pcm_path).await.unwrap();
-                let silk_data = encode_silk(pcm_data, 24000, 24000, true).unwrap();
-                let local_voice = LocalVoice::from_bytes(silk_data.into()).await.unwrap();
-                if let Ok(voice) = bot
-                    .upload_private_voice(msg.member_uin, local_voice)
-                    .await
-                    .inspect_err(|err| error!("upload_private_voice error: {:?}", err))
-                {
-                    debug!("upload_private_voice response: {:?}", voice);
-                    if let Err(e) = bot
-                        .send_private_message(msg.member_uin, MessageChain::new().voice(voice))
-                        .await
-                    {
-                        error!("send_private_message error: {:?}", e)
-                    }
-                }
-            }
-
-            if msg.message.to_string() == "img" {
-                let image = LocalImage::from_path("./test.jpg").await.unwrap();
-                if let Ok(img) = bot
-                    .upload_private_image(msg.member_uin, image)
-                    .await
-                    .inspect_err(|e| error!("upload_private_image error: {:?}", e))
-                {
-                    debug!("uploaded image: {:?}", img);
-                    if let Err(e) = bot
-                        .send_private_message(msg.member_uin, MessageChain::new().image(img))
-                        .await
-                    {
-                        error!("send_group_message error: {:?}", e)
-                    }
-                } else {
-                    warn!("upload failed")
-                }
-            }
-        };
-        ctx.spawn(fut::wrap_future(future));
     }
+    Ok(())
 }
 
-impl Handler<PrivateMessageEvent> for EventSubscriber {
-    type Result = ();
-
-    fn handle(&mut self, msg: PrivateMessageEvent, ctx: &mut Self::Context) -> Self::Result {
-        let bot = self.bot.clone();
-        info!(
-            "Handler<PrivateMessageEvent>:{}: msg: {}",
-            msg.uin, msg.message
-        );
-        let future = async move {
-            for message in &msg.message.messages {
-                match message {
-                    Element::Image(img) => {
-                        info!("image subtype:{}", img.sub_type);
-                        let url_res = bot.get_private_image_download_url(msg.uin, img).await;
-                        info!("url_res: {:?}", url_res);
-                    }
-                    Element::SuperFace(face) => {
-                        info!("SuperFace:{:?}", face)
-                    }
-                    Element::QFace(face) => {
-                        info!("QFace:{:?}", face)
-                    }
-                    Element::At(at) => {
-                        info!("At:{:?}", at)
-                    }
-                    Element::Voice(voice) => {
-                        info!("Voice:{:?}", voice);
-                        let url_res = bot.get_private_voice_download_url(msg.uin, voice).await;
-                        info!("url_res: {:?}", url_res);
-                    }
-                    _ => {}
-                }
+async fn on_private_message(ctx: Context, msg: PrivateMessageEvent) -> anyhow::Result<()> {
+    let bot = ctx.bot();
+    info!("on_private_message:{}: msg: {}", msg.uin, msg.message);
+    for message in &msg.message.messages {
+        match message {
+            Element::Image(img) => {
+                info!("image subtype:{}", img.sub_type);
+                let url_res = bot.get_private_image_download_url(msg.uin, img).await;
+                info!("url_res: {:?}", url_res);
             }
-        };
-
-        ctx.spawn(fut::wrap_future(future));
+            Element::SuperFace(face) => {
+                info!("SuperFace:{:?}", face)
+            }
+            Element::QFace(face) => {
+                info!("QFace:{:?}", face)
+            }
+            Element::At(at) => {
+                info!("At:{:?}", at)
+            }
+            Element::Voice(voice) => {
+                info!("Voice:{:?}", voice);
+                let url_res = bot.get_private_voice_download_url(msg.uin, voice).await;
+                info!("url_res: {:?}", url_res);
+            }
+            _ => {}
+        }
     }
+    Ok(())
 }
 
-#[actix::main]
+#[tokio::main]
 async fn main() -> anyhow::Result<()> {
     #[cfg(not(feature = "opentelemetry"))]
     tracing_subscriber::fmt()
@@ -295,17 +257,20 @@ async fn main() -> anyhow::Result<()> {
         sess
     };
 
-    let builder = Bot::builder(app_info)
+    let app = App::new()
+        .on_session_updated(on_session_updated)
+        .on_group_message(on_group_message)
+        .on_private_message(on_private_message);
+
+    let bot = Bot::builder(app_info)
         .session(session)
         .sign_provider(Box::new(GenericSign::new(
             std::env::var("KOSA_SIGN_URL")?,
             "",
-        )));
-
-    let bot = Arc::new(builder.run().await?);
-
-    let event_subscriber = EventSubscriber { bot: bot.clone() };
-    event_subscriber.start();
+        )))
+        .app(app)
+        .run()
+        .await?;
 
     if !bot.can_fast_login() {
         info!("login");

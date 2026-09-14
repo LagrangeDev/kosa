@@ -7,7 +7,6 @@ use std::{
     time::Duration,
 };
 
-use actix::{Actor, AsyncContext, Handler, Message, dev::ToEnvelope};
 use dashmap::DashMap;
 use delegate::delegate;
 #[cfg(feature = "opentelemetry")]
@@ -20,7 +19,7 @@ use crate::{
         PacketContext, appinfo::AppInfo, cache::Cache, highway::HighWayContext, session::Session,
         sign::Sign,
     },
-    event::EventContext,
+    event::{App, Dispatcher, Event, EventContext},
     service::ServiceContext,
 };
 
@@ -28,6 +27,7 @@ pub struct BotBuilder {
     app_info: AppInfo,
     session: Session,
     sign_provider: Option<Box<dyn Sign>>,
+    dispatcher: Dispatcher,
 }
 
 impl BotBuilder {
@@ -36,6 +36,7 @@ impl BotBuilder {
             app_info,
             session: rand::random(),
             sign_provider: None,
+            dispatcher: Dispatcher::new(),
         }
     }
 
@@ -49,13 +50,18 @@ impl BotBuilder {
         self
     }
 
-    pub async fn run(self) -> anyhow::Result<Bot> {
+    pub fn app<S: Send + Sync + 'static>(mut self, app: App<S>) -> Self {
+        self.dispatcher = app.into_dispatcher();
+        self
+    }
+
+    pub async fn run(self) -> anyhow::Result<Arc<Bot>> {
         let app_info = Arc::new(self.app_info);
         let session = Arc::new(self.session);
         let sign_provider = self
             .sign_provider
             .ok_or_else(|| anyhow::anyhow!("sign provider not configured"))?;
-        let event = Arc::new(EventContext::new());
+        let event = Arc::new(EventContext::new(self.dispatcher));
 
         let packet = PacketContext::connect_with(
             app_info.clone(),
@@ -87,17 +93,19 @@ impl BotBuilder {
         });
         tasks.insert("heartbeat".to_string(), handle);
 
-        Ok(Bot {
+        let bot = Arc::new(Bot {
             online: AtomicBool::new(false),
             session,
             cache,
-            event,
+            event: event.clone(),
             service,
             highway,
             tasks,
             #[cfg(feature = "opentelemetry")]
             metrics: BotMetrics::new(),
-        })
+        });
+        event.bind_bot(Arc::downgrade(&bot));
+        Ok(bot)
     }
 }
 
@@ -176,20 +184,8 @@ impl Bot {
         }
     }
 
-    pub fn subscribe_async<A, M>(&self, ctx: &mut A::Context)
-    where
-        A: Actor + Handler<M>,
-        A::Context: AsyncContext<A> + ToEnvelope<A, M>,
-        M: Message<Result = ()> + Send + 'static,
-    {
-        self.event.subscribe_async::<A, M>(ctx);
-    }
-
-    pub fn issue_async<M>(&self, msg: M)
-    where
-        M: Message<Result = ()> + Clone + Send + 'static,
-    {
-        self.event.issue_async::<M>(msg);
+    pub fn emit<E: Event>(&self, event: E) {
+        self.event.emit(event);
     }
 }
 

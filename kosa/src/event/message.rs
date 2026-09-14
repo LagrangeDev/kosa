@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 
-use actix::Message as ActixMessage;
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use kosa_proto::message::v2::{ContentHead, Elem, MessageBody};
@@ -8,15 +7,14 @@ use tracing::debug;
 
 use crate::{
     common::entity::Scene,
-    event::{Broker, push_message::PushMessageEvent},
+    event::{Event, EventContext, push_message::PushMessageEvent},
     message::{
         At, BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem,
         QFace, SuperFace, Text, Voice,
     },
 };
 
-#[derive(Debug, Clone, ActixMessage)]
-#[rtype(result = "()")]
+#[derive(Debug, Clone)]
 pub struct GroupMessageEvent {
     pub group_uin: i64,
     pub group_name: String,
@@ -27,8 +25,11 @@ pub struct GroupMessageEvent {
     pub message: BotMessage,
 }
 
-#[derive(Debug, Clone, ActixMessage)]
-#[rtype(result = "()")]
+impl Event for GroupMessageEvent {
+    const NAME: &'static str = "group_message";
+}
+
+#[derive(Debug, Clone)]
 pub struct PrivateMessageEvent {
     pub uin: i64,
     pub uid: String,
@@ -36,7 +37,14 @@ pub struct PrivateMessageEvent {
     pub message: BotMessage,
 }
 
-pub(crate) fn handle_group_message(event: PushMessageEvent, broker: &Broker) -> anyhow::Result<()> {
+impl Event for PrivateMessageEvent {
+    const NAME: &'static str = "private_message";
+}
+
+pub(crate) fn handle_group_message(
+    event: PushMessageEvent,
+    ctx: &EventContext,
+) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
     let routing_head = common.routing_head.unwrap_or_default();
@@ -59,7 +67,7 @@ pub(crate) fn handle_group_message(event: PushMessageEvent, broker: &Broker) -> 
                 )
                 .context("failed to decode group message")?,
             };
-            broker.issue_async(event);
+            ctx.emit(event);
             Ok(())
         }
     }
@@ -67,7 +75,7 @@ pub(crate) fn handle_group_message(event: PushMessageEvent, broker: &Broker) -> 
 
 pub(crate) fn handle_private_message(
     event: PushMessageEvent,
-    broker: &Broker,
+    ctx: &EventContext,
 ) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
@@ -85,7 +93,7 @@ pub(crate) fn handle_private_message(
         )
         .context("failed to decode private message")?,
     };
-    broker.issue_async(event);
+    ctx.emit(event);
     Ok(())
 }
 

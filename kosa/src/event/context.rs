@@ -1,23 +1,34 @@
-use actix::{Actor, AsyncContext, Handler, Message, dev::ToEnvelope};
+use std::{
+    fmt::{Debug, Formatter},
+    sync::{OnceLock, Weak},
+};
+
 use ahash::AHashMap;
-use anyhow::Context;
+use anyhow::Context as _;
 use tracing::trace;
 
 use crate::{
-    common::{AppInfo, Session},
-    event::{EventEntry, EventHandlerFn},
+    common::{AppInfo, Bot, Session},
+    event::{Event, EventEntry, EventHandlerFn, dispatcher::Dispatcher},
     service::packet::sso_packet::SsoPacket,
-    utils::broker::Broker,
 };
 
-#[derive(Debug)]
 pub struct EventContext {
-    broker: Broker,
+    dispatcher: Dispatcher,
+    bot: OnceLock<Weak<Bot>>,
     pub(crate) events: AHashMap<&'static str, EventHandlerFn>,
 }
 
+impl Debug for EventContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EventContext")
+            .field("bound", &self.bot.get().is_some())
+            .finish_non_exhaustive()
+    }
+}
+
 impl EventContext {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(dispatcher: Dispatcher) -> Self {
         let mut events = AHashMap::new();
 
         for entry in inventory::iter::<EventEntry> {
@@ -26,9 +37,22 @@ impl EventContext {
         }
 
         Self {
-            broker: Broker::new(),
+            dispatcher,
+            bot: OnceLock::new(),
             events,
         }
+    }
+
+    pub(crate) fn bind_bot(&self, bot: Weak<Bot>) {
+        let _ = self.bot.set(bot);
+    }
+
+    pub(crate) fn emit<E: Event>(&self, event: E) {
+        let Some(bot) = self.bot.get().and_then(Weak::upgrade) else {
+            trace!(event = E::NAME, "bot not bound, drop event");
+            return;
+        };
+        self.dispatcher.emit(bot, event);
     }
 
     pub(crate) fn decode(
@@ -42,24 +66,8 @@ impl EventContext {
                 trace!("no event found for {}", packet.command);
                 Ok(())
             }
-            Some(decode_fn) => decode_fn(&packet, &self.broker, app_info, session)
+            Some(decode_fn) => decode_fn(&packet, self, app_info, session)
                 .with_context(|| format!("push event decode error, cmd: {}", packet.command)),
         }
-    }
-
-    pub fn subscribe_async<A, M>(&self, ctx: &mut A::Context)
-    where
-        A: Actor + Handler<M>,
-        A::Context: AsyncContext<A> + ToEnvelope<A, M>,
-        M: Message<Result = ()> + Send + 'static,
-    {
-        self.broker.subscribe_async::<A, M>(ctx);
-    }
-
-    pub fn issue_async<M>(&self, msg: M)
-    where
-        M: Message<Result = ()> + Clone + Send + 'static,
-    {
-        self.broker.issue_async::<M>(msg);
     }
 }

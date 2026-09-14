@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use super::{
-    DisconnectEvent, Event, GroupMessageEvent, PrivateMessageEvent, ReconnectEvent, SessionExpired,
+    BotOffline, BotOnline, Event, GroupMessageEvent, PrivateMessageEvent, SessionExpired,
     SessionUpdated, dispatcher::Dispatcher,
 };
 use crate::common::Bot;
@@ -95,20 +95,20 @@ impl<S: Send + Sync + 'static> App<S> {
         self.on::<SessionExpired, F, Fut>(f)
     }
 
-    pub fn on_disconnect<F, Fut>(self, f: F) -> Self
+    pub fn on_online<F, Fut>(self, f: F) -> Self
     where
-        F: Fn(Context<S>, DisconnectEvent) -> Fut + Send + Sync + 'static,
+        F: Fn(Context<S>, BotOnline) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
     {
-        self.on::<DisconnectEvent, F, Fut>(f)
+        self.on::<BotOnline, F, Fut>(f)
     }
 
-    pub fn on_reconnect<F, Fut>(self, f: F) -> Self
+    pub fn on_offline<F, Fut>(self, f: F) -> Self
     where
-        F: Fn(Context<S>, ReconnectEvent) -> Fut + Send + Sync + 'static,
+        F: Fn(Context<S>, BotOffline) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
     {
-        self.on::<ReconnectEvent, F, Fut>(f)
+        self.on::<BotOffline, F, Fut>(f)
     }
 
     pub(crate) fn into_dispatcher(self) -> Dispatcher {

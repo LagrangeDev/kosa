@@ -5,7 +5,7 @@ pub(crate) use context::EventContext;
 pub(crate) use dispatcher::Dispatcher;
 pub use login::{SessionExpired, SessionUpdated};
 pub use message::{GroupMessageEvent, PrivateMessageEvent};
-pub use network::{DisconnectEvent, ReconnectEvent};
+pub use status::{BotOffline, BotOnline, OfflineReason};
 
 use crate::{
     common::{AppInfo, Session},
@@ -19,8 +19,8 @@ mod dispatcher;
 mod empty;
 mod login;
 mod message;
-mod network;
 mod push_message;
+mod status;
 
 pub trait Event: Clone + Send + Sync + 'static {
     const NAME: &'static str;

@@ -12,6 +12,7 @@ use tracing::error;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session},
+    event::BotOnline,
     service::{EncryptType, Metadata, RequestType, ServiceContext, ServiceRequest},
 };
 
@@ -125,7 +126,9 @@ impl Bot {
                     }
                 }
             });
+            self.abort_task("sso_heartbeat");
             self.tasks.insert("sso_heartbeat".to_string(), handle);
+            self.emit(BotOnline);
 
             Ok(())
         } else {

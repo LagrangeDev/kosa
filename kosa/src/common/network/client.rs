@@ -1,6 +1,7 @@
 use std::{io, io::Error, time::Duration};
 
 use futures::{SinkExt, StreamExt, stream::SplitSink};
+use scopeguard::defer;
 use tokio::{net::TcpStream, sync::Mutex, task::JoinHandle, time};
 use tokio_util::{codec::Framed, sync::CancellationToken};
 use tracing::{error, info};
@@ -77,10 +78,12 @@ pub(crate) struct TcpClient {
     sink: Mutex<SplitSink<Framed<TcpStream, LengthCodec>, Packet>>,
     recv_task: JoinHandle<anyhow::Result<()>>,
     cancel: CancellationToken,
+    closed: CancellationToken,
 }
 
 impl Drop for TcpClient {
     fn drop(&mut self) {
+        self.closed.cancel();
         self.recv_task.abort();
     }
 }
@@ -95,7 +98,10 @@ impl TcpClient {
         let (sink, mut stream) = framed.split();
         let canceller = CancellationToken::new();
         let canceller_clone = canceller.clone();
+        let closed = CancellationToken::new();
+        let closed_for_task = closed.clone();
         let recv_task = async move {
+            defer! { closed_for_task.cancel(); }
             loop {
                 tokio::select! {
                     packet = stream.next() => {
@@ -124,7 +130,12 @@ impl TcpClient {
             sink: Mutex::new(sink),
             recv_task,
             cancel: canceller,
+            closed,
         }
+    }
+
+    pub(crate) fn closed(&self) -> CancellationToken {
+        self.closed.clone()
     }
 
     pub(crate) async fn send(&self, packet: Packet) -> Result<(), io::Error> {

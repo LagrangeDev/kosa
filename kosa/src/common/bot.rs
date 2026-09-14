@@ -1,7 +1,7 @@
 use std::{
     fmt::{Debug, Formatter},
     sync::{
-        Arc,
+        Arc, Weak,
         atomic::{AtomicBool, Ordering},
     },
     time::Duration,
@@ -12,14 +12,14 @@ use delegate::delegate;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Gauge};
 use tokio::{task::JoinHandle, time};
-use tracing::error;
+use tracing::{error, info, warn};
 
 use crate::{
     common::{
-        PacketContext, appinfo::AppInfo, cache::Cache, highway::HighWayContext, session::Session,
-        sign::Sign,
+        PacketContext, appinfo::AppInfo, cache::Cache, highway::HighWayContext,
+        network::reconnect_delay, session::Session, sign::Sign,
     },
-    event::{App, Dispatcher, Event, EventContext},
+    event::{App, BotOffline, Dispatcher, Event, EventContext, OfflineReason, SessionExpired},
     service::ServiceContext,
 };
 
@@ -105,6 +105,7 @@ impl BotBuilder {
             metrics: BotMetrics::new(),
         });
         event.bind_bot(Arc::downgrade(&bot));
+        bot.spawn_reconnect();
         Ok(bot)
     }
 }
@@ -187,10 +188,99 @@ impl Bot {
     pub fn emit<E: Event>(&self, event: E) {
         self.event.emit(event);
     }
+
+    fn spawn_reconnect(self: &Arc<Self>) {
+        let weak = Arc::downgrade(self);
+        let handle = tokio::spawn(reconnect_loop(weak));
+        self.tasks.insert("reconnect".to_string(), handle);
+    }
+
+    pub(crate) fn abort_task(&self, name: &str) {
+        if let Some((_, handle)) = self.tasks.remove(name) {
+            handle.abort();
+        }
+    }
+
+    fn handle_disconnect(&self) -> bool {
+        let was_online = self.online.load(Ordering::SeqCst);
+        if was_online {
+            self.set_online(
+                false,
+                #[cfg(feature = "opentelemetry")]
+                Some("disconnected".to_string()),
+            );
+            self.abort_task("sso_heartbeat");
+            self.emit(BotOffline {
+                reason: OfflineReason::Network,
+            });
+        }
+        self.service.packet.fail_pending();
+        was_online
+    }
+
+    async fn restore_online(&self, was_online: bool) {
+        if !was_online {
+            return;
+        }
+        if !self.can_fast_login() {
+            self.emit(SessionExpired {
+                msg: "session missing after reconnect".to_string(),
+            });
+            return;
+        }
+        if let Err(e) = self.online().await {
+            error!(err = %e, "register after reconnect failed");
+            self.emit(SessionExpired { msg: e.to_string() });
+        }
+    }
+}
+
+async fn reconnect_loop(weak: Weak<Bot>) {
+    loop {
+        let Some(bot) = weak.upgrade() else {
+            return;
+        };
+        let closed = bot.service.packet.closed_token().await;
+        drop(bot);
+        closed.cancelled().await;
+
+        let Some(bot) = weak.upgrade() else {
+            return;
+        };
+        let was_online = bot.handle_disconnect();
+        drop(bot);
+
+        let mut attempt = 0u32;
+        loop {
+            time::sleep(reconnect_delay(attempt)).await;
+            let Some(bot) = weak.upgrade() else {
+                return;
+            };
+            match bot.service.packet.replace_network().await {
+                Ok(()) => {
+                    info!(attempt, "tcp reconnected");
+                    drop(bot);
+                    break;
+                }
+                Err(e) => {
+                    warn!(err = %e, attempt, "tcp reconnect failed");
+                    attempt = attempt.saturating_add(1);
+                }
+            }
+        }
+
+        let Some(bot) = weak.upgrade() else {
+            return;
+        };
+        bot.restore_online(was_online).await;
+    }
 }
 
 impl Drop for Bot {
     fn drop(&mut self) {
+        for task in self.tasks.iter() {
+            task.value().abort();
+        }
         self.set_online(
             false,
             #[cfg(feature = "opentelemetry")]

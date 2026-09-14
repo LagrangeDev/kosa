@@ -6,7 +6,8 @@ use futures::channel::oneshot;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Counter};
 use scopeguard::defer;
-use tokio::time::timeout;
+use tokio::{sync::Mutex, time::timeout};
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 
 use crate::{
@@ -22,7 +23,8 @@ use crate::{
 pub(crate) struct PacketContext {
     app_info: Arc<AppInfo>,
     session: Arc<Session>,
-    network: TcpClient,
+    event: Arc<EventContext>,
+    network: Mutex<TcpClient>,
 
     pending: Arc<DashMap<i32, oneshot::Sender<SsoPacket>>>,
     sign: Box<dyn Sign>,
@@ -73,10 +75,36 @@ impl PacketContext {
         Ok(Self {
             app_info,
             session,
-            network: tcp_client,
+            event,
+            network: Mutex::new(tcp_client),
             pending,
             sign,
+            #[cfg(feature = "opentelemetry")]
+            metrics,
         })
+    }
+
+    pub(crate) async fn closed_token(&self) -> CancellationToken {
+        self.network.lock().await.closed()
+    }
+
+    pub(crate) fn fail_pending(&self) {
+        self.pending.clear();
+    }
+
+    pub(crate) async fn replace_network(&self) -> Result<(), io::Error> {
+        let client = TcpClient::connector()
+            .connect(build_callback(
+                self.session.clone(),
+                self.app_info.clone(),
+                self.pending.clone(),
+                self.event.clone(),
+                #[cfg(feature = "opentelemetry")]
+                self.metrics.clone(),
+            ))
+            .await?;
+        *self.network.lock().await = client;
+        Ok(())
     }
 }
 
@@ -110,7 +138,7 @@ impl PacketContext {
             )
             .await?;
         let data = sso_packet.encode(metadata, app_info, session, secure_info);
-        self.network.send(Packet(data)).await?;
+        self.network.lock().await.send(Packet(data)).await?;
 
         #[cfg(feature = "opentelemetry")]
         metrics.sso_tx.add(

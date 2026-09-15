@@ -103,7 +103,11 @@ impl PacketContext {
                 self.metrics.clone(),
             ))
             .await?;
-        *self.network.lock().await = client;
+        let old = {
+            let mut network = self.network.lock().await;
+            std::mem::replace(&mut *network, client)
+        };
+        old.disconnect().await;
         Ok(())
     }
 }

@@ -76,7 +76,7 @@ impl TcpConnector {
 #[derive(Debug)]
 pub(crate) struct TcpClient {
     sink: Mutex<SplitSink<Framed<TcpStream, LengthCodec>, Packet>>,
-    recv_task: JoinHandle<anyhow::Result<()>>,
+    recv_task: Option<JoinHandle<anyhow::Result<()>>>,
     cancel: CancellationToken,
     closed: CancellationToken,
 }
@@ -84,7 +84,9 @@ pub(crate) struct TcpClient {
 impl Drop for TcpClient {
     fn drop(&mut self) {
         self.closed.cancel();
-        self.recv_task.abort();
+        if let Some(task) = self.recv_task.take() {
+            task.abort();
+        }
     }
 }
 
@@ -110,17 +112,20 @@ impl TcpClient {
                                 callback(packet);
                             }
                             Some(Err(e)) => {
-                                error!(err = %e, "tcp receive error");
+                                error!(reason = "error", err = %e, "tcp disconnected");
                                 break;
                             }
                             None => {
-                                info!("tcp disconnected");
+                                info!(reason = "peer", "tcp disconnected");
                                 break;
                             }
                         }
                     }
 
-                    _ = canceller_clone.cancelled() => break,
+                    _ = canceller_clone.cancelled() => {
+                        info!(reason = "local", "tcp disconnected");
+                        break;
+                    }
                 }
             }
             Ok::<(), anyhow::Error>(())
@@ -128,7 +133,7 @@ impl TcpClient {
         let recv_task = tokio::spawn(recv_task);
         TcpClient {
             sink: Mutex::new(sink),
-            recv_task,
+            recv_task: Some(recv_task),
             cancel: canceller,
             closed,
         }
@@ -142,8 +147,11 @@ impl TcpClient {
         self.sink.lock().await.send(packet).await
     }
 
-    pub(crate) async fn disconnect(self) {
+    pub(crate) async fn disconnect(mut self) {
         self.cancel.cancel();
         let _ = self.sink.lock().await.close().await;
+        if let Some(task) = self.recv_task.take() {
+            let _ = task.await;
+        }
     }
 }

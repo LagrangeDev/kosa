@@ -79,16 +79,16 @@ fn expand_oidb_command_tokens(
     Ok(expand)
 }
 
-pub(crate) fn expand_push_event_impl(
+pub(crate) fn expand_push_handler_impl(
     attr: TokenStream,
     item: TokenStream,
 ) -> syn::Result<TokenStream2> {
     let cmd_lit: LitStr = syn::parse(attr)?;
     let input_struct: ItemStruct = syn::parse(item)?;
-    expand_push_event_tokens(&input_struct, &cmd_lit)
+    expand_push_handler_tokens(&input_struct, &cmd_lit)
 }
 
-fn expand_push_event_tokens(
+fn expand_push_handler_tokens(
     input_struct: &ItemStruct,
     cmd_lit: &LitStr,
 ) -> syn::Result<TokenStream2> {
@@ -104,7 +104,7 @@ fn expand_push_event_tokens(
         inventory::submit! {
             crate::event::EventEntry {
                 creator: || {
-                    (#cmd_lit, <#struct_name #ty_generics as crate::event::PushEvent>::handle)
+                    (#cmd_lit, <#struct_name #ty_generics as crate::event::PushHandler>::handle)
                 }
             }
         }
@@ -141,7 +141,7 @@ mod tests {
 
     use super::{
         OidbCommandArgs, expand_command_impl, expand_command_tokens, expand_oidb_command_tokens,
-        expand_push_event_tokens,
+        expand_push_handler_tokens,
     };
 
     #[test]
@@ -213,7 +213,7 @@ mod tests {
         };
         let cmd_lit: LitStr = parse_quote!("PushMessage");
 
-        let expanded = expand_push_event_tokens(&input_struct, &cmd_lit)
+        let expanded = expand_push_handler_tokens(&input_struct, &cmd_lit)
             .unwrap()
             .to_string();
         assert!(expanded.contains("inventory :: submit !"));

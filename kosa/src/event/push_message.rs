@@ -1,5 +1,5 @@
 use anyhow::Context;
-use kosa_macros::push_event;
+use kosa_macros::push_handler;
 use kosa_proto::message::v2::{CommonMessage, MsgPush};
 use prost::Message;
 use strum::FromRepr;
@@ -8,19 +8,19 @@ use tracing::trace;
 use crate::{
     common::{AppInfo, Session},
     event::{
-        EventContext, PushEvent,
+        EventContext, PushHandler,
         message::{handle_group_message, handle_private_message},
     },
     service::packet::sso_packet::SsoPacket,
 };
 
 #[derive(Debug, Clone)]
-#[push_event("trpc.msg.olpush.OlPushService.MsgPush")]
-pub(crate) struct PushMessageEvent {
+#[push_handler("trpc.msg.olpush.OlPushService.MsgPush")]
+pub(crate) struct PushMessage {
     pub(crate) message: CommonMessage,
 }
 
-impl PushEvent for PushMessageEvent {
+impl PushHandler for PushMessage {
     fn handle(
         packet: &SsoPacket,
         ctx: &EventContext,
@@ -36,7 +36,7 @@ impl PushEvent for PushMessageEvent {
             };
         let content_head = &message.content_head.unwrap_or_default();
 
-        let event = PushMessageEvent { message };
+        let event = PushMessage { message };
 
         if let Some(event_type) = PushEventType::from_repr(content_head.r#type.unwrap_or_default())
         {

@@ -7,7 +7,7 @@ use tracing::debug;
 
 use crate::{
     common::entity::Scene,
-    event::{Event, EventContext, push_message::PushMessageEvent},
+    event::{Event, EventContext, push_message::PushMessage},
     message::{
         At, BotMessage, Element, Image, MessageChain, MessageDecode, MessageDecodeCommonElem,
         QFace, SuperFace, Text, Voice,
@@ -41,10 +41,7 @@ impl Event for PrivateMessageEvent {
     const NAME: &'static str = "private_message";
 }
 
-pub(crate) fn handle_group_message(
-    event: PushMessageEvent,
-    ctx: &EventContext,
-) -> anyhow::Result<()> {
+pub(crate) fn handle_group_message(event: PushMessage, ctx: &EventContext) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
     let routing_head = common.routing_head.unwrap_or_default();
@@ -73,10 +70,7 @@ pub(crate) fn handle_group_message(
     }
 }
 
-pub(crate) fn handle_private_message(
-    event: PushMessageEvent,
-    ctx: &EventContext,
-) -> anyhow::Result<()> {
+pub(crate) fn handle_private_message(event: PushMessage, ctx: &EventContext) -> anyhow::Result<()> {
     let common = event.message;
     let content_head = common.content_head.unwrap_or_default();
     let routing_head = common.routing_head.unwrap_or_default();

@@ -1,16 +1,16 @@
-use kosa_macros::push_event;
+use kosa_macros::push_handler;
 
 use crate::{
     common::{AppInfo, Session},
-    event::{EventContext, PushEvent, SessionExpired},
+    event::{EventContext, PushHandler, SessionExpired},
     service::packet::sso_packet::SsoPacket,
 };
 
 #[derive(Debug, Clone)]
-#[push_event("")]
+#[push_handler("")]
 pub(crate) struct EmptyEvent {}
 
-impl PushEvent for EmptyEvent {
+impl PushHandler for EmptyEvent {
     fn handle(
         packet: &SsoPacket,
         ctx: &EventContext,

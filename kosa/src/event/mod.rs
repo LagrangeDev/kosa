@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 
-pub use app::{App, Context};
 pub(crate) use context::EventContext;
 pub(crate) use dispatcher::Dispatcher;
 pub use login::{SessionExpired, SessionUpdated};
@@ -13,7 +12,6 @@ use crate::{
     utils::marker::CommandMarker,
 };
 
-mod app;
 mod context;
 mod dispatcher;
 mod empty;
@@ -35,7 +33,7 @@ pub(crate) struct EventEntry {
 
 inventory::collect!(EventEntry);
 
-pub(crate) trait PushEvent: Debug + Clone + Send + Sync + CommandMarker {
+pub(crate) trait PushHandler: Debug + Clone + Send + Sync + CommandMarker {
     fn handle(
         packet: &SsoPacket,
         ctx: &EventContext,

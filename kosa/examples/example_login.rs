@@ -2,8 +2,8 @@ use std::{path::PathBuf, time::Duration};
 
 use bytes::Bytes;
 use kosa::{
-    common::{AppInfo, Bot, GenericSign, Protocol, Session, Sig, WtLoginSdkInfo},
-    event::{App, Context, GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
+    common::{App, AppInfo, Bot, Context, GenericSign, Protocol, Session, Sig, WtLoginSdkInfo},
+    event::{GroupMessageEvent, PrivateMessageEvent, SessionUpdated},
     message::{Element, LocalImage, LocalVoice, MessageChain},
     service::{login::QrcodeState, system::Reaction},
 };

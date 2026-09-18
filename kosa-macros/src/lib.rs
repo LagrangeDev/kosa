@@ -13,8 +13,8 @@ pub fn tlv(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn push_event(attr: TokenStream, item: TokenStream) -> TokenStream {
-    command::expand_push_event_impl(attr, item)
+pub fn push_handler(attr: TokenStream, item: TokenStream) -> TokenStream {
+    command::expand_push_handler_impl(attr, item)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

@@ -1,3 +1,4 @@
+mod app;
 mod appinfo;
 mod bot;
 mod cache;
@@ -8,6 +9,7 @@ mod packet;
 mod session;
 mod sign;
 
+pub use app::{App, Context};
 pub use appinfo::{AppInfo, Protocol, Sig, WtLoginSdkInfo};
 pub use bot::{Bot, BotBuilder};
 pub use cache::{FriendCache, GroupCache};

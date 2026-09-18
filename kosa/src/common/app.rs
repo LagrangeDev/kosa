@@ -1,10 +1,12 @@
 use std::{future::Future, sync::Arc};
 
-use super::{
-    BotOffline, BotOnline, Event, GroupMessageEvent, PrivateMessageEvent, SessionExpired,
-    SessionUpdated, dispatcher::Dispatcher,
+use crate::{
+    common::Bot,
+    event::{
+        BotOffline, BotOnline, Dispatcher, Event, GroupMessageEvent, PrivateMessageEvent,
+        SessionExpired, SessionUpdated,
+    },
 };
-use crate::common::Bot;
 
 #[derive(Clone)]
 pub struct Context<S = ()> {

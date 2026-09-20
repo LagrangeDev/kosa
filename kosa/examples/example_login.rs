@@ -274,12 +274,12 @@ async fn main() -> anyhow::Result<()> {
 
     if !bot.can_fast_login() {
         info!("login");
-        let (qr_sig, _, image) = bot.fetch_qrcode(2).await?;
-        fs::write("./qrcode.png", image).await?;
+        let qr = bot.fetch_qrcode(2).await?;
+        fs::write("./qrcode.png", qr.image).await?;
 
         loop {
             time::sleep(Duration::from_secs(1)).await;
-            let state = bot.get_qrcode_result(qr_sig.clone()).await?;
+            let state = bot.get_qrcode_result(qr.sig.clone()).await?;
             info!("QR code result: {:?}", state);
             if state == QrcodeState::Confirmed {
                 break;

@@ -158,17 +158,24 @@ impl ServiceRequest for TransEmpReq31 {
     }
 }
 
+pub struct QrCode {
+    pub sig: Bytes,
+    pub image: Bytes,
+    pub url: String,
+}
+
 impl ServiceContext {
-    pub(crate) async fn fetch_qrcode(
-        &self,
-        qrcode_size: u32,
-    ) -> anyhow::Result<(Bytes, String, Bytes)> {
+    pub(crate) async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<QrCode> {
         let req = TransEmpReq31 {
             qrcode_size,
             unusual_sig: Bytes::default(),
         };
         let resp = self.send_request(req).await?;
-        Ok((resp.qr_sig, resp.url, resp.image))
+        Ok(QrCode {
+            sig: resp.qr_sig,
+            image: resp.image,
+            url: resp.url,
+        })
     }
 
     pub async fn get_qrcode_result(&self, qr_sig: Bytes) -> anyhow::Result<QrcodeState> {
@@ -194,7 +201,7 @@ impl ServiceContext {
 }
 
 impl Bot {
-    pub async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<(Bytes, String, Bytes)> {
+    pub async fn fetch_qrcode(&self, qrcode_size: u32) -> anyhow::Result<QrCode> {
         self.service.fetch_qrcode(qrcode_size).await
     }
 

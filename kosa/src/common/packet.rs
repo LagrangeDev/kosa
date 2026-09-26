@@ -2,11 +2,13 @@ use std::{io, ops::Deref, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use dashmap::DashMap;
-use futures::channel::oneshot;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Counter};
 use scopeguard::defer;
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{
+    sync::{Mutex, oneshot},
+    time::timeout,
+};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 

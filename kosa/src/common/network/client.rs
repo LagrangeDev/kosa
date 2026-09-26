@@ -1,6 +1,6 @@
 use std::{io, io::Error, time::Duration};
 
-use futures::{SinkExt, StreamExt, stream::SplitSink};
+use futures_util::{SinkExt, StreamExt, stream::SplitSink};
 use scopeguard::defer;
 use tokio::{net::TcpStream, sync::Mutex, task::JoinHandle, time};
 use tokio_util::{codec::Framed, sync::CancellationToken};

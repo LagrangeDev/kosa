@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [features]
-opentelemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"]
+opentelemetry = ["dep:opentelemetry"]
 
 [dependencies]
 aes = "0.9.0"
@@ -19,14 +19,14 @@ bitflags = { version = "2.10.0", features = ["serde"] }
 byteorder = "1.5.0"
 bytes = { workspace = true, features = ["serde"] }
 cbc = { version = "0.2.0", features = ["alloc", "block-padding"] }
-chrono.workspace = true
+chrono = { workspace = true }
 dashmap = "6.1.0"
 delegate = "0.13.5"
 derive_more = { version = "2.1.1", features = ["display"] }
 digest = "0.11.0"
 enum_dispatch = "0.3.13"
 flate2 = "1.1.5"
-futures = { workspace = true }
+futures-util = { workspace = true }
 hex = { workspace = true }
 imagesize = "0.15.0"
 inventory = "0.3.21"
@@ -35,7 +35,6 @@ kosa-proto = { workspace = true }
 md-5 = "0.11.0"
 num-bigint = "0.4.6"
 opentelemetry = { version = "0.31.0", optional = true }
-opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"], optional = true }
 p256 = { version = "0.14.0", features = ["ecdh"] }
 prost = { workspace = true }
 rand = "0.10.0"
@@ -54,6 +53,7 @@ tracing = { workspace = true }
 [dev-dependencies]
 opentelemetry-appender-tracing = "0.31.1"
 opentelemetry-otlp = "0.31.0"
+opentelemetry_sdk = { version = "0.31.0", features = ["rt-tokio"] }
 silk-codec = { version = "0.3.0", features = ["ffmpeg-static", "ffmpeg-tracing"] }
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3.22", features = ["local-time"] }

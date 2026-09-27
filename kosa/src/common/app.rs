@@ -39,7 +39,7 @@ impl App<()> {
 
     pub fn with_state<S: Send + Sync + 'static>(self, state: S) -> App<S> {
         App {
-            dispatcher: Dispatcher::new(),
+            dispatcher: self.dispatcher,
             state: Arc::new(state),
         }
     }

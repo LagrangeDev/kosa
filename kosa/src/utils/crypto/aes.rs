@@ -17,6 +17,9 @@ pub enum AesError {
     #[error("wrong iv size: {0}")]
     WrongIvSize(usize),
 
+    #[error("wrong nonce size: {0}")]
+    WrongNonceSize(usize),
+
     #[error("ciphertext too short: {0}")]
     CiphertextTooShort(usize),
 
@@ -78,7 +81,7 @@ where
         return Err(AesError::CiphertextTooShort(ciphertext.len()));
     };
     let nonce = Nonce::<C::NonceSize>::try_from(&ciphertext[..12])
-        .map_err(|_| AesError::WrongIvSize(12))?;
+        .map_err(|_| AesError::WrongNonceSize(12))?;
     let ciphertext = &ciphertext[12..];
     let plaintext = ciper.decrypt(&nonce, ciphertext)?;
     Ok(Bytes::from(plaintext))

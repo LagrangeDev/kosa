@@ -185,7 +185,7 @@ impl Bot {
         }
     }
 
-    pub fn emit<E: Event>(&self, event: E) {
+    pub(crate) fn emit<E: Event>(&self, event: E) {
         self.event.emit(event);
     }
 

@@ -7,8 +7,8 @@ use crate::{
 };
 
 #[command("Heartbeat.Alive")]
-pub(crate) struct AliveEventReq;
-pub(crate) struct AliveEventResp;
+struct AliveEventReq;
+struct AliveEventResp;
 
 impl ServiceRequest for AliveEventReq {
     type Response = AliveEventResp;

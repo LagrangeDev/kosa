@@ -26,6 +26,8 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
         .into()
 }
 
+/// OIDB command marker: `#[oidb_command(command, service, reserved = 1)]`.
+/// The `reserved` argument is optional and defaults to zero.
 #[proc_macro_attribute]
 pub fn oidb_command(attr: TokenStream, item: TokenStream) -> TokenStream {
     command::expand_oidb_command(attr, item)

@@ -6,6 +6,10 @@ use syn::{
     parse::{Parse, ParseStream},
 };
 
+mod kw {
+    syn::custom_keyword!(reserved);
+}
+
 pub(crate) fn expand_command(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream2> {
     let cmd_lit: LitStr = syn::parse(attr)?;
     let input_struct: Item = syn::parse(item)?;
@@ -26,6 +30,7 @@ fn expand_command_tokens(input_item: &Item, cmd_lit: &LitStr) -> syn::Result<Tok
 struct OidbCommandArgs {
     command: u32,
     sub_command: u32,
+    reserved: Option<u32>,
 }
 
 impl Parse for OidbCommandArgs {
@@ -33,9 +38,19 @@ impl Parse for OidbCommandArgs {
         let command_lit: LitInt = input.parse()?;
         let _ = input.parse::<Token![,]>()?;
         let sub_command_lit: LitInt = input.parse()?;
+        let reserved = if input.is_empty() {
+            None
+        } else {
+            let _ = input.parse::<Token![,]>()?;
+            let _ = input.parse::<kw::reserved>()?;
+            let _ = input.parse::<Token![=]>()?;
+            let value: LitInt = input.parse()?;
+            Some(value.base10_parse()?)
+        };
         Ok(Self {
             command: command_lit.base10_parse()?,
             sub_command: sub_command_lit.base10_parse()?,
+            reserved,
         })
     }
 }
@@ -63,6 +78,10 @@ fn expand_oidb_command_tokens(
 
     let command_val = oidb_command_args.command;
     let sub_command_val = oidb_command_args.sub_command;
+    let reserved_impl = match oidb_command_args.reserved {
+        Some(value) => quote! { const RESERVED: u32 = #value; },
+        None => quote! {},
+    };
 
     let command_impl = expand_command_impl(&Item::Struct(input_struct.clone()), &cmd_lit)?;
 
@@ -74,6 +93,7 @@ fn expand_oidb_command_tokens(
         impl #impl_generics crate::service::OidbCommandMarker for #struct_name #ty_generics #where_clause {
             const COMMAND: u32 = #command_val;
             const SERVICE: u32 = #sub_command_val;
+            #reserved_impl
         }
     };
     Ok(expand)
@@ -188,6 +208,15 @@ mod tests {
         let args: OidbCommandArgs = parse2(quote!(4660, 1)).unwrap();
         assert_eq!(args.command, 4660);
         assert_eq!(args.sub_command, 1);
+        assert_eq!(args.reserved, None);
+    }
+
+    #[test]
+    fn oidb_command_args_parse_reserved() {
+        let args: OidbCommandArgs = parse2(quote!(0x1234, 1, reserved = 2)).unwrap();
+        assert_eq!(args.command, 4660);
+        assert_eq!(args.sub_command, 1);
+        assert_eq!(args.reserved, Some(2));
     }
 
     #[test]
@@ -204,6 +233,20 @@ mod tests {
         assert!(expanded.contains("crate :: service :: OidbCommandMarker"));
         assert!(expanded.contains("const COMMAND : u32 = 4660"));
         assert!(expanded.contains("const SERVICE : u32 = 7"));
+        assert!(!expanded.contains("const RESERVED"));
+    }
+
+    #[test]
+    fn oidb_command_tokens_generate_reserved_override() {
+        let input_struct: ItemStruct = parse_quote! {
+            pub struct OidbFetch;
+        };
+        let args: OidbCommandArgs = parse2(quote!(4660, 7, reserved = 1)).unwrap();
+
+        let expanded = expand_oidb_command_tokens(&input_struct, &args)
+            .unwrap()
+            .to_string();
+        assert!(expanded.contains("const RESERVED : u32 = 1"));
     }
 
     #[test]
@@ -219,7 +262,7 @@ mod tests {
         assert!(expanded.contains("inventory :: submit !"));
         assert!(expanded.contains("crate :: event :: EventEntry"));
         assert!(
-            expanded.contains("< PushMessage < T > as crate :: event :: PushEvent > :: handle")
+            expanded.contains("< PushMessage < T > as crate :: event :: PushHandler > :: handle")
         );
     }
 }

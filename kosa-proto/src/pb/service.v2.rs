@@ -2892,6 +2892,40 @@ pub struct D8fcReqBodyMemberInfo {
     #[prost(uint32, optional, tag="21")]
     pub cmduin_flag_ex3_mask: ::core::option::Option<u32>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct RobotUinRangeReq {
+    #[prost(uint32, optional, tag="5")]
+    pub just_fetch_msg_config: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="6")]
+    pub r#type: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="7")]
+    pub version: ::core::option::Option<u32>,
+    #[prost(uint32, optional, tag="8")]
+    pub aio_keyword_version: ::core::option::Option<u32>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RobotUinRangeResp {
+    #[prost(message, optional, tag="5")]
+    pub robot_config: ::core::option::Option<RobotConfig>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RobotConfig {
+    #[prost(uint32, optional, tag="1")]
+    pub version: ::core::option::Option<u32>,
+    #[prost(message, repeated, tag="2")]
+    pub robot_uin_ranges: ::prost::alloc::vec::Vec<RobotUinRange>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct RobotUinRange {
+    #[prost(uint64, optional, tag="1")]
+    pub min_uin: ::core::option::Option<u64>,
+    #[prost(uint64, optional, tag="2")]
+    pub max_uin: ::core::option::Option<u64>,
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum D8fcReqBodyCardNameElemCardType {

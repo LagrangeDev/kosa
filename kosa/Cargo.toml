@@ -26,7 +26,7 @@ derive_more = { version = "2.1.1", features = ["display"] }
 digest = "0.11.0"
 enum_dispatch = "0.3.13"
 flate2 = "1.1.5"
-futures-util = { workspace = true }
+futures-util = { workspace = true, features = ["sink"] }
 hex = { workspace = true }
 imagesize = "0.15.0"
 inventory = "0.3.21"

@@ -1,6 +1,7 @@
+use anyhow::Context;
 use arcstr::ArcStr;
 use bytes::Bytes;
-use chrono::DateTime;
+use jiff::Timestamp;
 use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
     FetchGroupMembersRequest, FetchGroupMembersRequestBody, FetchGroupMembersResponse,
@@ -63,8 +64,8 @@ impl OidbServiceRequest for FetchMemberReq {
             .into_iter()
             .map(|member| {
                 let timestamp = |secs: Option<u32>| {
-                    DateTime::from_timestamp_secs(secs.unwrap_or_default() as i64)
-                        .ok_or_else(|| anyhow::anyhow!("invalid member timestamp"))
+                    Timestamp::from_second(secs.unwrap_or_default() as i64)
+                        .context("invalid member timestamp")
                 };
                 let id = member.id.unwrap_or_default();
                 let member_card = member.member_card.unwrap_or_default();

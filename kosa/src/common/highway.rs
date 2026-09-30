@@ -8,7 +8,7 @@ use std::{
 
 use arc_swap::ArcSwap;
 use bytes::{BufMut, Bytes, BytesMut};
-use chrono::{DateTime, Duration, Utc};
+use jiff::{Timestamp, ToSpan};
 use kosa_proto::service::v2::{
     DataHighwayHead, LoginSigHead, ReqDataHighwayHead, RespDataHighwayHead, SegHead,
 };
@@ -47,7 +47,7 @@ pub(crate) struct HighWayContext {
     app_info: Arc<AppInfo>,
 
     sequence: AtomicU32,
-    ticket: ArcSwap<Option<(Bytes, DateTime<Utc>)>>,
+    ticket: ArcSwap<Option<(Bytes, Timestamp)>>,
     url: ArcSwap<Vec<Url>>,
 }
 
@@ -86,7 +86,7 @@ impl HighWayContext {
 
     pub(crate) async fn refresh_ticket(&self) -> anyhow::Result<()> {
         let mut resp = self.service.get_highway_ticket().await?;
-        let ticket = (resp.sig_session, Utc::now());
+        let ticket = (resp.sig_session, Timestamp::now());
         let url = resp
             .servers
             .remove(&1)
@@ -108,7 +108,7 @@ impl HighWayContext {
         if ticket
             .as_ref()
             .as_ref()
-            .is_none_or(|t| Utc::now() - t.1 >= Duration::hours(12))
+            .is_none_or(|t| Timestamp::now() >= t.1 + 12.hours())
         {
             self.refresh_ticket().await?;
             debug!("refresh highway ticket");

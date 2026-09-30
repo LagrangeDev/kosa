@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use chrono::Utc;
+use jiff::Timestamp;
 use kosa_macros::command;
 use kosa_proto::system::v2::{SilenceState, SsoHeartBeatRequest, SsoHeartBeatResponse};
 use prost::Message;
@@ -33,7 +33,7 @@ impl ServiceRequest for SsoHeartBeatEventReq {
             .into()),
             protocol if Protocol::ANDROID.contains(protocol) => Ok(SsoHeartBeatRequest {
                 r#type: Some(1),
-                time: Some(Utc::now().timestamp_millis() as u64),
+                time: Some(Timestamp::now().as_millisecond() as u64),
                 local_silence: Some(SilenceState {
                     local_silence: Some(1),
                 }),

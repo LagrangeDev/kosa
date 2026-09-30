@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use ahash::AHashMap;
 use byteorder::{BigEndian, ByteOrder};
-use chrono::Utc;
+use jiff::Timestamp;
 use kosa_macros::tlv;
 use kosa_proto::login::v2::{DevInfo, DeviceReport, GenInfo, QrExtInfo, ScanExtInfo};
 use md5::{Digest, Md5};
@@ -57,7 +57,7 @@ impl<'a> Tlv<'a> {
             .write_i16(0x01)
             .write_i32(rand::random())
             .write_u32(self.session.uin() as u32)
-            .write_u32(Utc::now().timestamp() as u32)
+            .write_u32(Timestamp::now().as_second() as u32)
             .write_u32(0)
             .write_u16(0);
     }
@@ -145,7 +145,7 @@ impl<'a> Tlv<'a> {
             .write_u32(app_info.app_id as u32)
             .write_u32(app_info.app_client_version as u32)
             .write_u64(session.uin() as u64)
-            .write_u32(Utc::now().timestamp() as u32)
+            .write_u32(Timestamp::now().as_second() as u32)
             .write_u32(0) // dummy IP Address
             .write_u8(1u8)
             .write_bytes(password_md5.as_slice())
@@ -399,7 +399,7 @@ impl<'a> Tlv<'a> {
             .write_bytes(random_key)
             .write_u32(16)
             .write_u32(1)
-            .write_u32(Utc::now().timestamp() as u32)
+            .write_u32(Timestamp::now().as_second() as u32)
             .write_bytes(rand_seed);
 
         let encrypted = tea::encrypt(data.to_bytes(), &session.guid);

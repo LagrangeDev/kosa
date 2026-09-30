@@ -19,7 +19,6 @@ bitflags = { version = "2.10.0", features = ["serde"] }
 byteorder = "1.5.0"
 bytes = { workspace = true, features = ["serde"] }
 cbc = { version = "0.2.0", features = ["alloc", "block-padding"] }
-chrono = { workspace = true }
 dashmap = "6.1.0"
 delegate = "0.13.5"
 derive_more = { version = "2.1.1", features = ["display"] }
@@ -30,6 +29,7 @@ futures-util = { workspace = true, features = ["sink"] }
 hex = { workspace = true }
 imagesize = "0.15.0"
 inventory = "0.3.21"
+jiff = { workspace = true }
 kosa-macros = { workspace = true }
 kosa-proto = { workspace = true }
 md-5 = "0.11.0"

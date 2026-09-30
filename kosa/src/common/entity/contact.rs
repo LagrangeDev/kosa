@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use arcstr::ArcStr;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use strum::FromRepr;
 
@@ -86,9 +86,9 @@ pub struct Stranger {
     /// 性别
     pub gender: Gender,
     /// 注册时间
-    pub registration_time: DateTime<Utc>,
+    pub registration_time: Timestamp,
     /// 生日
-    pub birthday: DateTime<Utc>,
+    pub birthday: Timestamp,
     pub source: i64,
     pub country: Option<String>,
     pub city: Option<String>,
@@ -111,11 +111,11 @@ pub struct GroupMember {
     /// 权限
     pub permission: GroupPermission,
     /// 加群时间
-    pub join_time: DateTime<Utc>,
+    pub join_time: Timestamp,
     /// 上一次发言时间
-    pub last_msg_time: DateTime<Utc>,
+    pub last_msg_time: Timestamp,
     /// 禁言结束时间
-    pub shutup_time: DateTime<Utc>,
+    pub shutup_time: Timestamp,
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, FromRepr)]

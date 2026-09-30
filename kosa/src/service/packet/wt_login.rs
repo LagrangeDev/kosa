@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use byteorder::{BigEndian, ByteOrder};
 use bytes::Bytes;
-use chrono::Utc;
+use jiff::Timestamp;
 use thiserror::Error;
 
 use crate::{
@@ -490,7 +490,7 @@ pub(crate) fn build_code2d_packet(
     let wlogin_sigs = session.wlogin_sigs.deref().load();
     let mut writer = Writer::with_capacity(tlv.len() + 80);
     writer
-        .write_u32(Utc::now().timestamp() as u32)
+        .write_u32(Timestamp::now().as_second() as u32)
         .write_u8(2) // encryptMethod == EncryptMethod.EM_ST || encryptMethod == EncryptMethod.EM_ECDH_ST
         .write_with_prefix_add(Prefix::U16, true, 1, |w| {
             w.write_i16(command)

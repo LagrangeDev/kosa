@@ -1,7 +1,6 @@
-use std::ops::{Add, Sub};
+use std::{ops::Add, time::Instant};
 
 use bytes::Bytes;
-use chrono::Local;
 use num_bigint::{BigInt, Sign};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -42,7 +41,7 @@ pub fn generate_tlv547(tlv546: &[u8]) -> Result<Bytes, PowError> {
     let mut input_num = BigInt::from_bytes_be(Sign::Plus, src.as_ref());
 
     if tgt.len() == 32 {
-        let start = Local::now();
+        let start = Instant::now();
         let mut hash = Sha256::digest(input_num.to_bytes_be().1).to_vec();
 
         while tgt.as_ref() != hash.as_slice() {
@@ -57,7 +56,7 @@ pub fn generate_tlv547(tlv546: &[u8]) -> Result<Bytes, PowError> {
 
         ok = true;
         dst = input_num.to_bytes_be().1;
-        elapsed = Local::now().sub(start).num_seconds() as i32;
+        elapsed = start.elapsed().as_secs() as i32;
     } else {
         return Err(PowError::UnsupportedHash);
     }

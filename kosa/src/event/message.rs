@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use anyhow::Context;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use kosa_proto::message::v2::{ContentHead, Elem, MessageBody};
 use tracing::debug;
 
@@ -21,7 +21,7 @@ pub struct GroupMessageEvent {
     pub member_uin: i64,
     /// 群名片
     pub member_card: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: Timestamp,
     pub message: BotMessage,
 }
 
@@ -33,7 +33,7 @@ impl Event for GroupMessageEvent {
 pub struct PrivateMessageEvent {
     pub uin: i64,
     pub uid: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: Timestamp,
     pub message: BotMessage,
 }
 
@@ -55,7 +55,7 @@ pub(crate) fn handle_group_message(event: PushMessage, ctx: &EventContext) -> an
                 group_name: group.group_name().to_string(),
                 member_uin: routing_head.from_uin(),
                 member_card: group.group_card().to_string(),
-                timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
+                timestamp: Timestamp::from_second(content_head.time.unwrap_or_default())
                     .unwrap_or_default(),
                 message: decode_message(
                     Scene::Group(group.group_code()),
@@ -78,7 +78,7 @@ pub(crate) fn handle_private_message(event: PushMessage, ctx: &EventContext) -> 
     let event = PrivateMessageEvent {
         uin: routing_head.from_uin(),
         uid: routing_head.from_uid().to_string(),
-        timestamp: DateTime::from_timestamp(content_head.time.unwrap_or_default(), 0)
+        timestamp: Timestamp::from_second(content_head.time.unwrap_or_default())
             .unwrap_or_default(),
         message: decode_message(
             Scene::Private(routing_head.from_uin(), routing_head.from_uid().to_string()),

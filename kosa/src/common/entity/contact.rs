@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
-use arcstr::ArcStr;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use strum::FromRepr;
+
+use crate::utils::InternedStr;
 
 #[derive(Debug, Default, Clone, Copy, FromRepr, Serialize, Deserialize)]
 #[repr(i32)]
@@ -42,7 +43,7 @@ pub struct Friend {
     /// QQ号
     pub uin: i64,
     /// uid
-    pub uid: ArcStr,
+    pub uid: InternedStr,
     /// 昵称
     pub nick_name: String,
     /// 备注
@@ -61,7 +62,7 @@ pub struct Friend {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FriendCategory {
     pub id: i32,
-    pub name: ArcStr,
+    pub name: InternedStr,
     pub member_count: i32,
     pub sort_id: i32,
 }
@@ -99,9 +100,9 @@ pub struct Stranger {
 #[derive(Debug, Clone)]
 pub struct GroupMember {
     pub uin: i64,
-    pub uid: ArcStr,
+    pub uid: InternedStr,
     /// 昵称
-    pub nick_name: ArcStr,
+    pub nick_name: InternedStr,
     /// 群名片
     pub member_card: String,
     /// 特殊头衔

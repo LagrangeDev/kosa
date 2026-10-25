@@ -1,6 +1,5 @@
 use std::vec;
 
-use arcstr::ArcStr;
 use bytes::Bytes;
 use kosa_macros::oidb_command;
 use kosa_proto::service::v2::{
@@ -14,6 +13,7 @@ use crate::{
         entity::{Friend, FriendCategory, Gender},
     },
     service::{OidbServiceRequest, ServiceContext},
+    utils::InternedStr,
 };
 
 #[oidb_command(0xfd4, 1)]
@@ -76,7 +76,7 @@ impl OidbServiceRequest for FetchFriendReq {
             .into_iter()
             .map(|category| FriendCategory {
                 id: category.category_id.unwrap_or_default(),
-                name: ArcStr::from(category.category_name.unwrap_or_default()),
+                name: InternedStr::from(category.category_name.unwrap_or_default()),
                 member_count: category.category_member_count.unwrap_or_default(),
                 sort_id: category.catogory_sort_id.unwrap_or_default(),
             })
@@ -97,7 +97,7 @@ impl OidbServiceRequest for FetchFriendReq {
 
                 Some(Friend {
                     uin: friend.uin.unwrap_or_default(),
-                    uid: ArcStr::from(friend.uid.unwrap_or_default()),
+                    uid: InternedStr::from(friend.uid.unwrap_or_default()),
                     nick_name,
                     personal_sign,
                     remark,

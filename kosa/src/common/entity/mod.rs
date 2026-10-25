@@ -2,9 +2,7 @@ mod contact;
 
 use std::fmt::Debug;
 
-pub use crate::common::entity::contact::{
-    Friend, FriendCategory, Gender, Group, GroupMember, GroupPermission, Stranger,
-};
+pub use contact::{Friend, FriendCategory, Gender, Group, GroupMember, GroupPermission, Stranger};
 
 #[derive(Debug, Clone)]
 pub enum Scene {

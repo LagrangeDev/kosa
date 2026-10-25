@@ -7,6 +7,9 @@ pub mod marker;
 pub mod silk;
 
 use base64::{Engine, prelude::BASE64_STANDARD};
+use internment::ArcIntern;
+
+pub type InternedStr = ArcIntern<String>;
 
 pub fn random_hex_string(num_bytes: usize) -> String {
     let mut raw_bytes = vec![0u8; num_bytes];

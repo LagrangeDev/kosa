@@ -12,7 +12,6 @@ aes-gcm = { version = "0.11.0" }
 ahash = { workspace = true, features = ["serde"] }
 anyhow = { workspace = true }
 arc-swap = { version = "1.8.0", features = ["serde"] }
-arcstr = { version = "1.2.0", features = ["serde"] }
 async-trait = { workspace = true }
 base64 = "0.23.1"
 bitflags = { version = "2.10.0", features = ["serde"] }
@@ -28,6 +27,7 @@ flate2 = "1.1.5"
 futures-util = { workspace = true, features = ["sink"] }
 hex = { workspace = true }
 imagesize = "0.15.0"
+internment = { version = "0.8.6", features = ["arc", "serde"] }
 inventory = "0.3.21"
 jiff = { workspace = true }
 kosa-macros = { workspace = true }

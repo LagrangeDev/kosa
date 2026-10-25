@@ -9,6 +9,7 @@ pub use kosa_proto::common::v2::SsoSecureInfo;
 
 use crate::common::{AppInfo, Session};
 
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait Sign: Debug + Send + Sync {
     async fn get_sec_sign(

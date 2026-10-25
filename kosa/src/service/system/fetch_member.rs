@@ -1,5 +1,4 @@
 use anyhow::Context;
-use arcstr::ArcStr;
 use bytes::Bytes;
 use jiff::Timestamp;
 use kosa_macros::oidb_command;
@@ -14,6 +13,7 @@ use crate::{
         entity::{GroupMember, GroupPermission},
     },
     service::{OidbServiceRequest, ServiceContext},
+    utils::InternedStr,
 };
 
 #[oidb_command(0xfe7, 3)]
@@ -73,8 +73,8 @@ impl OidbServiceRequest for FetchMemberReq {
 
                 Ok(GroupMember {
                     uin: id.uin.unwrap_or_default() as i64,
-                    uid: ArcStr::from(id.uid.unwrap_or_default()),
-                    nick_name: ArcStr::from(member.member_name.unwrap_or_default()),
+                    uid: InternedStr::from(id.uid.unwrap_or_default()),
+                    nick_name: InternedStr::from(member.member_name.unwrap_or_default()),
                     member_card: member_card.member_card.unwrap_or_default(),
                     special_title: member.special_title.unwrap_or_default(),
                     level: level.level.unwrap_or_default() as i32,

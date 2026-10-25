@@ -181,7 +181,7 @@ impl Bot {
             pub fn groups(&self) -> Arc<crate::common::GroupCache>;
             pub async fn refresh_friends(&self) -> anyhow::Result<(usize,usize)>;
             pub async fn refresh_group_info(&self) -> anyhow::Result<usize>;
-            pub async fn refresh_members(&self, group: i64) -> anyhow::Result<usize>;
+            pub async fn refresh_group_members(&self, group: i64) -> anyhow::Result<usize>;
         }
     }
 

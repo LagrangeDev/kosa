@@ -1,11 +1,11 @@
 version: v2
 clean: true
 plugins:
-  - remote: buf.build/community/neoeinstein-prost:v0.4.0
+  - remote: buf.build/community/neoeinstein-prost:v0.5.0
     out: kosa-proto/src/pb
     opt:
       - bytes=.
-  - remote: buf.build/community/neoeinstein-prost-crate:v0.4.1
+  - remote: buf.build/community/neoeinstein-prost-crate:v0.5.0
     out: kosa-proto/src/pb
     opt:
       - no_features=true

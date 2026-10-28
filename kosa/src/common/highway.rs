@@ -6,8 +6,10 @@ use std::{
     },
 };
 
+use anyhow::Context;
 use arc_swap::ArcSwap;
 use bytes::{BufMut, Bytes, BytesMut};
+use futures_util::{TryStreamExt, stream};
 use jiff::{Timestamp, ToSpan};
 use kosa_proto::service::v2::{
     DataHighwayHead, LoginSigHead, ReqDataHighwayHead, RespDataHighwayHead, SegHead,
@@ -16,7 +18,7 @@ use md5::{Digest, Md5};
 use prost::Message;
 use reqwest::{
     Client, Url,
-    header::{ACCEPT_ENCODING, CONNECTION, HeaderMap, HeaderValue, USER_AGENT},
+    header::{ACCEPT_ENCODING, HeaderMap, HeaderValue, USER_AGENT},
 };
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt};
 use tracing::debug;
@@ -29,13 +31,14 @@ use crate::{
 
 // 1MB
 pub const BLOCK_SIZE: usize = 1024 * 1024;
+const MAX_UPLOAD_CONCURRENCY: usize = 5;
 
-struct Block<'a> {
+struct Block {
     offset: usize,
     file_size: usize,
     md5: [u8; 16],
     file_md5: [u8; 16],
-    data: &'a [u8],
+    data: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -99,7 +102,7 @@ impl HighWayContext {
     pub(crate) async fn upload<R: AsyncRead + AsyncSeek + Unpin>(
         &self,
         command_id: u32,
-        stream: &mut R,
+        data_stream: &mut R,
         file_size: usize,
         file_md5: [u8; 16],
         ext_info: Option<Bytes>,
@@ -120,57 +123,89 @@ impl HighWayContext {
             .ok_or_else(|| anyhow::anyhow!("no url"))?
             .clone();
 
-        stream.seek(SeekFrom::Start(0)).await?;
+        data_stream.seek(SeekFrom::Start(0)).await?;
 
-        let mut buffer = Vec::with_capacity(BLOCK_SIZE);
-        for offset in (0..file_size).step_by(BLOCK_SIZE) {
-            buffer.clear();
-            let block_size = BLOCK_SIZE.min(file_size - offset);
-            buffer.resize(block_size, 0);
+        let blocks = stream::try_unfold(
+            (data_stream, 0usize),
+            move |(data_stream, offset)| async move {
+                if offset == file_size {
+                    return Ok::<_, anyhow::Error>(None);
+                }
 
-            let n = stream.read_exact(&mut buffer).await?;
-            let chunk = &buffer[..n];
-            let block_md5: [u8; 16] = *Md5::digest(chunk).as_ref();
-            let block = Block {
-                offset,
-                file_size,
-                md5: block_md5,
-                file_md5,
-                data: chunk,
-            };
-            self.upload_block(url.clone(), command_id, block, ext_info.clone())
-                .await?;
-        }
+                let block_size = BLOCK_SIZE.min(file_size - offset);
+                let mut data = vec![0; block_size];
+                data_stream.read_exact(&mut data).await.with_context(|| {
+                    format!(
+                        "highway block read failed: command_id={command_id}, offset={offset}, block_size={block_size}, file_size={file_size}"
+                    )
+                })?;
+
+                Ok(Some(((offset, data), (data_stream, offset + block_size))))
+            },
+        );
+
+        blocks
+            .try_for_each_concurrent(MAX_UPLOAD_CONCURRENCY, |(offset, data)| {
+                let url = url.clone();
+                let ext_info = ext_info.clone();
+                async move {
+                    let block_size = data.len();
+                    let block = Block {
+                        offset,
+                        file_size,
+                        md5: *Md5::digest(&data).as_ref(),
+                        file_md5,
+                        data,
+                    };
+
+                    self.upload_block(url, command_id, block, ext_info)
+                        .await
+                        .with_context(|| {
+                            format!(
+                                "highway block upload failed: command_id={command_id}, offset={offset}, block_size={block_size}, file_size={file_size}"
+                            )
+                        })
+                }
+            })
+            .await?;
         Ok(())
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            command_id,
+            sequence = tracing::field::Empty,
+            offset = block.offset,
+            block_size = block.data.len(),
+            file_size = block.file_size,
+        ),
+        err
+    )]
     async fn upload_block(
         &self,
         server: Url,
         command_id: u32,
-        block: Block<'_>,
+        block: Block,
         ext_info: Option<Bytes>,
     ) -> anyhow::Result<()> {
-        let head = self.build_head(command_id, &block, ext_info.clone())?;
-        let is_end = block.offset + block.data.len() == block.file_size;
+        let sequence = self.new_sequence();
+        tracing::Span::current().record("sequence", sequence);
+        debug!("highway block upload started");
+        let head = self.build_head(command_id, sequence, &block, ext_info)?;
         let body_len = 1 + 1 + 4 + 4 + head.len() + block.data.len();
         let mut body = BytesMut::with_capacity(body_len);
         body.put_u8(0x28);
         body.put_u32(head.len() as u32);
         body.put_u32(block.data.len() as u32);
         body.put_slice(head.as_ref());
-        body.put_slice(block.data);
+        body.put_slice(&block.data);
         body.put_u8(0x29);
+        drop(block);
 
         let body = body.freeze();
 
-        let resp = self
-            .http_client
-            .post(server)
-            .header(CONNECTION, if !is_end { "keep-alive" } else { "close" })
-            .body(body)
-            .send()
-            .await?;
+        let resp = self.http_client.post(server).body(body).send().await?;
 
         if !resp.status().is_success() {
             return Err(anyhow::anyhow!(
@@ -214,15 +249,15 @@ impl HighWayContext {
     fn build_head(
         &self,
         command_id: u32,
+        sequence: u32,
         block: &Block,
         ext_info: Option<Bytes>,
     ) -> anyhow::Result<Bytes> {
-        let seq = self.new_sequence();
         let head = DataHighwayHead {
             version: Some(1),
             uin: Some(self.session.uin().to_string()),
             command: Some("PicUp.DataUp".to_string()),
-            seq: Some(seq),
+            seq: Some(sequence),
             retry_times: Some(0),
             app_id: Some(self.app_info.app_id as u32),
             data_flag: Some(16),

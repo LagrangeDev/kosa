@@ -179,8 +179,6 @@ impl GroupCache {
     }
 
     pub fn get_member(&self, group: i64, uin: i64) -> Option<Arc<GroupMember>> {
-        self.members
-            .get(&group)
-            .and_then(|t| t.get(&uin).map(|u| u.clone()))
+        self.members.get(&group).and_then(|t| t.get(&uin).cloned())
     }
 }

@@ -20,12 +20,19 @@ pub(crate) struct PrivateImageDownloadReq {
     scene: Scene,
 }
 
-pub(crate) struct PrivateImageDownloadResp {
+#[oidb_command(0x11c4, 200)]
+pub(crate) struct GroupImageDownloadReq {
+    node: IndexNode,
+    ext: Option<DownloadExt>,
+    scene: Scene,
+}
+
+pub(crate) struct ImageDownloadResp {
     url: String,
 }
 
 impl OidbServiceRequest for PrivateImageDownloadReq {
-    type Response = PrivateImageDownloadResp;
+    type Response = ImageDownloadResp;
     const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
 
     fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
@@ -42,7 +49,31 @@ impl OidbServiceRequest for PrivateImageDownloadReq {
         _session: &Session,
     ) -> anyhow::Result<Self::Response> {
         let resp = Ntv2RichMediaResp::decode(data)?;
-        Ok(PrivateImageDownloadResp {
+        Ok(ImageDownloadResp {
+            url: parse_download_url(resp)?,
+        })
+    }
+}
+
+impl OidbServiceRequest for GroupImageDownloadReq {
+    type Response = ImageDownloadResp;
+    const SUPPORT_PROTOCOLS: Protocol = Protocol::all();
+
+    fn encode(req: Self, _app_info: &AppInfo, _session: &Session) -> anyhow::Result<Bytes> {
+        Ok(
+            build_download_request::<LocalImage>(req.node, req.ext, req.scene)?
+                .encode_to_vec()
+                .into(),
+        )
+    }
+
+    fn decode(
+        data: Bytes,
+        _app_info: &AppInfo,
+        _session: &Session,
+    ) -> anyhow::Result<Self::Response> {
+        let resp = Ntv2RichMediaResp::decode(data)?;
+        Ok(ImageDownloadResp {
             url: parse_download_url(resp)?,
         })
     }
@@ -54,11 +85,23 @@ impl ServiceContext {
         uin: i64,
         uid: String,
         image: &Image,
-    ) -> anyhow::Result<PrivateImageDownloadResp> {
+    ) -> anyhow::Result<ImageDownloadResp> {
         let req = PrivateImageDownloadReq {
             node: extract_index_node!(image),
             ext: None,
             scene: Scene::Private(uin, uid),
+        };
+        self.send_request(req).await
+    }
+    pub(crate) async fn get_group_image_download_url(
+        &self,
+        group: i64,
+        image: &Image,
+    ) -> anyhow::Result<ImageDownloadResp> {
+        let req = GroupImageDownloadReq {
+            node: extract_index_node!(image),
+            ext: None,
+            scene: Scene::Group(group),
         };
         self.send_request(req).await
     }
@@ -78,6 +121,19 @@ impl Bot {
                 self.friends().get_uid_required(uin)?.to_string(),
                 image,
             )
+            .await?;
+        Ok(resp.url)
+    }
+
+    /// 获取群聊图片下载链接
+    pub async fn get_group_image_download_url(
+        &self,
+        group: i64,
+        image: &Image,
+    ) -> anyhow::Result<String> {
+        let resp = self
+            .service
+            .get_group_image_download_url(group, image)
             .await?;
         Ok(resp.url)
     }

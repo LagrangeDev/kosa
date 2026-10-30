@@ -86,30 +86,26 @@ impl MessageDecode for At {
         _elems: &mut VecDeque<Elem>,
         _scene: &Scene,
     ) -> anyhow::Result<Option<Self>> {
-        let res = match elem
-            .text
+        elem.text
             .as_ref()
-            .filter(|t| t.attr6_buf.is_some())
-            .as_ref()
-            .and_then(|t| t.pb_reserve.clone())
-        {
-            None => None,
-            Some(reserve) => {
-                let reserve = TextResvAttr::decode(reserve)?;
-                let at_type = match reserve.at_type {
-                    Some(1) => AtType::All,
-                    Some(2) => AtType::Specific(
-                        reserve.at_member_uin() as i64,
-                        reserve.at_member_uid().to_string(),
-                    ),
-                    _ => unreachable!(),
-                };
-                Some(Self {
-                    r#type: at_type,
-                    display: elem.text.as_ref().unwrap().text_msg.clone(),
+            .filter(|text| text.attr6_buf.is_some())
+            .and_then(|text| {
+                text.pb_reserve.as_deref().map(|reserve| {
+                    let reserve = TextResvAttr::decode(reserve)?;
+                    let at_type = match reserve.at_type {
+                        Some(1) => AtType::All,
+                        Some(2) => AtType::Specific(
+                            reserve.at_member_uin() as i64,
+                            reserve.at_member_uid().to_string(),
+                        ),
+                        other => return Err(anyhow::anyhow!("unknown at_type: {:?}", other)),
+                    };
+                    Ok(Self {
+                        r#type: at_type,
+                        display: text.text_msg.clone(),
+                    })
                 })
-            }
-        };
-        Ok(res)
+            })
+            .transpose()
     }
 }

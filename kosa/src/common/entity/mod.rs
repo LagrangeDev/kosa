@@ -20,3 +20,9 @@ impl Scene {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub enum Target {
+    Private(i64),
+    Group { group: i64, uin: i64 },
+}

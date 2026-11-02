@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 pub(crate) use context::EventContext;
 pub(crate) use dispatcher::Dispatcher;
+pub use kick::KickEvent;
 pub use login::{SessionExpired, SessionUpdated};
 pub use message::{GroupMessageEvent, PrivateMessageEvent};
 pub use status::{BotOffline, BotOnline, OfflineReason};
@@ -15,6 +16,7 @@ use crate::{
 mod context;
 mod dispatcher;
 mod empty;
+mod kick;
 mod login;
 mod message;
 mod push_message;

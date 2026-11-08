@@ -35,7 +35,6 @@ pub(crate) struct GroupImageUploadReq {
 #[derive(Debug)]
 pub(crate) struct ImageUploadResp {
     msg_info: MsgInfo,
-    compat_qmsg: Bytes,
     ext: Option<Ntv2RichMediaHighwayExt>,
 }
 
@@ -93,7 +92,6 @@ fn decode_image_upload_resp(data: Bytes) -> anyhow::Result<ImageUploadResp> {
     Ok(ImageUploadResp {
         ext: gen_ext(upload.clone()),
         msg_info: upload.msg_info.unwrap_or_default(),
-        compat_qmsg: upload.compat_q_msg.unwrap_or_default(),
     })
 }
 
@@ -196,7 +194,7 @@ impl Bot {
                 .await?;
         }
 
-        build_image(image, upload_resp.msg_info, upload_resp.compat_qmsg)
+        build_image(image, upload_resp.msg_info)
     }
 
     pub async fn upload_group_image(
@@ -222,15 +220,11 @@ impl Bot {
                 .await?;
         }
 
-        build_image(image, upload_resp.msg_info, upload_resp.compat_qmsg)
+        build_image(image, upload_resp.msg_info)
     }
 }
 
-fn build_image(
-    local_image: LocalImage,
-    msg_info: MsgInfo,
-    compact: Bytes,
-) -> anyhow::Result<Image> {
+fn build_image(local_image: LocalImage, msg_info: MsgInfo) -> anyhow::Result<Image> {
     let index0 = msg_info
         .msg_info_body
         .first()
@@ -250,7 +244,6 @@ fn build_image(
         width: local_image.width,
         height: local_image.height,
         msg_info: msg_info.into(),
-        compact,
     };
     Ok(image)
 }

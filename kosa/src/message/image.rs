@@ -33,8 +33,6 @@ pub struct Image {
     pub height: u32,
 
     pub(crate) msg_info: Box<MsgInfo>,
-    #[allow(dead_code)]
-    pub(crate) compact: Bytes,
 }
 
 impl Display for Image {
@@ -89,7 +87,6 @@ impl MessageDecode for Image {
                 width: custom_face.width() as u32,
                 height: custom_face.height() as u32,
                 msg_info: Default::default(),
-                compact: Default::default(),
             }))
         } else {
             Ok(None)
@@ -138,8 +135,6 @@ impl MessageDecodeCommonElem for Image {
             width: width.unwrap_or_default(),
             height: height.unwrap_or_default(),
             msg_info: msg_info.into(),
-
-            compact: Default::default(),
         }))
     }
 }

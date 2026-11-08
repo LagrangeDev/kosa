@@ -31,7 +31,7 @@ pub(crate) fn build_upload_request<M: RichMedia>(
             compat_q_msg_scene_type: Some(scene_type),
             client_seq: Some(10),
             ext_biz_info: Some(ext_biz_info),
-            no_need_compat_msg: Some(false),
+            no_need_compat_msg: Some(true),
         }),
         ..Default::default()
     };

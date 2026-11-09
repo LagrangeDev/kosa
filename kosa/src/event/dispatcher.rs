@@ -1,5 +1,6 @@
 use std::{
     any::{Any, TypeId},
+    fmt::Debug,
     future::Future,
     pin::Pin,
     sync::Arc,
@@ -11,7 +12,7 @@ use tracing::error;
 use super::Event;
 use crate::common::Bot;
 
-type BoxedFut = Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
+type BoxedFut = Pin<Box<dyn Future<Output = ()> + Send>>;
 type HandlerFn<E> = Arc<dyn Fn(Arc<Bot>, E) -> BoxedFut + Send + Sync>;
 
 #[derive(Default)]
@@ -24,13 +25,21 @@ impl Dispatcher {
         Self::default()
     }
 
-    pub(crate) fn register<E, F, Fut>(&self, f: F)
+    pub(crate) fn register<E, F, Fut, Err>(&self, f: F)
     where
         E: Event,
         F: Fn(Arc<Bot>, E) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        let boxed: HandlerFn<E> = Arc::new(move |bot, ev| Box::pin(f(bot, ev)));
+        let boxed: HandlerFn<E> = Arc::new(move |bot, ev| {
+            let future = f(bot, ev);
+            Box::pin(async move {
+                if let Err(err) = future.await {
+                    error!(event = E::NAME, ?err, "event handler failed");
+                }
+            })
+        });
         let mut entry = self
             .handlers
             .entry(TypeId::of::<E>())
@@ -53,9 +62,7 @@ impl Dispatcher {
             let bot = bot.clone();
             let event = event.clone();
             tokio::spawn(async move {
-                if let Err(err) = handler(bot, event).await {
-                    error!(event = E::NAME, ?err, "event handler failed");
-                }
+                handler(bot, event).await;
             });
         }
     }

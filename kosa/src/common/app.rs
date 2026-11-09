@@ -1,4 +1,4 @@
-use std::{future::Future, sync::Arc};
+use std::{fmt::Debug, future::Future, sync::Arc};
 
 use crate::{
     common::Bot,
@@ -46,14 +46,17 @@ impl App<()> {
 }
 
 impl<S: Send + Sync + 'static> App<S> {
-    pub fn on<E, F, Fut>(self, f: F) -> Self
+    /// Registers a handler whose errors are logged by the dispatcher.
+    /// Each handler can return its own error type.
+    pub fn on<E, F, Fut, Err>(self, f: F) -> Self
     where
         E: Event,
         F: Fn(Context<S>, E) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
         let state = self.state.clone();
-        self.dispatcher.register::<E, _, _>(move |bot, ev| {
+        self.dispatcher.register::<E, _, _, Err>(move |bot, ev| {
             f(
                 Context {
                     bot,
@@ -65,52 +68,58 @@ impl<S: Send + Sync + 'static> App<S> {
         self
     }
 
-    pub fn on_group_message<F, Fut>(self, f: F) -> Self
+    pub fn on_group_message<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, GroupMessageEvent) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<GroupMessageEvent, F, Fut>(f)
+        self.on::<GroupMessageEvent, F, Fut, Err>(f)
     }
 
-    pub fn on_private_message<F, Fut>(self, f: F) -> Self
+    pub fn on_private_message<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, PrivateMessageEvent) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<PrivateMessageEvent, F, Fut>(f)
+        self.on::<PrivateMessageEvent, F, Fut, Err>(f)
     }
 
-    pub fn on_session_updated<F, Fut>(self, f: F) -> Self
+    pub fn on_session_updated<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, SessionUpdated) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<SessionUpdated, F, Fut>(f)
+        self.on::<SessionUpdated, F, Fut, Err>(f)
     }
 
-    pub fn on_session_expired<F, Fut>(self, f: F) -> Self
+    pub fn on_session_expired<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, SessionExpired) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<SessionExpired, F, Fut>(f)
+        self.on::<SessionExpired, F, Fut, Err>(f)
     }
 
-    pub fn on_online<F, Fut>(self, f: F) -> Self
+    pub fn on_online<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, BotOnline) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<BotOnline, F, Fut>(f)
+        self.on::<BotOnline, F, Fut, Err>(f)
     }
 
-    pub fn on_offline<F, Fut>(self, f: F) -> Self
+    pub fn on_offline<F, Fut, Err>(self, f: F) -> Self
     where
         F: Fn(Context<S>, BotOffline) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = anyhow::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), Err>> + Send + 'static,
+        Err: Debug,
     {
-        self.on::<BotOffline, F, Fut>(f)
+        self.on::<BotOffline, F, Fut, Err>(f)
     }
 
     pub(crate) fn into_dispatcher(self) -> Dispatcher {

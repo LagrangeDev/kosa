@@ -1,7 +1,6 @@
 use std::{io, io::Error, time::Duration};
 
 use futures_util::{SinkExt, StreamExt, stream::SplitSink};
-use scopeguard::defer;
 use tokio::{net::TcpStream, sync::Mutex, task::JoinHandle, time};
 use tokio_util::{codec::Framed, sync::CancellationToken};
 use tracing::{error, info};
@@ -103,7 +102,7 @@ impl TcpClient {
         let closed = CancellationToken::new();
         let closed_for_task = closed.clone();
         let recv_task = async move {
-            defer! { closed_for_task.cancel(); }
+            let _guard = closed_for_task.drop_guard();
             loop {
                 tokio::select! {
                     packet = stream.next() => {

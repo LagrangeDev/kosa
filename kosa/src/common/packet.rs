@@ -1,10 +1,9 @@
-use std::{io, ops::Deref, sync::Arc, time::Duration};
+use std::{io, mem::DropGuard, ops::Deref, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use dashmap::DashMap;
 #[cfg(feature = "opentelemetry")]
 use opentelemetry::{InstrumentationScope, KeyValue, global, metrics::Counter};
-use scopeguard::defer;
 use tokio::{
     sync::{Mutex, oneshot},
     time::timeout,
@@ -129,9 +128,10 @@ impl PacketContext {
         let (tx, rx) = oneshot::channel();
         self.pending.insert(sso_packet.sequence, tx);
         let pending = self.pending.clone();
-        defer! {
-            pending.remove(&sso_packet.sequence);
-        }
+        let sequence = sso_packet.sequence;
+        let _guard = DropGuard::new(pending, |pending| {
+            pending.remove(&sequence);
+        });
 
         let secure_info = self
             .sign

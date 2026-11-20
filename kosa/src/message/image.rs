@@ -15,7 +15,8 @@ use tokio::fs::File;
 use crate::{
     common::entity::Scene,
     message::{
-        MessageDecode, MessageDecodeCommonElem, MessageEncode, RichMedia, utils::extract_info,
+        MessageDecode, MessageDecodeCommonElem, MessageEncode, RichMedia, RichMediaExt,
+        utils::extract_info,
     },
     stream_hash, try_parse_hash,
     utils::{image, image::Format, io::AsyncStream},
@@ -159,7 +160,9 @@ pub struct LocalImage {
 impl RichMedia for LocalImage {
     const REQUEST_TYPE: u32 = 2;
     const BUSINESS_TYPE: u32 = 1;
+}
 
+impl RichMediaExt for LocalImage {
     fn build_file_info(&self) -> anyhow::Result<FileInfo> {
         let md5 = hex::encode(self.md5);
         let sha1 = hex::encode(self.sha1);
@@ -169,7 +172,7 @@ impl RichMedia for LocalImage {
             file_hash: Some(md5),
             file_sha1: Some(sha1),
             r#type: Some(FileType {
-                r#type: Some(1),
+                r#type: Some(Self::BUSINESS_TYPE),
                 pic_format: Some(self.format as u32),
                 video_format: Some(0),
                 voice_format: Some(0),

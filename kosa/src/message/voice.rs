@@ -13,7 +13,9 @@ use tokio::fs::File;
 
 use crate::{
     common::entity::Scene,
-    message::{MessageDecodeCommonElem, MessageEncode, RichMedia, utils::extract_info},
+    message::{
+        MessageDecodeCommonElem, MessageEncode, RichMedia, RichMediaExt, utils::extract_info,
+    },
     stream_hash, try_parse_hash,
     utils::{io::AsyncStream, silk::get_silk_duration},
 };
@@ -99,7 +101,9 @@ pub struct LocalVoice {
 impl RichMedia for LocalVoice {
     const REQUEST_TYPE: u32 = 2;
     const BUSINESS_TYPE: u32 = 3;
+}
 
+impl RichMediaExt for LocalVoice {
     fn build_file_info(&self) -> anyhow::Result<FileInfo> {
         let md5 = hex::encode(self.md5);
         let sha1 = hex::encode(self.sha1);
@@ -110,7 +114,7 @@ impl RichMedia for LocalVoice {
             file_sha1: Some(sha1),
             file_name: Some(file_name),
             r#type: Some(FileType {
-                r#type: Some(3),
+                r#type: Some(Self::BUSINESS_TYPE),
                 voice_format: Some(1),
                 ..Default::default()
             }),

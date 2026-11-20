@@ -55,7 +55,9 @@ pub(crate) trait MessageDecodeCommonElem: Sized + Display {
 pub(crate) trait RichMedia {
     const REQUEST_TYPE: u32;
     const BUSINESS_TYPE: u32;
+}
 
+pub(crate) trait RichMediaExt: RichMedia {
     fn build_file_info(&self) -> anyhow::Result<FileInfo>;
 }
 

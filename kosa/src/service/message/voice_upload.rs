@@ -8,7 +8,7 @@ use prost::Message;
 
 use crate::{
     common::{AppInfo, Bot, Protocol, Session, entity::Scene},
-    message::{LocalVoice, RichMedia, Voice},
+    message::{LocalVoice, RichMediaExt, Voice},
     service::{
         OidbServiceRequest, ServiceContext,
         packet::nt_v2_richmedia::{build_upload_request, gen_ext},
